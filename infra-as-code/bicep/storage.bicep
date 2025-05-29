@@ -17,7 +17,6 @@ param privateEndpointsSubnetName string
 param logWorkspaceName string
 
 @maxLength(36)
-@minLength(36)
 param yourPrincipalId string
 
 // variables
@@ -138,7 +137,7 @@ resource appDeployStorageDiagSettings 'Microsoft.Insights/diagnosticSettings@202
 }
 
 @description('Assign your user the ability to manage prompt flow state files from blob storage. This is needed to execute the prompt flow from within in the Azure AI Foundry portal.')
-resource blobStorageContributorForUserRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+resource blobStorageContributorForUserRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (yourPrincipalId != '') {
   scope: appDeployStorage::blobService::deployContainer
   name: guid(appDeployStorage::blobService::deployContainer.id, yourPrincipalId, storageBlobDataContributorRole.id)
   properties: {

@@ -25,7 +25,6 @@ param logWorkspaceName string
 param openAiResourceName string
 
 @maxLength(36)
-@minLength(36)
 param yourPrincipalId string
 
 // ---- Variables ----
@@ -91,7 +90,7 @@ resource amlWorkspaceSecretsReaderRole 'Microsoft.Authorization/roleDefinitions@
 // ---- New Resources ----
 
 @description('Assign your user the ability to manage files in storage. This is needed to use the prompt flow editor in the Azure AI Foundry portal.')
-resource storageFileDataContributorForUserRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+resource storageFileDataContributorForUserRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (yourPrincipalId != '') {
   scope: aiStudioStorageAccount
   name: guid(aiStudioStorageAccount.id, yourPrincipalId, storageFileDataContributorRole.id)
   properties: {
@@ -103,7 +102,7 @@ resource storageFileDataContributorForUserRoleAssignment 'Microsoft.Authorizatio
 }
 
 @description('Assign your user the ability to manage prompt flow state files from blob storage. This is needed to execute the prompt flow from within in the Azure AI Foundry portal.')
-resource blobStorageContributorForUserRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+resource blobStorageContributorForUserRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (yourPrincipalId != '') {
   scope: aiStudioStorageAccount
   name: guid(aiStudioStorageAccount.id, yourPrincipalId, storageBlobDataContributorRole.id)
   properties: {
@@ -117,7 +116,7 @@ resource blobStorageContributorForUserRoleAssignment 'Microsoft.Authorization/ro
 }
 
 @description('Assign your user the ability to invoke models in Azure OpenAI. This is needed to execute the prompt flow from within in the Azure AI Foundry portal.')
-resource cognitiveServicesOpenAiUserForUserRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+resource cognitiveServicesOpenAiUserForUserRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (yourPrincipalId != '') {
   scope: openAiAccount
   name: guid(openAiAccount.id, yourPrincipalId, cognitiveServicesOpenAiUserRole.id)
   properties: {

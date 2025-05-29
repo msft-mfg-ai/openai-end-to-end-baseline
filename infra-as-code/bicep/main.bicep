@@ -22,7 +22,6 @@ param jumpBoxAdminPassword string
 
 @description('Assign your user some roles to support fluid access when working in the Azure AI Foundry portal')
 @maxLength(36)
-@minLength(36)
 param yourPrincipalId string
 
 @description('Set to true to opt-out of deployment telemetry.')
