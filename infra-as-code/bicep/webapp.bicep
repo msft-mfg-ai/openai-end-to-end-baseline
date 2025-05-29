@@ -38,6 +38,10 @@ var appServicePrivateEndpointName = 'pep-${appName}'
 var appServicePfPrivateEndpointName = 'pep-${appName}-pf'
 var chatApiKey = '@Microsoft.KeyVault(SecretUri=https://${keyVaultName}.vault.azure.net/secrets/chatApiKey)'
 
+var skuName = contains(baseName, 'prod') ? 'P1v3' : 'B1'
+var skuTier = contains(baseName, 'prod') ? 'PremiumV3' : 'Basic'
+var skuCapacity = contains(baseName, 'prod') ? 3 : 1
+
 // ---- Existing resources ----
 resource vnet 'Microsoft.Network/virtualNetworks@2022-11-01' existing = {
   name: vnetName
@@ -133,9 +137,9 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2023-12-01' = {
   location: location
   kind: 'linux'
   sku: {
-    name: 'P1v3'
-    tier: 'PremiumV3'
-    capacity: 3
+    name: skuName
+    tier: skuTier
+    capacity: skuCapacity
   }
   properties: {
     zoneRedundant: true
