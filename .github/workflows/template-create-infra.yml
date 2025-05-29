@@ -57,6 +57,10 @@ on:
         description: Add Role Assignments?
         type: boolean
         default: true
+      runBuildDeployAPI:
+        description: Run Build and Deploy API?
+        type: boolean
+        default: false
 
 # ------------------------------------------------------------------------------------------------------------------------
 jobs:

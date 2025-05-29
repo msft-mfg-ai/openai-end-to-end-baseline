@@ -27,6 +27,9 @@ param yourPrincipalId string
 @description('Set to true to opt-out of deployment telemetry.')
 param telemetryOptOut bool = false
 
+@description('Set to true to deploy the web app and Application Gateway.')
+param deployWebApp bool = false
+
 // Customer Usage Attribution Id
 var varCuaid = 'a52aa8a8-44a8-46e9-b7a5-189ab3a64409'
 
@@ -150,7 +153,7 @@ module aiStudioModule 'machinelearning.bicep' = {
 }
 
 //Deploy an Azure Application Gateway with WAF v2 and a custom domain name.
-module gatewayModule 'gateway.bicep' = {
+module gatewayModule 'gateway.bicep' = if (deployWebApp) {
   name: 'gatewayDeploy'
   params: {
     location: location
@@ -166,7 +169,7 @@ module gatewayModule 'gateway.bicep' = {
 }
 
 // Deploy the web apps for the front end demo UI and the containerised promptflow endpoint
-module webappModule 'webapp.bicep' = {
+module webappModule 'webapp.bicep' = if (deployWebApp) {
   name: 'webappDeploy'
   params: {
     location: location
