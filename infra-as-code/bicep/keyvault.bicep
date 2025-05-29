@@ -4,7 +4,7 @@
 
 @description('This is the base name for each Azure resource name (6-8 chars)')
 @minLength(6)
-@maxLength(8)
+@maxLength(14)
 param baseName string
 
 @description('The resource group location')
@@ -22,7 +22,8 @@ param privateEndpointsSubnetName string
 param logWorkspaceName string
 
 //variables
-var keyVaultName = 'kv-${baseName}'
+var kvBaseName = 'kv-${baseName}'
+var keyVaultName = take(replace(replace(replace(toLower(kvBaseName), ' ', ''), '-', ''), '_', ''), 24)
 var keyVaultPrivateEndpointName = 'pep-${keyVaultName}'
 var keyVaultDnsGroupName = '${keyVaultPrivateEndpointName}/default'
 var keyVaultDnsZoneName = 'privatelink.vaultcore.azure.net' //Cannot use 'privatelink${environment().suffixes.keyvaultDns}', per https://github.com/Azure/bicep/issues/9708
