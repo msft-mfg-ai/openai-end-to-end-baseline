@@ -1,0 +1,34 @@
+{
+  "source": {
+    "url": "https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles"
+  },
+
+  "cosmos": {
+    "dataContributorRoleId": "00000000-0000-0000-0000-000000000002"
+  },
+  "storage": {
+    "blobDataContributorRoleId": "ba92f5b4-2d11-453d-a403-e96b0029c9fe",
+    "blobDataOwnerRoleId": "b7e6dc6d-f1e8-4753-8033-0f276bb0955b",
+    "storageAccountContributorRoleId": "17d1049b-9a84-46fb-8f53-869881c3d3ab",
+    "queueDataContributorRoleId": "974c5e8b-45b9-4653-ba55-5f855dd0fb88",
+    "tableContributorRoleId": "0a9a7e1f-b9d0-4cc4-a60d-0319b160aaa3",
+    "storageQueueDataMessageSender": "c6a89b2d-59bc-44d0-9896-0f6e12d7b80a"
+  },
+  "search": {
+    "indexDataContributorRoleId": "8ebe5a00-799e-43f5-93ac-243d3dce84a7",
+    "indexDataReaderRoleId": "1407120a-92aa-4202-b7e9-c0e197c71c8f",
+    "serviceContributorRoleId": "7ca78c08-252a-4471-8644-bb5ff32d4ba0"
+  },
+  "openai": {
+    "cognitiveServicesOpenAIContributorRoleId": "a001fd3d-188f-4b5d-821b-7da978bf7442",
+    "cognitiveServicesOpenAIUserRoleId": "5e0bd9bd-7b93-4f28-af87-19fc36ad61bd",
+    "cognitiveServicesUserRoleId":"a97b65f3-24c7-4388-baec-2e87135dc908",
+    "cognitiveServicesContributorRoleId": "25fbc0a9-bd7c-42a3-aa1a-3b75d497ee68"
+  },
+  "ml": {
+    "dataScientistRole": "f6c7c914-8db3-469d-8ca1-694a8f32e121"
+  },
+  "containerregistry": {
+    "acrPullRoleId": "7f951dda-4ed3-4680-a7ca-43fe172d538d"
+  }
+}
