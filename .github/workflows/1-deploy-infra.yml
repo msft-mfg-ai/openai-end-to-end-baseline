@@ -35,7 +35,7 @@ on:
       parameterFile:
         description: 'Parameter File'
         required: true
-        default: 'main.bicepparam'
+        default: 'main.dynamic.bicepparam'
       createResourceGroup:
         description: Create Resource Group?
         type: boolean
