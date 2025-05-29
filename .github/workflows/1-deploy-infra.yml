@@ -59,7 +59,7 @@ on:
       runBuildDeployAPI:
         description: 'Build and Deploy API'
         required: false
-        default: true
+        default: false
         type: boolean
           
 jobs:
@@ -84,3 +84,4 @@ jobs:
       createDnsZones: ${{ inputs.createDnsZones }}
       deployAIHub: ${{ inputs.deployAIHub }}
       addRoleAssignments: ${{ inputs.addRoleAssignments }}
+      runBuildDeployAPI: ${{ inputs.runBuildDeployAPI }}

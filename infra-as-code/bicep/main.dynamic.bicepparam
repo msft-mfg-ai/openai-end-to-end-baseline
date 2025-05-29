@@ -6,6 +6,7 @@
 //   AGW_CERT          - User/ENV - AGW Certificate - BYO Certificate
 //   ADMIN_PW          - User/ENV - Jump Box Admin Password - BYO Password
 //   USER_PRINCIPAL_ID - User/ENV - User Principal ID - this is your ID - BYO User
+//   runBuildDeployAPI - Runtime  - User decision to deploy webapp or not
 // --------------------------------------------------------------------------------
 
 using './main.bicep'
@@ -14,3 +15,4 @@ param baseName = '#{APP_NAME}##{envCode}#'
 param appGatewayListenerCertificate = '#{AGW_CERT}#'
 param jumpBoxAdminPassword = '#{ADMIN_PW}#'
 param yourPrincipalId = '#{USER_PRINCIPAL_ID}#'
+param deployWebApp = '#{runBuildDeployAPI}#'
