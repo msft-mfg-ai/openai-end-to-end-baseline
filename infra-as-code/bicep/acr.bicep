@@ -23,7 +23,8 @@ param buildAgentSubnetName string
 param logWorkspaceName string
 
 // Variables
-var acrName = 'cr${baseName}'
+var acrBaseName = 'cr${baseName}'
+var acrName = take(replace(replace(replace(toLower(acrBaseName), ' ', ''), '-', ''), '_', ''), 50)
 var acrPrivateEndpointName = 'pep-${acrName}'
 var acrDnsZoneName = 'privatelink${environment().suffixes.acrLoginServer}'
 
