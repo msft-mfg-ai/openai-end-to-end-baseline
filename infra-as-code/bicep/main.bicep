@@ -1,9 +1,9 @@
 @description('The location in which all resources should be deployed.')
 param location string = resourceGroup().location
 
-@description('This is the base name for each Azure resource name (6-8 chars)')
+@description('This is the base name for each Azure resource name (6-14 chars)')
 @minLength(6)
-@maxLength(8)
+@maxLength(14)
 param baseName string
 
 @description('Domain name to use for App Gateway')
