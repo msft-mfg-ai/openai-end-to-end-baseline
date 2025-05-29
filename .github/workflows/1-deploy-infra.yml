@@ -59,7 +59,7 @@ on:
       runBuildDeployAPI:
         description: 'Build and Deploy API'
         required: false
-        default: true
+        default: false
         type: boolean
           
 jobs:
