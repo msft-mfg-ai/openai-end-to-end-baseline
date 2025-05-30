@@ -34,10 +34,11 @@ param jumpBoxAdminPassword string
 param yourPrincipalId string
 
 @description('Set to true to opt-out of deployment telemetry.')
-param telemetryOptOut bool = false
-
+param telemetryOptOut bool = true
 @description('Set to true to deploy the web app and Application Gateway.')
 param deployWebApp bool = false
+@description('Set to true to deploy the jump box.')
+param deployJumpBox bool = false
 
 // --------------------------------------------------------------------------------------------------------------
 // A variable masquerading as a parameter to allow for dynamic value assignment in Bicep
@@ -47,7 +48,7 @@ param runDateTime string = utcNow()
 // --------------------------------------------------------------------------------------------------------------
 // -- Variables -------------------------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------------------------------
-var resourceToken = toLower(uniqueString(resourceGroup().id, location))
+// var resourceToken = toLower(uniqueString(resourceGroup().id, location))
 var resourceGroupName = resourceGroup().name
 
 // --------------------------------------------------------------------------------------------------------------
@@ -55,10 +56,10 @@ var resourceGroupName = resourceGroup().name
 var varCuaid = 'a52aa8a8-44a8-46e9-b7a5-189ab3a64409'
 var deploymentSuffix = '-${runDateTime}'
 
-var commonTags = {
-  LastDeployed: runDateTime
-  Application: baseName
-}
+// var commonTags = {
+//   LastDeployed: runDateTime
+//   Application: baseName
+// }
 
 
 // --------------------------------------------------------------------------------------------------------------
@@ -93,7 +94,7 @@ module networkModule 'network.bicep' = {
 }
 
 @description('Deploys Azure Bastion and the jump box, which is used for private access to the Azure ML and Azure OpenAI portals.')
-module jumpBoxModule 'jumpbox.bicep' = {
+module jumpBoxModule 'jumpbox.bicep' = if (deployJumpBox) {
   name: 'jumpBoxDeploy${deploymentSuffix}'
   params: {
     location: location
@@ -240,13 +241,14 @@ module webappModule 'webapp.bicep' = if (deployWebApp) {
 // --------------------------------------------------------------------------------------------------------------
 module customerUsageAttributionModule 'customerUsageAttribution/cuaIdResourceGroup.bicep' = if (!telemetryOptOut) {
   #disable-next-line no-loc-expr-outside-params // Only to ensure telemetry data is stored in same location as deployment. See https://github.com/Azure/ALZ-Bicep/wiki/FAQ#why-are-some-linter-rules-disabled-via-the-disable-next-line-bicep-function for more information
-  name: 'pid-${varCuaid}-${uniqueString(resourceGroup().location)}${deploymentSuffix}'
+  name: take('pid-${varCuaid}-${uniqueString(resourceGroup().location)}${deploymentSuffix}', 64)
   params: {}
 }
 
 // --------------------------------------------------------------------------------------------------------------
 // -- Outputs ---------------------------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------------------------------
+output AZURE_RESOURCE_GROUP string = resourceGroupName
 output SUBSCRIPTION_ID string = subscription().subscriptionId
 output ACR_NAME string = acrModule.outputs.acrName
 //output ACR_URL string = acrModule.outputs.loginServer
@@ -261,7 +263,6 @@ output ACR_NAME string = acrModule.outputs.acrName
 // output AZURE_CONTAINER_ENVIRONMENT_NAME string = managedEnvironment.outputs.name
 // output AZURE_CONTAINER_REGISTRY_ENDPOINT string = acrModule.outputs.loginServer
 // output AZURE_CONTAINER_REGISTRY_NAME string = acrModule.outputs.name
-// output AZURE_RESOURCE_GROUP string = resourceGroupName
 // output COSMOS_CONTAINER_NAME string = uiChatContainerName
 // output COSMOS_DATABASE_NAME string = cosmos.outputs.databaseName
 // output COSMOS_ENDPOINT string = cosmos.outputs.endpoint

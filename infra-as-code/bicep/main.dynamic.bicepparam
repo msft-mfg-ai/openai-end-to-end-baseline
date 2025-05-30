@@ -16,3 +16,8 @@ param appGatewayListenerCertificate = '#{AGW_CERT}#'
 param jumpBoxAdminPassword = '#{ADMIN_PW}#'
 param yourPrincipalId = '#{USER_PRINCIPAL_ID}#'
 param deployWebApp = #{runBuildDeployAPI}#
+
+// param customDomainName = 'contoso.com'
+// param publishFileName = 'chatui.zip'
+// param telemetryOptOut = true
+// param deployJumpBox = false
