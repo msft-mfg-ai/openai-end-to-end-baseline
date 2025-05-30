@@ -1,7 +1,16 @@
+// --------------------------------------------------------------------------------------------------------------
+// Main bicep file that deploys EVERYTHING for the application, with optional parameters for existing resources.
+// --------------------------------------------------------------------------------------------------------------
+// You can test it with this commands:
+//   az deployment group create -n manual --resource-group rg_mfg-ai-lz --template-file 'main.bicep' --parameters baseName='yourbasename' appGatewayListenerCertificate='yourcertdata' jumpBoxAdminPassword='yourPassword' yourPrincipalId='yourprincipalId'
+// --------------------------------------------------------------------------------------------------------------
+
 @description('The location in which all resources should be deployed.')
 param location string = resourceGroup().location
 
 @description('This is the base name for each Azure resource name (6-8 chars)')
+@minLength(6)
+@maxLength(14)
 param baseName string
 
 @description('Domain name to use for App Gateway')
@@ -30,10 +39,31 @@ param telemetryOptOut bool = false
 @description('Set to true to deploy the web app and Application Gateway.')
 param deployWebApp bool = false
 
+// --------------------------------------------------------------------------------------------------------------
+// A variable masquerading as a parameter to allow for dynamic value assignment in Bicep
+// --------------------------------------------------------------------------------------------------------------
+param runDateTime string = utcNow()
+
+// --------------------------------------------------------------------------------------------------------------
+// -- Variables -------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------
+var resourceToken = toLower(uniqueString(resourceGroup().id, location))
+var resourceGroupName = resourceGroup().name
+
+// --------------------------------------------------------------------------------------------------------------
 // Customer Usage Attribution Id
 var varCuaid = 'a52aa8a8-44a8-46e9-b7a5-189ab3a64409'
+var deploymentSuffix = '-${runDateTime}'
 
+var commonTags = {
+  LastDeployed: runDateTime
+  Application: baseName
+}
+
+
+// --------------------------------------------------------------------------------------------------------------
 // ---- Log Analytics workspace ----
+// --------------------------------------------------------------------------------------------------------------
 resource logWorkspace 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
   name: 'log-${baseName}'
   location: location
@@ -51,9 +81,11 @@ resource logWorkspace 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
   }
 }
 
+// --------------------------------------------------------------------------------------------------------------
 // Deploy Virtual Network, with subnets, NSGs, and DDoS Protection.
+// --------------------------------------------------------------------------------------------------------------
 module networkModule 'network.bicep' = {
-  name: 'networkDeploy'
+  name: 'networkDeploy${deploymentSuffix}'
   params: {
     location: location
     baseName: baseName
@@ -62,7 +94,7 @@ module networkModule 'network.bicep' = {
 
 @description('Deploys Azure Bastion and the jump box, which is used for private access to the Azure ML and Azure OpenAI portals.')
 module jumpBoxModule 'jumpbox.bicep' = {
-  name: 'jumpBoxDeploy'
+  name: 'jumpBoxDeploy${deploymentSuffix}'
   params: {
     location: location
     baseName: baseName
@@ -73,9 +105,11 @@ module jumpBoxModule 'jumpbox.bicep' = {
   }
 }
 
+// --------------------------------------------------------------------------------------------------------------
 // Deploy Azure Storage account with private endpoint and private DNS zone
+// --------------------------------------------------------------------------------------------------------------
 module storageModule 'storage.bicep' = {
-  name: 'storageDeploy'
+  name: 'storageDeploy${deploymentSuffix}'
   params: {
     location: location
     baseName: baseName
@@ -86,9 +120,11 @@ module storageModule 'storage.bicep' = {
   }
 }
 
+// --------------------------------------------------------------------------------------------------------------
 // Deploy Azure Key Vault with private endpoint and private DNS zone
+// --------------------------------------------------------------------------------------------------------------
 module keyVaultModule 'keyvault.bicep' = {
-  name: 'keyVaultDeploy'
+  name: 'keyVaultDeploy${deploymentSuffix}'
   params: {
     location: location
     baseName: baseName
@@ -99,9 +135,11 @@ module keyVaultModule 'keyvault.bicep' = {
   }
 }
 
+// --------------------------------------------------------------------------------------------------------------
 // Deploy Azure Container Registry with private endpoint and private DNS zone
+// --------------------------------------------------------------------------------------------------------------
 module acrModule 'acr.bicep' = {
-  name: 'acrDeploy'
+  name: 'acrDeploy${deploymentSuffix}'
   params: {
     location: location
     baseName: baseName
@@ -112,9 +150,11 @@ module acrModule 'acr.bicep' = {
   }
 }
 
+// --------------------------------------------------------------------------------------------------------------
 // Deploy Application Insights and Log Analytics workspace
+// --------------------------------------------------------------------------------------------------------------
 module appInsightsModule 'applicationinsights.bicep' = {
-  name: 'appInsightsDeploy'
+  name: 'appInsightsDeploy${deploymentSuffix}'
   params: {
     location: location
     baseName: baseName
@@ -122,9 +162,11 @@ module appInsightsModule 'applicationinsights.bicep' = {
   }
 }
 
+// --------------------------------------------------------------------------------------------------------------
 // Deploy Azure OpenAI service with private endpoint and private DNS zone
+// --------------------------------------------------------------------------------------------------------------
 module openaiModule 'openai.bicep' = {
-  name: 'openaiDeploy'
+  name: 'openaiDeploy${deploymentSuffix}'
   params: {
     location: location
     baseName: baseName
@@ -134,9 +176,11 @@ module openaiModule 'openai.bicep' = {
   }
 }
 
+// --------------------------------------------------------------------------------------------------------------
 // Deploy Azure AI Foundry with private networking
+// --------------------------------------------------------------------------------------------------------------
 module aiStudioModule 'machinelearning.bicep' = {
-  name: 'aiStudioDeploy'
+  name: 'aiStudioDeploy${deploymentSuffix}'
   params: {
     location: location
     baseName: baseName
@@ -152,9 +196,11 @@ module aiStudioModule 'machinelearning.bicep' = {
   }
 }
 
+// --------------------------------------------------------------------------------------------------------------
 //Deploy an Azure Application Gateway with WAF v2 and a custom domain name.
+// --------------------------------------------------------------------------------------------------------------
 module gatewayModule 'gateway.bicep' = if (deployWebApp) {
-  name: 'gatewayDeploy'
+  name: 'gatewayDeploy${deploymentSuffix}'
   params: {
     location: location
     baseName: baseName
@@ -168,9 +214,11 @@ module gatewayModule 'gateway.bicep' = if (deployWebApp) {
   }
 }
 
+// --------------------------------------------------------------------------------------------------------------
 // Deploy the web apps for the front end demo UI and the containerised promptflow endpoint
+// --------------------------------------------------------------------------------------------------------------
 module webappModule 'webapp.bicep' = if (deployWebApp) {
-  name: 'webappDeploy'
+  name: 'webappDeploy${deploymentSuffix}'
   params: {
     location: location
     baseName: baseName
@@ -187,9 +235,44 @@ module webappModule 'webapp.bicep' = if (deployWebApp) {
   }
 }
 
+// --------------------------------------------------------------------------------------------------------------
 // Optional Deployment for Customer Usage Attribution
+// --------------------------------------------------------------------------------------------------------------
 module customerUsageAttributionModule 'customerUsageAttribution/cuaIdResourceGroup.bicep' = if (!telemetryOptOut) {
   #disable-next-line no-loc-expr-outside-params // Only to ensure telemetry data is stored in same location as deployment. See https://github.com/Azure/ALZ-Bicep/wiki/FAQ#why-are-some-linter-rules-disabled-via-the-disable-next-line-bicep-function for more information
-  name: 'pid-${varCuaid}-${uniqueString(resourceGroup().location)}'
+  name: 'pid-${varCuaid}-${uniqueString(resourceGroup().location)}${deploymentSuffix}'
   params: {}
 }
+
+// --------------------------------------------------------------------------------------------------------------
+// -- Outputs ---------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------
+output SUBSCRIPTION_ID string = subscription().subscriptionId
+output ACR_NAME string = acrModule.outputs.acrName
+//output ACR_URL string = acrModule.outputs.loginServer
+//output AI_ENDPOINT string = openaiModule.outputs.endpoint
+// output AI_HUB_ID string = deployAIHub ? aiHub.outputs.id : ''
+// output AI_HUB_NAME string = deployAIHub ? aiHub.outputs.name : ''
+// output AI_PROJECT_NAME string = resourceNames.outputs.aiHubProjectName
+// output AI_SEARCH_ENDPOINT string = searchService.outputs.endpoint
+// output API_CONTAINER_APP_FQDN string = containerAppAPI.outputs.fqdn
+// output API_CONTAINER_APP_NAME string = containerAppAPI.outputs.name
+// output API_KEY string = apiKeyValue
+// output AZURE_CONTAINER_ENVIRONMENT_NAME string = managedEnvironment.outputs.name
+// output AZURE_CONTAINER_REGISTRY_ENDPOINT string = acrModule.outputs.loginServer
+// output AZURE_CONTAINER_REGISTRY_NAME string = acrModule.outputs.name
+// output AZURE_RESOURCE_GROUP string = resourceGroupName
+// output COSMOS_CONTAINER_NAME string = uiChatContainerName
+// output COSMOS_DATABASE_NAME string = cosmos.outputs.databaseName
+// output COSMOS_ENDPOINT string = cosmos.outputs.endpoint
+// output DOCUMENT_INTELLIGENCE_ENDPOINT string = documentIntelligence.outputs.endpoint
+// output MANAGED_ENVIRONMENT_ID string = managedEnvironment.outputs.id
+// output MANAGED_ENVIRONMENT_NAME string = managedEnvironment.outputs.name
+// output RESOURCE_TOKEN string = resourceToken
+// output STORAGE_ACCOUNT_BATCH_IN_CONTAINER string = storage.outputs.containerNames[1].name
+// output STORAGE_ACCOUNT_BATCH_OUT_CONTAINER string = storage.outputs.containerNames[2].name
+// output STORAGE_ACCOUNT_CONTAINER string = storage.outputs.containerNames[0].name
+// output STORAGE_ACCOUNT_NAME string = storage.outputs.name
+// output VNET_CORE_ID string = vnet.outputs.vnetResourceId
+// output VNET_CORE_NAME string = vnet.outputs.vnetName
+// output VNET_CORE_PREFIX string = vnet.outputs.vnetAddressPrefix
