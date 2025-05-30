@@ -86,6 +86,7 @@ jobs:
       createDnsZones: ${{ inputs.createDnsZones }}
       deployAIHub: ${{ inputs.deployAIHub }}
       addRoleAssignments: ${{ inputs.addRoleAssignments }}
+      runBuildDeployAPI: ${{ inputs.runBuildDeployAPI }}
 
     # ------------------------------------------------------------------------------------------------------------------------
     # Outputs
