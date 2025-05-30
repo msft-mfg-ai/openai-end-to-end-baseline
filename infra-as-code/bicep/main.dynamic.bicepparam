@@ -15,4 +15,4 @@ param baseName = '#{APP_NAME}##{envCode}#'
 param appGatewayListenerCertificate = '#{AGW_CERT}#'
 param jumpBoxAdminPassword = '#{ADMIN_PW}#'
 param yourPrincipalId = '#{USER_PRINCIPAL_ID}#'
-param deployWebApp = '#{runBuildDeployAPI}#'
+param deployWebApp = #{runBuildDeployAPI}#
