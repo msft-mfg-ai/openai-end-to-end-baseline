@@ -25,12 +25,13 @@ Follow these steps to get started quickly:
 
 1. Create these environment secrets either manually or by customizing these commands. They should be in each environment if you are using multiple environments, or could be at the repository level if you are only deploying one version.
 
-    *(Note that there is no CLIENT_SECRET because the previous step recommended using a Federated Identity. If you want to use a secret, you would need to add that and update the workflow login steps.)*
+    *(Note that you only need to use CLIENT_SECRET if you are NOT using a Federated Identity. If you want to use a Federated Identity, you could omit that secret.)*
 
     ```bash
     gh secret set --env <envName> AZURE_SUBSCRIPTION_ID -b xxx-xx-xx-xx-xxxx
     gh secret set --env <envName> AZURE_TENANT_ID -b xxx-xx-xx-xx-xxxx
     gh secret set --env <envName> CICD_CLIENT_ID -b xxx-xx-xx-xx-xxxx
+    gh secret set --env <envName> CLIENT_SECRET -b xxxxxxxxxx
     ```
 
 1. The following variables should be set or updated at the repository level, as they should be the same for most uses. If desired, you could set them at the environment level to customize them for each environment. These values are used by the Bicep templates to configure the resource names that are deployed.
