@@ -32,7 +32,7 @@ The implementation covers the following scenarios:
 
 ### Authoring a flow
 
-![Diagram of the authoring architecture using Azure AI Foundry. It demonstrates key architecture components and flow when using AI Foundry portal as an authoring environment. ](docs/media/openai-end-to-end-baseline-authoring.png)
+![Diagram of the authoring architecture using Azure AI Foundry. It demonstrates key architecture components and flow when using AI Foundry portal as an authoring environment. ](docs/images/openai-end-to-end-baseline-authoring.png)
 
 The authoring architecture diagram illustrates how flow authors [connect to an Azure AI Foundry through a private endpoint](https://learn.microsoft.com/azure/ai-studio/how-to/configure-private-link) in a virtual network. In this case, the author connects to the virtual network through Azure Bastion and a virtual machine. Connectivity to the virtual network is more commonly done in enterprises using private connectivity options like ExpressRoute or virtual network peering.
 
@@ -40,13 +40,13 @@ The diagram further illustrates how AI Foundry is configured for [managed virtua
 
 ### Deploying a flow to Azure Machine Learning managed online endpoint
 
-![Diagram of the deploying a flow to managed online endpoint. The diagram illustrates the Azure services' relationships for an AI Foundry environment with a managed online endpoint. This diagram also demonstrates the private endpoints used to ensure private connectivity for the managed private endpoint in Azure AI Foundry.](docs/media/openai-end-to-end-baseline-aml-compute.png)
+![Diagram of the deploying a flow to managed online endpoint. The diagram illustrates the Azure services' relationships for an AI Foundry environment with a managed online endpoint. This diagram also demonstrates the private endpoints used to ensure private connectivity for the managed private endpoint in Azure AI Foundry.](docs/images/openai-end-to-end-baseline-aml-compute.png)
 
 The Azure AI Foundry deployment architecture diagram illustrates how a front-end web application, deployed into a [network-secured App Service](https://github.com/Azure-Samples/app-service-baseline-implementation), [connects to a managed online endpoint through a private endpoint](https://learn.microsoft.com/azure/ai-studio/how-to/configure-private-link) in a virtual network. Like the authoring flow, the diagram illustrates how the AI Foundry project is configured for [managed virtual network isolation](https://learn.microsoft.com/azure/ai-studio/how-to/configure-managed-network). The deployed flow connects to required resources such as Azure OpenAI and Azure AI Search through managed private endpoints.
 
 ### Deploying a flow to Azure App Service (alternative)
 
-![Diagram of the deploying a flow to Azure App Service. This drawing emphasizes how AI Foundry compute and endpoints are bypassed, and Azure App Service and its virtual network become responsible for connecting to the private endpoints for dependencies.](docs/media/openai-end-to-end-baseline-app-services.png)
+![Diagram of the deploying a flow to Azure App Service. This drawing emphasizes how AI Foundry compute and endpoints are bypassed, and Azure App Service and its virtual network become responsible for connecting to the private endpoints for dependencies.](docs/images/openai-end-to-end-baseline-app-services.png)
 
 The Azure App Service deployment architecture diagram illustrates how the same prompt flow is containerized and deployed to Azure App Service alongside the same front-end web application from the prior architecture. This solution is a completely self-hosted, externalized alternative to an Azure AI Foundry managed online endpoint.
 
@@ -171,7 +171,7 @@ The following steps are required to deploy the infrastructure from the command l
 
    PRINCIPAL_ID=$(az ad signed-in-user show --query id -o tsv)
 
-   az deployment group create -f ./infra-as-code/bicep/main.bicep \
+   az deployment group create -f ./infra/bicep/main.bicep \
      -g $RESOURCE_GROUP \
      -p appGatewayListenerCertificate=${APP_GATEWAY_LISTENER_CERTIFICATE_APPSERV} \
      -p baseName=${BASE_NAME} \

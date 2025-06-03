@@ -23,7 +23,7 @@ on:
       templatePath:
         required: false
         type: string
-        default: 'infra-as-code/bicep/'
+        default: 'infra/bicep/'
       templateFile:
         required: false
         type: string

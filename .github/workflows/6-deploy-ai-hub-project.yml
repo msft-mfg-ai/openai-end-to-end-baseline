@@ -50,7 +50,7 @@ jobs:
     with:
       envCode: ${{ inputs.deployEnvironment }}
       resourceGroupName: ${{ vars.RESOURCEGROUP_PREFIX }}-${{ inputs.deployEnvironment }}
-      templatePath: './infra-as-code/bicep/'
+      templatePath: './infra/bicep/'
       templateFile: 'find-ai-hub-id.bicep'
       parameterFile: 'find-ai-hub-id.gh.bicepparam'
       parameterFileReplaceTokens: 'true'

@@ -74,7 +74,7 @@ jobs:
       pages: write
     with:
       envCode: ${{ inputs.deployEnvironment }}
-      templatePath: './infra-as-code/bicep/'
+      templatePath: './infra/bicep/'
       templateFile: 'main.bicep'
       parameterFile: ${{ inputs.parameterFile }}
       parameterFileReplaceTokens: 'true'
