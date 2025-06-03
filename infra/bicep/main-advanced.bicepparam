@@ -18,7 +18,7 @@ param baseName = '#{APP_NAME}##{envCode}#'
 param appGatewayListenerCertificate = '#{AGW_CERT}#'
 param jumpBoxAdminPassword = '#{ADMIN_PW}#'
 param yourPrincipalId = '#{USER_PRINCIPAL_ID}#'
-param deployWebApp = #{runBuildDeployAPI}#  // Should we deploy the web app?
+param deployWebApp = #{runBuildDeployUI}#  // Should we deploy the web app?
 
 // Hardcoded values for the deployment
 param telemetryOptOut = true // do not deploy the Customer Attribution PID

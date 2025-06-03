@@ -174,7 +174,7 @@ jobs:
       RESOURCE_GROUP: ${{ needs.template-env.outputs.RESOURCE_GROUP_NAME }}
       ACR_REPO_NAME: ${{ needs.template-env.outputs.ACR_REPO_NAME }}
 
-      BUILD_DEPLOY_API: ${{ inputs.runBuildDeployUI }}
+      BUILD_DEPLOY_UI: ${{ inputs.runBuildDeployUI }}
       UI_APP_PATH: ${{ needs.template-env.outputs.UI_APP_PATH }}
       UI_ACR_APP_NAME: ${{ needs.template-env.outputs.UI_ACR_APP_NAME }}
 

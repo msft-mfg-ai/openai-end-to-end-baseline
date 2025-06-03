@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
     inputs:
       deployEnvironment:
-        description: 'Environment'
+        description: Environment
         required: true
         default: 'dev'
         type: choice
@@ -23,19 +23,18 @@ on:
           - preston
           - chris
           - matt
-      deploymentMode:
-        description: 'Bicep Deploy Mode'
+      bicepFile:
+        description: Main Bicep File
         required: true
-        default: 'Incremental'
+        default: 'main-basic.bicep'
         type: choice
         options:
-          - Incremental
-          - Validation
-          - Complete
+          - main-basic.bicep
+          - main-advanced.bicep
       parameterFile:
-        description: 'Parameter File'
+        description: Parameter File
         required: true
-        default: 'main.dynamic.bicepparam'
+        default: 'main-basic.dynamic.bicepparam'
       createResourceGroup:
         description: Create Resource Group?
         type: boolean
@@ -56,8 +55,8 @@ on:
         description: Deploy AI Hub?
         type: boolean
         default: true
-      runBuildDeployAPI:
-        description: 'Build and Deploy API'
+      runBuildDeployUI:
+        description: Build and Deploy UI
         required: false
         default: false
         type: boolean
@@ -75,13 +74,12 @@ jobs:
     with:
       envCode: ${{ inputs.deployEnvironment }}
       templatePath: './infra/bicep/'
-      templateFile: 'main-basic.bicep'
+      templateFile: ${{ inputs.bicepFile }}
       parameterFile: ${{ inputs.parameterFile }}
       parameterFileReplaceTokens: 'true'
-      deploymentMode: ${{ inputs.deploymentMode }}
       createResourceGroup: ${{ inputs.createResourceGroup }}
       publicAccessEnabled: ${{ inputs.publicAccessEnabled }}
       createDnsZones: ${{ inputs.createDnsZones }}
       deployAIHub: ${{ inputs.deployAIHub }}
       addRoleAssignments: ${{ inputs.addRoleAssignments }}
-      runBuildDeployAPI: ${{ inputs.runBuildDeployAPI }}
+      runBuildDeployUI: ${{ inputs.runBuildDeployUI }}

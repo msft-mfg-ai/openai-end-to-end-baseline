@@ -163,8 +163,8 @@ param addRoleAssignments bool = true
 param deduplicateKeyVaultSecrets bool = true
 @description('Set this if you want to append all the resource names with a unique token')
 param appendResourceTokens bool = false
-@description('Should batch container app be deployed?')
-param deployBatchApp bool = true
+@description('Should UI container app be deployed?')
+param deployUIApp bool = true
 
 // --------------------------------------------------------------------------------------------------------------
 // Additional Tags that may be included or not
@@ -687,7 +687,7 @@ var batchSettings = union(apiSettings, [
   { name: 'CosmosDbContainerName', value: uiChatContainerName }
   { name: 'MaxBatchSize', value: '10' }
 ])
-module containerAppBatch './modules/app/containerappstub.bicep' = if (deployBatchApp) {
+module containerAppBatch './modules/app/containerappstub.bicep' = if (deployUIApp) {
   name: 'ca-batch-stub${deploymentSuffix}'
   params: {
     appName: resourceNames.outputs.containerAppBatchName

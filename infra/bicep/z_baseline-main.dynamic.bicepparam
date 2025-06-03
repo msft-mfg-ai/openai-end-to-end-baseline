@@ -8,7 +8,7 @@
 //   AGW_CERT          - GH Env Secret - AGW Certificate - BYO Certificate
 //   ADMIN_PW          - GH Env Secret - Jump Box Admin Password - BYO Password
 //   USER_PRINCIPAL_ID - GH Env Secret - User Principal ID - this is you - BYO User
-//   runBuildDeployAPI - Runtime  - User decision to deploy webapp or not
+//   runBuildDeployUI  - Runtime  - User decision to deploy webapp or not
 //   envCode           - Runtime  - Environment Code (e.g., dev, qa, prod)
 // --------------------------------------------------------------------------------
 
@@ -18,7 +18,7 @@ param baseName = '#{APP_NAME}##{envCode}#'
 param appGatewayListenerCertificate = '#{AGW_CERT}#'
 param jumpBoxAdminPassword = '#{ADMIN_PW}#'
 param yourPrincipalId = '#{USER_PRINCIPAL_ID}#'
-param deployWebApp = #{runBuildDeployAPI}#  // Should we deploy the web app?
+param deployWebApp = #{runBuildDeployUI}#  // Should we deploy the web app?
 
 // Hardcoded values for the deployment
 param telemetryOptOut = true // do not deploy the Customer Attribution PID

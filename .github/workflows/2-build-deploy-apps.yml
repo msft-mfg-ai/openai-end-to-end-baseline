@@ -31,7 +31,7 @@ on:
           - preston
           - chris
           - matt
-      runBuildDeployAPI:
+      runBuildDeployUI:
         description: 'Build and Deploy API'
         required: false
         default: true
@@ -127,7 +127,7 @@ jobs:
       RESOURCE_GROUP: ${{ needs.template-env.outputs.RESOURCE_GROUP_NAME }}
       ACR_REPO_NAME: ${{ needs.template-env.outputs.ACR_REPO_NAME }}
 
-      BUILD_DEPLOY_API: ${{ inputs.runBuildDeployAPI }}
+      BUILD_DEPLOY_UI: ${{ inputs.runBuildDeployUI }}
       UI_APP_PATH: ${{ needs.template-env.outputs.UI_APP_PATH }}
       UI_ACR_APP_NAME: ${{ needs.template-env.outputs.UI_ACR_APP_NAME }}
 
@@ -135,7 +135,7 @@ jobs:
   deploy-ui:
     name: Deploy UI ${{ inputs.deployEnvironment }} ${{ inputs.deployType }}
     uses: ./.github/workflows/template-aca-deploy.yml
-    if: inputs.runBuildDeployAPI
+    if: inputs.runBuildDeployUI
     needs:
       - build-all
       - template-env
