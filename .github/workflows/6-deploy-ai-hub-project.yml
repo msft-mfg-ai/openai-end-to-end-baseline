@@ -1,7 +1,7 @@
 # ------------------------------------------------------------------------------------------------------------------------
 # Action: Deploy AI Hub Project
 # ------------------------------------------------------------------------------------------------------------------------
-name: 6 - Deploy AI Hub Project
+name: z-Unused-6 - Deploy AI Hub Project
 run-name: 6 - Deploy AI Hub Project to ENV ${{ inputs.deployEnvironment }} by @${{ github.actor }}
 
 on:
