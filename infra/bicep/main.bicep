@@ -56,11 +56,21 @@ var resourceGroupName = resourceGroup().name
 var varCuaid = 'a52aa8a8-44a8-46e9-b7a5-189ab3a64409'
 var deploymentSuffix = '-${runDateTime}'
 
-// var commonTags = {
-//   LastDeployed: runDateTime
-//   Application: baseName
-// }
-
+//var commonTags = {
+//  LastDeployed: runDateTime
+//  Application: baseName
+  // Environment_Name: env
+  // Cost_Code: GH_VAR
+  // Application_Owner: owner_email
+  // Business_Owner: owner_email
+  // Business_Function	GH_VAR
+  // Region	Optional	ALL	NAA
+  // Network_Model	GH_VAR
+  // Server_Type	GH_VAR
+  // Patch_Group	GH_VAR
+  // Start Date	Current Date
+  // Point_Of_Contact	owner_email
+//}
 
 // --------------------------------------------------------------------------------------------------------------
 // ---- Log Analytics workspace ----
