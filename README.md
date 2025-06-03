@@ -4,7 +4,7 @@ This reference implementation deploys an AI Landing Zone for Azure OpenAI, which
 
 ## Azure Resource High Level Diagram
 
-![Resource Diagram](docs/media/openai-end-to-end-baseline-app-services.png)
+![Resource Diagram](docs/media/azure-openai-baseline-landing-zone.png)
 
 ## Agent Architecture Diagram
 
