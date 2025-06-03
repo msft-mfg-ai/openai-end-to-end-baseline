@@ -1,7 +1,7 @@
 // --------------------------------------------------------------------------------------------------------------
 // Parameter file with many existing resources specified
 // --------------------------------------------------------------------------------------------------------------
-using 'main.bicep'
+using 'z_smartflow-main.bicep'
 
 param applicationName = '#{APP_NAME}#'
 param location = '#{RESOURCEGROUP_LOCATION}#'

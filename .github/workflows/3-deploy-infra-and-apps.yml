@@ -151,7 +151,7 @@ jobs:
     with:
       envCode: ${{ inputs.deployEnvironment }}
       templatePath: './infra/bicep/'
-      templateFile: 'main.bicep'
+      templateFile: 'main-basic.bicep'
       parameterFile: ${{ inputs.parameterFile }}
       parameterFileReplaceTokens: 'true'
       createResourceGroup: ${{ inputs.createResourceGroup }}

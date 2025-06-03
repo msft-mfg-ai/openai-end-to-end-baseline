@@ -49,6 +49,14 @@ Follow these steps to get started quickly:
     gh variable set --env <envName> OPENAI_DEPLOY_LOCATION -b eastus2
     ```
 
+    <!-- if you're doing advanced networking, you will need these:
+
+    ```bash
+    gh variable set --env <envName> VNET_NAME -b vnet-aichat
+    gh variable set --env <envName> SUBNET_NAME -b subnet-aichat
+    gh variable set --env <envName> SUBNET_PREFIX -b
+    ``` -->
+
 1. Run the **[1-infra-build-deploy-all](./workflows/1-infra-build-deploy-all.yml):** action in this repo to deploy the UI.
 
 That's it - you should have a fully working deployed environment!

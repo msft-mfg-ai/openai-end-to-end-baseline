@@ -194,7 +194,7 @@ module resourceNames 'resourcenames.bicep' = {
 // --------------------------------------------------------------------------------------------------------------
 // -- VNET ------------------------------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------------------------------
-module vnet './core/networking/vnet.bicep' = {
+module vnet './modules/networking/vnet.bicep' = {
   name: 'vnet${deploymentSuffix}'
   params: {
     location: location
@@ -212,7 +212,7 @@ module vnet './core/networking/vnet.bicep' = {
 // --------------------------------------------------------------------------------------------------------------
 // -- Container Registry ----------------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------------------------------
-module containerRegistry './core/host/containerregistry.bicep' = {
+module containerRegistry './modules/app/containerregistry.bicep' = {
   name: 'containerregistry${deploymentSuffix}'
   params: {
     existingRegistryName: existing_ACR_Name
@@ -231,7 +231,7 @@ module containerRegistry './core/host/containerregistry.bicep' = {
 // --------------------------------------------------------------------------------------------------------------
 // -- Log Analytics Workspace and App Insights ------------------------------------------------------------------
 // --------------------------------------------------------------------------------------------------------------
-module logAnalytics './core/monitor/loganalytics.bicep' = {
+module logAnalytics './modules/monitor/loganalytics.bicep' = {
   name: 'law${deploymentSuffix}'
   params: {
     existingLogAnalyticsName: existing_LogAnalytics_Name
@@ -247,7 +247,7 @@ module logAnalytics './core/monitor/loganalytics.bicep' = {
 // --------------------------------------------------------------------------------------------------------------
 // -- Storage Resources ---------------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------------------------------
-module storage './core/storage/storage-account.bicep' = {
+module storage './modules/storage/storage-account.bicep' = {
   name: 'storage${deploymentSuffix}'
   params: {
     name: resourceNames.outputs.storageAccountName
@@ -266,14 +266,14 @@ module storage './core/storage/storage-account.bicep' = {
 // --------------------------------------------------------------------------------------------------------------
 // -- Key Vault Resources ---------------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------------------------------
-module identity './core/iam/identity.bicep' = {
+module identity './modules/iam/identity.bicep' = {
   name: 'app-identity${deploymentSuffix}'
   params: {
     identityName: resourceNames.outputs.userAssignedIdentityName
     location: location
   }
 }
-module appIdentityRoleAssignments './core/iam/role-assignments.bicep' = if (addRoleAssignments) {
+module appIdentityRoleAssignments './modules/iam/role-assignments.bicep' = if (addRoleAssignments) {
   name: 'identity-access${deploymentSuffix}'
   params: {
     identityPrincipalId: identity.outputs.managedIdentityPrincipalId
@@ -286,7 +286,7 @@ module appIdentityRoleAssignments './core/iam/role-assignments.bicep' = if (addR
   }
 }
 
-module adminUserRoleAssignments './core/iam/role-assignments.bicep' = if (addRoleAssignments && !empty(principalId)) {
+module adminUserRoleAssignments './modules/iam/role-assignments.bicep' = if (addRoleAssignments && !empty(principalId)) {
   name: 'user-access${deploymentSuffix}'
   params: {
     identityPrincipalId: principalId
@@ -299,7 +299,7 @@ module adminUserRoleAssignments './core/iam/role-assignments.bicep' = if (addRol
   }
 }
 
-module keyVault './core/security/keyvault.bicep' = {
+module keyVault './modules/security/keyvault.bicep' = {
   name: 'keyvault${deploymentSuffix}'
   params: {
     location: location
@@ -317,7 +317,7 @@ module keyVault './core/security/keyvault.bicep' = {
   }
 }
 
-module keyVaultSecretList './core/security/keyvault-list-secret-names.bicep' = if (deduplicateKVSecrets) {
+module keyVaultSecretList './modules/security/keyvault-list-secret-names.bicep' = if (deduplicateKVSecrets) {
   name: 'keyVault-Secret-List-Names${deploymentSuffix}'
   params: {
     keyVaultName: keyVault.outputs.name
@@ -327,7 +327,7 @@ module keyVaultSecretList './core/security/keyvault-list-secret-names.bicep' = i
 }
 
 var apiKeyValue = uniqueString(resourceGroup().id, location, 'api-key', runDateTime)
-module apiKeySecret './core/security/keyvault-secret.bicep' = {
+module apiKeySecret './modules/security/keyvault-secret.bicep' = {
   name: 'secret-api-key${deploymentSuffix}'
   params: {
     keyVaultName: keyVault.outputs.name
@@ -337,7 +337,7 @@ module apiKeySecret './core/security/keyvault-secret.bicep' = {
   }
 }
 
-module cosmosSecret './core/security/keyvault-cosmos-secret.bicep' = {
+module cosmosSecret './modules/security/keyvault-cosmos-secret.bicep' = {
   name: 'secret-cosmos${deploymentSuffix}'
   params: {
     keyVaultName: keyVault.outputs.name
@@ -347,7 +347,7 @@ module cosmosSecret './core/security/keyvault-cosmos-secret.bicep' = {
   }
 }
 
-module storageSecret './core/security/keyvault-storage-secret.bicep' = {
+module storageSecret './modules/security/keyvault-storage-secret.bicep' = {
   name: 'secret-storage${deploymentSuffix}'
   params: {
     keyVaultName: keyVault.outputs.name
@@ -357,7 +357,7 @@ module storageSecret './core/security/keyvault-storage-secret.bicep' = {
   }
 }
 
-module openAISecret './core/security/keyvault-cognitive-secret.bicep' = {
+module openAISecret './modules/security/keyvault-cognitive-secret.bicep' = {
   name: 'secret-openai${deploymentSuffix}'
   params: {
     keyVaultName: keyVault.outputs.name
@@ -368,7 +368,7 @@ module openAISecret './core/security/keyvault-cognitive-secret.bicep' = {
   }
 }
 
-module documentIntelligenceSecret './core/security/keyvault-cognitive-secret.bicep' = {
+module documentIntelligenceSecret './modules/security/keyvault-cognitive-secret.bicep' = {
   name: 'secret-doc-intelligence${deploymentSuffix}'
   params: {
     keyVaultName: keyVault.outputs.name
@@ -379,7 +379,7 @@ module documentIntelligenceSecret './core/security/keyvault-cognitive-secret.bic
   }
 }
 
-module searchSecret './core/security/keyvault-search-secret.bicep' = {
+module searchSecret './modules/security/keyvault-search-secret.bicep' = {
   name: 'secret-search${deploymentSuffix}'
   params: {
     keyVaultName: keyVault.outputs.name
@@ -400,7 +400,7 @@ var cosmosContainerArray = [
   { name: 'UserDocuments', partitionKey: '/userId' }
   { name: uiChatContainerName, partitionKey: '/chatId' }
 ]
-module cosmos './core/database/cosmosdb.bicep' = {
+module cosmos './modules/database/cosmosdb.bicep' = {
   name: 'cosmos${deploymentSuffix}'
   params: {
     accountName: resourceNames.outputs.cosmosName
@@ -422,7 +422,7 @@ module cosmos './core/database/cosmosdb.bicep' = {
 // --------------------------------------------------------------------------------------------------------------
 // -- Cognitive Services Resources ------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------------------------------
-module searchService './core/search/search-services.bicep' = {
+module searchService './modules/search/search-services.bicep' = {
   name: 'search${deploymentSuffix}'
   params: {
     location: location
@@ -443,22 +443,25 @@ module searchService './core/search/search-services.bicep' = {
 // --------------------------------------------------------------------------------------------------------------
 // -- Azure OpenAI Resources ------------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------------------------------
-module openAI './core/ai/cognitive-services.bicep' = {
+module openAI './modules/ai/cognitive-services.bicep' = {
   name: 'openai${deploymentSuffix}'
   params: {
     managedIdentityId: identity.outputs.managedIdentityId
     existing_CogServices_Name: existing_CogServices_Name
-    existing_CogServices_ResourceGroupName: existing_CogServices_ResourceGroupName
+    //existing_CogServices_ResourceGroupName: existing_CogServices_ResourceGroupName
     name: resourceNames.outputs.cogServiceName
     location: openAI_deploy_location // this may be different than the other resources
     pe_location: location
+    appInsightsName: logAnalytics.outputs.applicationInsightsName
     tags: tags
-    textEmbedding: {
-      DeploymentName: 'text-embedding'
-      ModelName: 'text-embedding-ada-002'
-      ModelVersion: '2'
-      DeploymentCapacity: 30
-    }
+    textEmbeddings: [{
+      name: 'text-embedding'
+      model: {
+        format: 'OpenAI'
+        name: 'text-embedding-ada-002'
+        version: '2'
+      }
+    }]
     chatGpt_Standard: {
       DeploymentName: 'gpt-35-turbo'
       ModelName: 'gpt-35-turbo'
@@ -481,11 +484,11 @@ module openAI './core/ai/cognitive-services.bicep' = {
   ]
 }
 
-module documentIntelligence './core/ai/document-intelligence.bicep' = {
+module documentIntelligence './modules/ai/document-intelligence.bicep' = {
   name: 'doc-intelligence${deploymentSuffix}'
   params: {
     existing_CogServices_Name: '' //existing_DocumentIntelligence_Name
-    existing_CogServices_ResourceGroupName: '' //existing_DocumentIntelligence_RG_Name
+    //existing_CogServices_ResourceGroupName: '' //existing_DocumentIntelligence_RG_Name
     name: resourceNames.outputs.documentIntelligenceServiceName
     location: location // this may be different than the other resources
     tags: tags
@@ -500,7 +503,7 @@ module documentIntelligence './core/ai/document-intelligence.bicep' = {
   ]
 }
 
-module aiHub 'core/ai/ai-hub-secure.bicep' = if (deployAIHub) {
+module aiHub './modules/ai/ai-hub-secure.bicep' = if (deployAIHub) {
   name: 'aiHub${deploymentSuffix}'
   params: {
     aiHubName: resourceNames.outputs.aiHubName
@@ -526,7 +529,7 @@ module aiHub 'core/ai/ai-hub-secure.bicep' = if (deployAIHub) {
   }
 }
 
-module aiProject 'core/ai/ai-hub-project.bicep' = if (deployAIHub) {
+module aiProject './modules/ai/ai-hub-project.bicep' = if (deployAIHub) {
   name: 'aiProject${deploymentSuffix}'
   params: {
     aiProjectName: resourceNames.outputs.aiHubProjectName
@@ -542,7 +545,7 @@ module aiProject 'core/ai/ai-hub-project.bicep' = if (deployAIHub) {
 // --------------------------------------------------------------------------------------------------------------
 // -- DNS ZONES ---------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------------------------------
-module allDnsZones './core/networking/all-zones.bicep' = if (createDnsZones) {
+module allDnsZones './modules/networking/all-zones.bicep' = if (createDnsZones) {
   name: 'all-dns-zones${deploymentSuffix}'
   params: {
     tags: tags
@@ -566,7 +569,7 @@ module allDnsZones './core/networking/all-zones.bicep' = if (createDnsZones) {
 // --------------------------------------------------------------------------------------------------------------
 // -- Container App Environment ---------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------------------------------
-module managedEnvironment './core/host/managedEnvironment.bicep' = {
+module managedEnvironment './modules/app/managedEnvironment.bicep' = {
   name: 'caenv${deploymentSuffix}'
   params: {
     existingEnvironmentName: existing_managedAppEnv_Name
@@ -606,7 +609,7 @@ var apiSettings = [
   { name: 'StorageAccountName', value: storage.outputs.name }
 ]
 
-module containerAppAPI './core/host/containerappstub.bicep' = {
+module containerAppAPI './modules/app/containerappstub.bicep' = {
   name: 'ca-api-stub${deploymentSuffix}'
   params: {
     appName: resourceNames.outputs.containerAppAPIName
@@ -646,7 +649,7 @@ var batchSettings = union(apiSettings, [
   { name: 'CosmosDbContainerName', value: uiChatContainerName }
   { name: 'MaxBatchSize', value: '10' }
 ])
-module containerAppBatch './core/host/containerappstub.bicep' = if (deployBatchApp) {
+module containerAppBatch './modules/app/containerappstub.bicep' = if (deployBatchApp) {
   name: 'ca-batch-stub${deploymentSuffix}'
   params: {
     appName: resourceNames.outputs.containerAppBatchName

@@ -16,7 +16,7 @@ on:
       templateFile:
         required: false
         type: string
-        default: 'main.bicep'
+        default: 'main-basic.bicep'
       parameterFile:
         required: false
         type: string

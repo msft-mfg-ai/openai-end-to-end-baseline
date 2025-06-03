@@ -12,7 +12,7 @@
 //   envCode           - Runtime  - Environment Code (e.g., dev, qa, prod)
 // --------------------------------------------------------------------------------
 
-using './main.bicep'
+using './z_baseline-main.bicep'
 
 param baseName = '#{APP_NAME}##{envCode}#'
 param appGatewayListenerCertificate = '#{AGW_CERT}#'

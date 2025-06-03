@@ -178,9 +178,10 @@ output endpoint string = !empty(existing_CogServices_Name)
   : account.properties.endpoint
 output resourceGroupName string = !empty(existing_CogServices_Name) ? existing_CogServices_RG_Name : resourceGroupName
 output cognitiveServicesKeySecretName string = cognitiveServicesKeySecretName
-output privateEndpointName string = !empty(privateEndpointSubnetId) ? privateEndpoint.outputs.privateEndpointName : ''
-output privateEndpointName2 string = !empty(privateEndpointSubnetId) ? privateEndpoint2.outputs.privateEndpointName: ''
+// output privateEndpointName string = !empty(privateEndpointSubnetId) ? privateEndpoint.outputs.privateEndpointName : ''
+// output privateEndpointName2 string = !empty(privateEndpointSubnetId) ? privateEndpoint2.outputs.privateEndpointName: ''
 
 output textEmbeddings array = textEmbeddings
 output chatGpt_Standard object = chatGpt_Standard
 output kind string = kind
+output privateEndpointName string = privateEndpoint.name

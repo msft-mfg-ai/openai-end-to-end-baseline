@@ -1,7 +1,7 @@
 // --------------------------------------------------------------------------------------------------------------
 // The most minimal parameters you need - everything else is defaulted
 // --------------------------------------------------------------------------------------------------------------
-using 'main.bicep'
+using 'z_smartflow-main.bicep'
 
 param applicationName = '#{APP_NAME}#'
 param location = '#{RESOURCEGROUP_LOCATION}#'
