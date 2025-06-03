@@ -124,7 +124,7 @@ jobs:
           echo "templateFile=${{ inputs.templateFile }}"
           echo "templateFilePath=${{ inputs.templatePath }}${{ inputs.templateFile }}"
           echo "parameterFile=${{ inputs.parameterFile }}"
-          echo "parameterFilePath=$${{ inputs.templatePath }}${{ inputs.parameterFile }}"
+          echo "parameterFilePath=${{ inputs.templatePath }}${{ inputs.parameterFile }}"
           echo "parameterFileReplaceTokens=${{ inputs.parameterFileReplaceTokens }}"
           echo "---------------------------------"
           echo "##[group]All Variables:"

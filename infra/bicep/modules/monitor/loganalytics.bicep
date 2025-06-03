@@ -2,7 +2,7 @@ param newLogAnalyticsName string = ''
 param newApplicationInsightsName string = ''
 
 param existingLogAnalyticsName string = ''
-param existingLogAnalyticsRgName string
+param existingLogAnalyticsRgName string = ''
 param existingApplicationInsightsName string = ''
 
 param location string = resourceGroup().location

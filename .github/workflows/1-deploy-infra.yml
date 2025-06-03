@@ -46,7 +46,7 @@ on:
       createDnsZones:
         description: Create DNS Zones?
         type: boolean
-        default: true
+        default: false
       addRoleAssignments:
         description: Add Role Assignments?
         type: boolean
