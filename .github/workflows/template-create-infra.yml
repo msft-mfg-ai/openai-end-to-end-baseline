@@ -12,11 +12,11 @@ on:
       templatePath:
         required: false
         type: string
-        default: 'infra-as-code/bicep/'
+        default: 'infra/bicep/'
       templateFile:
         required: false
         type: string
-        default: 'main.bicep'
+        default: 'main-basic.bicep'
       parameterFile:
         required: false
         type: string
@@ -57,10 +57,14 @@ on:
         description: Add Role Assignments?
         type: boolean
         default: true
-      runBuildDeployAPI:
-        description: Run Build and Deploy API?
+      runBuildDeployUI:
+        description: Run Build and Deploy UI?
         type: boolean
         default: false
+      instance:
+        description: Instance number for resource naming
+        type: string
+        default: '001'
 
 # ------------------------------------------------------------------------------------------------------------------------
 jobs:
@@ -80,13 +84,13 @@ jobs:
     # ------------------------------------------------------------------------------------------------------------------------
     env:
       envCode: ${{ inputs.envCode }}
-      generatedResourceGroupName: ${{ vars.RESOURCEGROUP_PREFIX }}-${{ inputs.envCode }}
+      generatedResourceGroupName: ${{ vars.RESOURCEGROUP_PREFIX }}-${{ inputs.envCode }}-${{ vars.RESOURCEGROUP_LOCATION }}-${{ inputs.instance }}
       createResourceGroup: ${{ inputs.createResourceGroup }}
       publicAccessEnabled: ${{ inputs.publicAccessEnabled }}
       createDnsZones: ${{ inputs.createDnsZones }}
       deployAIHub: ${{ inputs.deployAIHub }}
       addRoleAssignments: ${{ inputs.addRoleAssignments }}
-      runBuildDeployAPI: ${{ inputs.runBuildDeployAPI }}
+      runBuildDeployUI: ${{ inputs.runBuildDeployUI }}
 
     # ------------------------------------------------------------------------------------------------------------------------
     # Outputs
@@ -120,7 +124,7 @@ jobs:
           echo "templateFile=${{ inputs.templateFile }}"
           echo "templateFilePath=${{ inputs.templatePath }}${{ inputs.templateFile }}"
           echo "parameterFile=${{ inputs.parameterFile }}"
-          echo "parameterFilePath=$${{ inputs.templatePath }}${{ inputs.parameterFile }}"
+          echo "parameterFilePath=${{ inputs.templatePath }}${{ inputs.parameterFile }}"
           echo "parameterFileReplaceTokens=${{ inputs.parameterFileReplaceTokens }}"
           echo "---------------------------------"
           echo "##[group]All Variables:"

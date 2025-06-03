@@ -4,7 +4,7 @@
 # Note: in order to do multiple CA build/deploys, you need to change FW and login ONCE, otherwise
 # it tends to have token refresh issues and fail on the second and third app
 # ------------------------------------------------------------------------------------------------------------------------
-name: 3 - Deploy Infra, Build, Deploy All Apps
+name: z-Unused-3 - Deploy Infra, Build, Deploy All Apps
 run-name: 3 - Deploy Infra, Build, Deploy to ENV ${{ inputs.deployEnvironment }} by @${{ github.actor }}
 on:
   # push:
@@ -69,6 +69,10 @@ on:
       #   required: false
       #   default: false
       #   type: boolean
+      instance:
+        description: Instance number for resource naming
+        type: string
+        default: '001'
 
 permissions:
   id-token: write # This is required for requesting the JWT
@@ -95,7 +99,7 @@ jobs:
       ENV_CODE: ${{ inputs.deployEnvironment }}
       APP_NAME: ${{ vars.APP_NAME }}
       APP_NAME_NO_DASHES: ${{ vars.APP_NAME_NO_DASHES }}
-      RESOURCE_GROUP_NAME: '${{ vars.RESOURCEGROUP_PREFIX }}-${{ inputs.deployEnvironment }}'
+      RESOURCE_GROUP_NAME: '${{ vars.RESOURCEGROUP_PREFIX }}-${{ inputs.deployEnvironment }}-${{ vars.RESOURCEGROUP_LOCATION }}-${{ inputs.instance }}'
 
       ACR_NAME: '${{ vars.APP_NAME_NO_DASHES }}cr${{ inputs.deployEnvironment }}'
       ACR_REPO_NAME: ${{ env.ACR_REPO_NAME }}
@@ -114,7 +118,7 @@ jobs:
           echo "inputs.ENV_CODE: ${{ inputs.deployEnvironment }}"
           echo "vars.APP_NAME: ${{ vars.APP_NAME }}"
           echo "vars.APP_NAME_NO_DASHES: ${{ vars.APP_NAME_NO_DASHES }}"
-          echo "AZURE_RESOURCE_GROUP: ${{ vars.RESOURCEGROUP_PREFIX }}-${{ inputs.deployEnvironment }}"
+          echo "AZURE_RESOURCE_GROUP: ${{ vars.RESOURCE_GROUP_NAME }}"
 
           echo "ACR_REPO_NAME: ${{ env.ACR_REPO_NAME }}"
 
@@ -146,8 +150,8 @@ jobs:
       pages: write
     with:
       envCode: ${{ inputs.deployEnvironment }}
-      templatePath: './infra-as-code/bicep/'
-      templateFile: 'main.bicep'
+      templatePath: './infra/bicep/'
+      templateFile: 'main-basic.bicep'
       parameterFile: ${{ inputs.parameterFile }}
       parameterFileReplaceTokens: 'true'
       createResourceGroup: ${{ inputs.createResourceGroup }}
@@ -170,7 +174,7 @@ jobs:
       RESOURCE_GROUP: ${{ needs.template-env.outputs.RESOURCE_GROUP_NAME }}
       ACR_REPO_NAME: ${{ needs.template-env.outputs.ACR_REPO_NAME }}
 
-      BUILD_DEPLOY_API: ${{ inputs.runBuildDeployUI }}
+      BUILD_DEPLOY_UI: ${{ inputs.runBuildDeployUI }}
       UI_APP_PATH: ${{ needs.template-env.outputs.UI_APP_PATH }}
       UI_ACR_APP_NAME: ${{ needs.template-env.outputs.UI_ACR_APP_NAME }}
 

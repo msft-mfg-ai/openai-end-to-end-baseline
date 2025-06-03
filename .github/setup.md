@@ -6,7 +6,7 @@ The GitHub workflows in this project require several secrets set at the reposito
 
 ## Workflow Definitions
 
-- **[1_deploy_infra.yml](./workflows/1_deploy_infra.yml):** Deploys the main.bicep template with all new resources and does nothing else. You can use this to do a `what-if` deployment to see what resources will be created/updated/deleted by the [main.bicep](../infra-as-code/bicep/main.bicep) file.
+- **[1_deploy_infra.yml](./workflows/1_deploy_infra.yml):** Deploys the main.bicep template with all new resources and does nothing else. You can use this to do a `what-if` deployment to see what resources will be created/updated/deleted by the [main.bicep](../infra/bicep/main.bicep) file.
 - **[2-build-deploy-apps.yml](./workflows/2-build-deploy-apps.yml):** Builds the app and deploys it to Azure - this could/should be set up to happen automatically after each check-in to main branch app folder
 - **[3-deploy-infra-and-apps](./workflows/1-infra-build-deploy-all.yml):** Deploys the main.bicep template then builds and deploys all the apps
 - **[4_scan_build_pr.yml](./workflows/4_scan_build_pr.yml):** Runs each time a Pull Request is submitted and includes the results in the PR
@@ -25,12 +25,13 @@ Follow these steps to get started quickly:
 
 1. Create these environment secrets either manually or by customizing these commands. They should be in each environment if you are using multiple environments, or could be at the repository level if you are only deploying one version.
 
-    *(Note that there is no CLIENT_SECRET because the previous step recommended using a Federated Identity. If you want to use a secret, you would need to add that and update the workflow login steps.)*
+    *(Note that you only need to use CLIENT_SECRET if you are NOT using a Federated Identity. If you want to use a Federated Identity, you could omit that secret.)*
 
     ```bash
     gh secret set --env <envName> AZURE_SUBSCRIPTION_ID -b xxx-xx-xx-xx-xxxx
     gh secret set --env <envName> AZURE_TENANT_ID -b xxx-xx-xx-xx-xxxx
     gh secret set --env <envName> CICD_CLIENT_ID -b xxx-xx-xx-xx-xxxx
+    gh secret set --env <envName> CLIENT_SECRET -b xxxxxxxxxx
     ```
 
 1. The following variables should be set or updated at the repository level, as they should be the same for most uses. If desired, you could set them at the environment level to customize them for each environment. These values are used by the Bicep templates to configure the resource names that are deployed.
@@ -47,6 +48,14 @@ Follow these steps to get started quickly:
     gh variable set --env <envName> RESOURCEGROUP_LOCATION -b eastus2
     gh variable set --env <envName> OPENAI_DEPLOY_LOCATION -b eastus2
     ```
+
+    <!-- if you're doing advanced networking, you will need these:
+
+    ```bash
+    gh variable set --env <envName> VNET_NAME -b vnet-aichat
+    gh variable set --env <envName> SUBNET_NAME -b subnet-aichat
+    gh variable set --env <envName> SUBNET_PREFIX -b
+    ``` -->
 
 1. Run the **[1-infra-build-deploy-all](./workflows/1-infra-build-deploy-all.yml):** action in this repo to deploy the UI.
 

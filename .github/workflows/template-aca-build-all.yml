@@ -16,7 +16,7 @@ on:
         required: true
         type: string
 
-      BUILD_DEPLOY_API:
+      BUILD_DEPLOY_UI:
         default: true
         type: boolean
       UI_APP_PATH:
@@ -135,7 +135,7 @@ jobs:
       # -- Create MetaData for Images ----------------------------------------------------------------------
       - name: Get UI metadata
         uses: docker/metadata-action@v5
-        if: ${{ inputs.PUSH_TO_ACR && inputs.BUILD_DEPLOY_API }}
+        if: ${{ inputs.PUSH_TO_ACR && inputs.BUILD_DEPLOY_UI }}
         id: meta-ui
         with:
           images: ${{ inputs.ACR_NAME }}.azurecr.io/${{ steps.image-name.outputs.UI_IMAGE_NAME_NO_TAG }}
@@ -152,7 +152,7 @@ jobs:
       # -- Build and Deploy Images ----------------------------------------------------------------------
       - name: UI Build-Push
         uses: docker/build-push-action@v6
-        if: ${{ inputs.PUSH_TO_ACR && inputs.BUILD_DEPLOY_API }}
+        if: ${{ inputs.PUSH_TO_ACR && inputs.BUILD_DEPLOY_UI }}
         with:
           context: '${{ github.workspace }}/${{ inputs.UI_APP_PATH }}'
           push: ${{ github.event_name != 'pull_request' }}

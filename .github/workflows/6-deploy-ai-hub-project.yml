@@ -1,7 +1,7 @@
 # ------------------------------------------------------------------------------------------------------------------------
 # Action: Deploy AI Hub Project
 # ------------------------------------------------------------------------------------------------------------------------
-name: 6 - Deploy AI Hub Project
+name: z-Unused-6 - Deploy AI Hub Project
 run-name: 6 - Deploy AI Hub Project to ENV ${{ inputs.deployEnvironment }} by @${{ github.actor }}
 
 on:
@@ -28,6 +28,10 @@ on:
           - preston
           - chris
           - matt
+      instance:
+        description: Instance number for resource naming
+        type: string
+        default: '001'
 
 permissions:
   id-token: write # This is required for requesting the JWT
@@ -49,8 +53,8 @@ jobs:
       pages: write
     with:
       envCode: ${{ inputs.deployEnvironment }}
-      resourceGroupName: ${{ vars.RESOURCEGROUP_PREFIX }}-${{ inputs.deployEnvironment }}
-      templatePath: './infra-as-code/bicep/'
+      resourceGroupName: ${{ vars.RESOURCEGROUP_PREFIX }}-${{ inputs.deployEnvironment }}-${{ vars.RESOURCEGROUP_LOCATION }}-${{ inputs.instance }}
+      templatePath: './infra/bicep/'
       templateFile: 'find-ai-hub-id.bicep'
       parameterFile: 'find-ai-hub-id.gh.bicepparam'
       parameterFileReplaceTokens: 'true'
