@@ -166,6 +166,9 @@ param appendResourceTokens bool = false
 @description('Should UI container app be deployed?')
 param deployUIApp bool = true
 
+@description('Instance number for the application, e.g. 001, 002, etc. This is used to differentiate multiple instances of the same application in the same environment.')
+param instanceNumber string = '001' // used to differentiate multiple instances of the same application in the same environment
+
 // --------------------------------------------------------------------------------------------------------------
 // Additional Tags that may be included or not
 // --------------------------------------------------------------------------------------------------------------
@@ -226,6 +229,8 @@ module resourceNames 'resourcenames.bicep' = {
     applicationName: appName
     environmentName: environmentName
     resourceToken: appendResourceTokens ? resourceToken : ''
+    region: location
+    instance: instanceNumber
   }
 }
 
