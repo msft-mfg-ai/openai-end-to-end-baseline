@@ -11,13 +11,13 @@ param baseName string
 param location string = resourceGroup().location
 
 @description('The name of the virtual network that this ACR instance will have a private endpoint in.')
-param vnetName string
+param vnetName string = ''
 
 @description('The name of the subnet for the private endpoint. Must be in the provided virtual network.')
-param privateEndpointsSubnetName string
+param privateEndpointsSubnetName string = ''
 
 @description('The name of the subnet for build agents. Must be in the provided virtual network.')
-param buildAgentSubnetName string
+param buildAgentSubnetName string = ''
 
 @description('The name of the workload\'s existing Log Analytics workspace.')
 param logWorkspaceName string
@@ -28,6 +28,9 @@ var acrName = 'cr${baseName}'
 // var acrName = take(replace(replace(replace(toLower(acrBaseName), ' ', ''), '-', ''), '_', ''), 50)
 var acrPrivateEndpointName = 'pep-${acrName}'
 var acrDnsZoneName = 'privatelink${environment().suffixes.acrLoginServer}'
+
+
+var deployVNET = vnetName == ''
 
 // ---- Existing resources ----
 resource vnet 'Microsoft.Network/virtualNetworks@2022-11-01' existing =  {
@@ -75,13 +78,13 @@ resource acrResource 'Microsoft.ContainerRegistry/registries@2024-11-01-preview'
   }
 
   @description('Compute in the virtual network that can be used to build container images. This could also be done with tasks or images could be built on build agents.')
-  resource imageBuildPool 'agentPools@2019-06-01-preview' = {
+  resource imageBuildPool 'agentPools@2019-06-01-preview' = if (deployVNET) {
     name: 'imgbuild'
     location: location
     properties: {
       os: 'Linux'
       count: 1
-      virtualNetworkSubnetResourceId: vnet::buildAgentSubnet.id
+      virtualNetworkSubnetResourceId: vnet::buildAgentSubnet.id 
       tier: 'S1'
     }
   }

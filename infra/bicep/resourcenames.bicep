@@ -24,6 +24,8 @@ var resourceAbbreviations = loadJsonContent('./data/abbreviation.json')
 output webSiteName string                 = toLower('${sanitizedAppNameWithDashes}-${sanitizedEnvironment}${resourceTokenWithDash}')
 output webSiteAppServicePlanName string   = toLower('${sanitizedAppName}-${resourceAbbreviations.webServerFarms}-${sanitizedEnvironment}${resourceTokenWithDash}')
 
+// appi-applicationname-environmentname-otisregion-instance
+
 output appInsightsName string             = toLower('${sanitizedAppName}-${resourceAbbreviations.insightsComponents}-${sanitizedEnvironment}${resourceTokenWithDash}')
 output logAnalyticsWorkspaceName string   = toLower('${sanitizedAppName}-${resourceAbbreviations.operationalInsightsWorkspaces}-${sanitizedEnvironment}${resourceTokenWithDash}')
 
