@@ -69,7 +69,6 @@ on:
         description: Requestor Name
         type: string
         default: '${{ github.actor }}'
-
       # instance:
       #   description: Instance number for resource naming
       #   type: string
