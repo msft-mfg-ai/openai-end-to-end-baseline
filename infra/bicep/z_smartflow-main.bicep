@@ -143,7 +143,7 @@ param createDnsZones bool = true
 @description('Add Role Assignments for the user assigned identity?')
 param addRoleAssignments bool = true
 @description('Should we run a script to dedupe the KeyVault secrets? (this fails on private networks right now)')
-param deduplicateKeyVaultSecrets bool = true
+param deduplicateKeyVaultSecrets bool = false
 @description('Set this if you want to append all the resource names with a unique token')
 param appendResourceTokens bool = false
 @description('Should batch container app be deployed?')

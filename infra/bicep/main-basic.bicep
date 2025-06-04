@@ -68,27 +68,9 @@ param subnet2Name string = ''
 @description('If new VNET, this is the Subnet addresses for the application, i.e. 10.2.2.0/23') // Provided subnet must have a size of at least /23
 param subnet2Prefix string = '10.2.2.0/23'
 
-// // --------------------------------------------------------------------------------------------------------------
-// // Existing container registry?
-// // --------------------------------------------------------------------------------------------------------------
-// @description('If you provide this is will be used instead of creating a new Registry')
-// param existing_ACR_Name string = ''
-// @description('If you provide this is will be used instead of creating a new Registry')
-// param existing_ACR_ResourceGroupName string = ''
-
-// // --------------------------------------------------------------------------------------------------------------
-// // Existing monitoring?
-// // --------------------------------------------------------------------------------------------------------------
-// @description('If you provide this is will be used instead of creating a new Workspace')
-// param existing_LogAnalytics_Name string = ''
-// @description('If you provide this is will be used instead of creating a new App Insights')
-// param existing_AppInsights_Name string = ''
-
-// // --------------------------------------------------------------------------------------------------------------
-// // Existing Container App Environment?
-// // --------------------------------------------------------------------------------------------------------------
-// @description('If you provide this is will be used instead of creating a new Container App Environment')
-// param existing_managedAppEnv_Name string = ''
+// --------------------------------------------------------------------------------------------------------------
+// Existing Container App Environment?
+// --------------------------------------------------------------------------------------------------------------
 @description('Name of the Container Apps Environment workload profile to use for the app')
 param appContainerAppEnvironmentWorkloadProfileName string = 'app'
 @description('Workload profiles for the Container Apps environment')
@@ -101,43 +83,13 @@ param containerAppEnvironmentWorkloadProfiles array = [
   }
 ]
 
-// // --------------------------------------------------------------------------------------------------------------
-// // Existing OpenAI resources?
-// // --------------------------------------------------------------------------------------------------------------
-// @description('Name of an existing Cognitive Services account to use')
-// param existing_CogServices_Name string = ''
-// @description('Resource Group where existing Cognitive Services account Lives')
-// param existing_CogServices_ResourceGroupName string = ''
-
-// @description('Name of an existing Search Services account to use')
-// param existing_SearchService_Name string = ''
-// @description('Resource Group where existing Search Services account Lives')
-// param existing_SearchService_ResourceGroupName string = ''
-
+// --------------------------------------------------------------------------------------------------------------
+// AI Hub Parameters
+// --------------------------------------------------------------------------------------------------------------
 @description('Friendly name for your Azure AI resource')
 param aiProjectFriendlyName string = 'Agents Project resource'
 @description('Description of your Azure AI resource displayed in AI studio')
 param aiProjectDescription string = 'This is an example AI Project resource for use in Azure AI Studio.'
-
-// // --------------------------------------------------------------------------------------------------------------
-// // Existing Cosmos resources?
-// // --------------------------------------------------------------------------------------------------------------
-// @description('Name of an existing Cosmos account to use')
-// param existing_Cosmos_Name string = ''
-// @description('Resource Group where existing Cosmos account Lives')
-// param existing_Cosmos_ResourceGroupName string = ''
-
-// // --------------------------------------------------------------------------------------------------------------
-// // Existing Key Vault?
-// // --------------------------------------------------------------------------------------------------------------
-// @description('Name of an existing Key Vault to use')
-// param existing_KeyVault_Name string = ''
-// @description('Resource Group where existing Key Vault Lives')
-// param existing_KeyVault_ResourceGroupName string = ''
-
-// --------------------------------------------------------------------------------------------------------------
-// AI Hub Parameters
-// --------------------------------------------------------------------------------------------------------------
 @description('Should we deploy an AI Foundry Hub?')
 param deployAIHub bool = true
 
@@ -157,7 +109,7 @@ param createDnsZones bool = true
 @description('Add Role Assignments for the user assigned identity?')
 param addRoleAssignments bool = true
 @description('Should we run a script to dedupe the KeyVault secrets? (this fails on private networks right now)')
-param deduplicateKeyVaultSecrets bool = true
+param deduplicateKeyVaultSecrets bool = false
 @description('Set this if you want to append all the resource names with a unique token')
 param appendResourceTokens bool = false
 
@@ -200,9 +152,6 @@ var appName = applicationName != '' ? applicationName : '${applicationPrefix}_${
 
 var deploymentSuffix = '-${runDateTime}'
 
-// if this bicep was called from AZD, then it needs this tag added to the resource group (at a minimum) to deploy successfully...
-var azdTag = azdEnvName != '' ? { 'azd-env-name': azdEnvName } : {}
-
 var commonTags = {
   'creation-date': take(runDateTime, 8)
   'application-name': appName
@@ -218,6 +167,8 @@ var ownerEmailTagObject = ownerEmailTag == '' ? {} :  {
   'business-owner': ownerEmailTag
   'point-of-contact': ownerEmailTag
 }
+// if this bicep was called from AZD, then it needs this tag added to the resource group (at a minimum) to deploy successfully...
+var azdTag = azdEnvName != '' ? { 'azd-env-name': azdEnvName } : {}
 var tags = union(commonTags, azdTag, costCenterTagObject, ownerEmailTagObject)
 
 // Run a script to dedupe the KeyVault secrets -- this fails on private networks right now so turn if off for them
@@ -261,8 +212,6 @@ module vnet './modules/networking/vnet.bicep' = {
 module containerRegistry './modules/app/containerregistry.bicep' = {
   name: 'containerregistry${deploymentSuffix}'
   params: {
-    // existingRegistryName: existing_ACR_Name
-    // existing_ACR_ResourceGroupName: existing_ACR_ResourceGroupName
     newRegistryName: resourceNames.outputs.ACR_Name
     location: location
     acrSku: 'Premium'
@@ -280,10 +229,7 @@ module containerRegistry './modules/app/containerregistry.bicep' = {
 module logAnalytics './modules/monitor/loganalytics.bicep' = {
   name: 'law${deploymentSuffix}'
   params: {
-    // existingLogAnalyticsName: existing_LogAnalytics_Name
-    // existingLogAnalyticsRgName: resourceGroupName
     newLogAnalyticsName: resourceNames.outputs.logAnalyticsWorkspaceName
-    // existingApplicationInsightsName: existing_AppInsights_Name
     newApplicationInsightsName: resourceNames.outputs.appInsightsName
     location: location
     tags: tags
@@ -351,8 +297,6 @@ module keyVault './modules/security/keyvault.bicep' = {
     location: location
     commonTags: tags
     keyVaultName: resourceNames.outputs.keyVaultName
-    // existingKeyVaultName: existing_KeyVault_Name
-    // existingKeyVaultResourceGroupName: existing_KeyVault_ResourceGroupName
     keyVaultOwnerUserId: principalId
     adminUserObjectIds: [identity.outputs.managedIdentityPrincipalId]
     publicNetworkAccess: publicAccessEnabled ? 'Enabled' : 'Disabled'
@@ -450,8 +394,6 @@ module cosmos './modules/database/cosmosdb.bicep' = {
   name: 'cosmos${deploymentSuffix}'
   params: {
     accountName: resourceNames.outputs.cosmosName
-    // existingAccountName: existing_Cosmos_Name
-    // existingCosmosResourceGroupName: existing_Cosmos_ResourceGroupName
     databaseName: uiDatabaseName
     containerArray: cosmosContainerArray
     location: location
@@ -473,8 +415,6 @@ module searchService './modules/search/search-services.bicep' = {
   params: {
     location: location
     name: resourceNames.outputs.searchServiceName
-    // existingSearchServiceName: existing_SearchService_Name
-    // existingSearchServiceResourceGroupName: existing_SearchService_ResourceGroupName
     publicNetworkAccess: publicAccessEnabled ? 'enabled' : 'disabled'
     myIpAddress: myIpAddress
     privateEndpointSubnetId: vnet.outputs.subnet1ResourceId
@@ -493,8 +433,6 @@ module openAI './modules/ai/cognitive-services.bicep' = {
   name: 'openai${deploymentSuffix}'
   params: {
     managedIdentityId: identity.outputs.managedIdentityId
-    //existing_CogServices_Name: existing_CogServices_Name
-    //existing_CogServices_ResourceGroupName: existing_CogServices_ResourceGroupName
     name: resourceNames.outputs.cogServiceName
     location: openAI_deploy_location // this may be different than the other resources
     pe_location: location
@@ -533,8 +471,6 @@ module openAI './modules/ai/cognitive-services.bicep' = {
 module documentIntelligence './modules/ai/document-intelligence.bicep' = {
   name: 'doc-intelligence${deploymentSuffix}'
   params: {
-    //existing_CogServices_Name: '' //existing_DocumentIntelligence_Name
-    //existing_CogServices_ResourceGroupName: '' //existing_DocumentIntelligence_RG_Name
     name: resourceNames.outputs.documentIntelligenceName
     location: location // this may be different than the other resources
     tags: tags
@@ -569,7 +505,6 @@ module aiHub './modules/ai/ai-hub-secure.bicep' = if (deployAIHub) {
     addRoleAssignments: addRoleAssignments
     userObjectId: principalId
     userObjectType: 'User'
-    //managedIdentityResourceId: identity.outputs.managedIdentityId
     managedIdentityPrincipalId: identity.outputs.managedIdentityPrincipalId
     managedIdentityType: 'ServicePrincipal'
   }
