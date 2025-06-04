@@ -184,4 +184,4 @@ output cognitiveServicesKeySecretName string = cognitiveServicesKeySecretName
 output textEmbeddings array = textEmbeddings
 output chatGpt_Standard object = chatGpt_Standard
 output kind string = kind
-output privateEndpointName string = privateEndpoint.name
+output privateEndpointName string = privateEndpoint.outputs.privateEndpointName

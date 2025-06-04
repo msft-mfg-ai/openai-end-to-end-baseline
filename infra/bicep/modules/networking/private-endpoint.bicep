@@ -58,3 +58,4 @@ resource peDnsGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@202
 }
 
 output privateEndpointId string = pe.id
+output privateEndpointName string = pe.name
