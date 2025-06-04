@@ -345,6 +345,21 @@ module adminUserRoleAssignments './modules/iam/role-assignments.bicep' = if (add
   }
 }
 
+var roleDefinitions = loadJsonContent('./data/roleDefinitions.json')
+var userKeyVaultRoleAssignment = principalId == '' ? [] : [
+  {
+    principalId: principalId
+    roleDefinitionId: roleDefinitions.keyvault.secretsOfficer
+  }
+]
+var appKeyVaultRoleAssignment = [
+  {
+    principalId: identity.outputs.managedIdentityPrincipalId
+    roleDefinitionId: roleDefinitions.keyvault.secretsOfficer
+  }
+]
+var allRoleAssignments = union(userKeyVaultRoleAssignment, appKeyVaultRoleAssignment)
+
 module keyVault './modules/security/keyvault.bicep' = {
   name: 'keyvault${deploymentSuffix}'
   params: {
@@ -360,6 +375,7 @@ module keyVault './modules/security/keyvault.bicep' = {
     createUserAssignedIdentity: false
     privateEndpointName: 'pe-${resourceNames.outputs.keyVaultName}'
     privateEndpointSubnetId: vnet.outputs.subnet1ResourceId
+    roleAssignments: allRoleAssignments
   }
 }
 

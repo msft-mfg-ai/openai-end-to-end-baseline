@@ -49,6 +49,9 @@ param createDaprIdentity bool = false
 @description('Override the default DAPR identity user name if you need to')
 param daprIdentityName string = '${keyVaultName}-dapr'
 
+@description('Optional array of role assignments')
+param roleAssignments array = []
+
 @description('The workspace to store audit logs.')
 @metadata({
   strongType: 'Microsoft.OperationalInsights/workspaces'
@@ -191,6 +194,19 @@ var userAssignedIdentityPolicies = (!createUserAssignedIdentity) ? [] : [{
     secrets: ['get','list','set']
   }
 }]
+
+// Create role assignments if provided
+resource roleAssignmentsResource 'Microsoft.Authorization/roleAssignments@2022-04-01' = [
+  for roleAssignment in roleAssignments: if (length(roleAssignments) > 0) {
+    name: guid(roleAssignment.principalId, roleAssignment.roleDefinitionId, keyVaultResource.id)
+    scope: keyVaultResource
+    properties: {
+      roleDefinitionId: resourceId('Microsoft.Authorization/roleDefinitions', roleAssignment.roleDefinitionId)
+      principalId: roleAssignment.principalId
+      principalType: 'ServicePrincipal'
+    }
+  }
+]
 
 // this creates an identity for DAPR that can be used to get secrets
 resource daprIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2022-01-31-preview' = if (!useExistingVault && createDaprIdentity) {
