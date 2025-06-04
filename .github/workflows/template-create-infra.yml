@@ -91,7 +91,7 @@ jobs:
       deployAIHub: ${{ inputs.deployAIHub }}
       addRoleAssignments: ${{ inputs.addRoleAssignments }}
       runBuildDeployUI: ${{ inputs.runBuildDeployUI }}
-      loginWithSecret: ${{ secrets.CICD_CLIENT_SECRET != '' }}
+      loginWithSecret: ${{ secrets.CICD_CLIENT_SECRET != '' && 'true' || 'false' }}
 
     # ------------------------------------------------------------------------------------------------------------------------
     # Outputs
@@ -121,7 +121,7 @@ jobs:
           echo "vars.RESOURCEGROUP_PREFIX=${{ vars.RESOURCEGROUP_PREFIX }}"
           echo "vars.RESOURCEGROUP_LOCATION=${{ vars.RESOURCEGROUP_LOCATION }}"
           echo "env.loginWithSecret=${{ env.loginWithSecret }}"
-
+          
           echo "templatePath=${{ inputs.templatePath }}"
           echo "templateFile=${{ inputs.templateFile }}"
           echo "templateFilePath=${{ inputs.templatePath }}${{ inputs.templateFile }}"
