@@ -35,10 +35,10 @@ on:
         description: Parameter File
         required: true
         default: 'main-basic.dynamic.bicepparam'
-      instance:
-        description: Instance number for resource naming
-        type: string
-        default: '01'
+      # instance: # moved to GH Variable
+      #   description: Instance number for resource naming
+      #   type: string
+      #   default: '01'
       createResourceGroup:
         description: Create Resource Group?
         type: boolean
@@ -87,4 +87,4 @@ jobs:
       deployAIHub: ${{ inputs.deployAIHub }}
       addRoleAssignments: ${{ inputs.addRoleAssignments }}
       runBuildDeployUI: ${{ inputs.runBuildDeployUI }}
-      instance: ${{ inputs.instance }}
+      #instance: ${{ vars.INSTANCE_NUMBER }}

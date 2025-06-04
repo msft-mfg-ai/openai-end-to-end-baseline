@@ -61,10 +61,10 @@ on:
         description: Run Build and Deploy UI?
         type: boolean
         default: false
-      instance:
-        description: Instance number for resource naming
-        type: string
-        default: '01'
+      # instance:
+      #   description: Instance number for resource naming
+      #   type: string
+      #   default: '01'
 
 # ------------------------------------------------------------------------------------------------------------------------
 jobs:
@@ -84,7 +84,7 @@ jobs:
     # ------------------------------------------------------------------------------------------------------------------------
     env:
       envCode: ${{ inputs.envCode }}
-      generatedResourceGroupName: ${{ vars.RESOURCEGROUP_PREFIX }}-${{ inputs.envCode }}-${{ vars.RESOURCEGROUP_LOCATION }}-${{ inputs.instance }}
+      generatedResourceGroupName: ${{ vars.RESOURCEGROUP_PREFIX }}-${{ inputs.envCode }}-${{ vars.RESOURCEGROUP_LOCATION }}-${{ vars.INSTANCE_NUMBER }}
       createResourceGroup: ${{ inputs.createResourceGroup }}
       publicAccessEnabled: ${{ inputs.publicAccessEnabled }}
       createDnsZones: ${{ inputs.createDnsZones }}

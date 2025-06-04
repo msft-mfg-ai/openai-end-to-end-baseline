@@ -46,10 +46,10 @@ on:
       #   required: false
       #   default: false
       #   type: boolean
-      instance:
-        description: Instance number for resource naming
-        type: string
-        default: '01'
+      # instance: # moved to GH Variable
+      #   description: Instance number for resource naming
+      #   type: string
+      #   default: '01'
 permissions:
   id-token: write # This is required for requesting the JWT
   contents: read # This is required for actions/checkout
@@ -75,7 +75,7 @@ jobs:
       ENV_CODE: ${{ inputs.deployEnvironment }}
       APP_NAME: ${{ vars.APP_NAME }}
       APP_NAME_NO_DASHES: ${{ vars.APP_NAME_NO_DASHES }}
-      RESOURCE_GROUP_NAME: '${{ vars.RESOURCEGROUP_PREFIX }}-${{ inputs.deployEnvironment }}-${{ vars.RESOURCEGROUP_LOCATION }}-${{ inputs.instance }}'
+      RESOURCE_GROUP_NAME: '${{ vars.RESOURCEGROUP_PREFIX }}-${{ inputs.deployEnvironment }}-${{ vars.RESOURCEGROUP_LOCATION }}-${{ vars.INSTANCE_NUMBER }}'
 
       ACR_NAME: '${{ vars.APP_NAME_NO_DASHES }}cr${{ inputs.deployEnvironment }}'
       ACR_REPO_NAME: ${{ env.ACR_REPO_NAME }}
