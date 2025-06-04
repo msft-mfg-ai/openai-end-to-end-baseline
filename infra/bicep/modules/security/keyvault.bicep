@@ -27,7 +27,7 @@ param enabledForDiskEncryption bool = true
 @description('Determine if soft delete is enabled on this Key Vault.')
 param enableSoftDelete bool = true
 @description('Determine if purge protection is enabled on this Key Vault.')
-param enablePurgeProtection bool = true
+param enablePurgeProtection bool = false
 @description('The number of days to retain soft deleted vaults and vault objects.')
 param softDeleteRetentionInDays int = 7
 @description('Determines if access to the objects granted using RBAC. When true, access policies are ignored.')
@@ -48,6 +48,10 @@ param userAssignedIdentityName string = '${keyVaultName}-cicd'
 param createDaprIdentity bool = false
 @description('Override the default DAPR identity user name if you need to')
 param daprIdentityName string = '${keyVaultName}-dapr'
+
+// Role assignments centralized in the iam/role-assignments.bicep file...
+// @description('Optional array of role assignments')
+// param roleAssignments array = []
 
 @description('The workspace to store audit logs.')
 @metadata({
@@ -160,7 +164,7 @@ resource keyVaultResource 'Microsoft.KeyVault/vaults@2021-11-01-preview' = if (!
     }
     tenantId: subTenantId
     enableRbacAuthorization: useRBAC
-    accessPolicies: accessPolicies
+    accessPolicies: useRBAC ? [] : accessPolicies
     enabledForDeployment: enabledForDeployment
     enabledForDiskEncryption: enabledForDiskEncryption
     enabledForTemplateDeployment: enabledForTemplateDeployment
@@ -191,6 +195,20 @@ var userAssignedIdentityPolicies = (!createUserAssignedIdentity) ? [] : [{
     secrets: ['get','list','set']
   }
 }]
+
+// // Role assignments centralized in the iam/role-assignments.bicep file...
+// // Create role assignments if provided
+// resource roleAssignmentsResource 'Microsoft.Authorization/roleAssignments@2022-04-01' = [
+//   for roleAssignment in roleAssignments: if (length(roleAssignments) > 0) {
+//     name: guid(roleAssignment.principalId, roleAssignment.roleDefinitionId, keyVaultResource.id)
+//     scope: keyVaultResource
+//     properties: {
+//       roleDefinitionId: resourceId('Microsoft.Authorization/roleDefinitions', roleAssignment.roleDefinitionId)
+//       principalId: roleAssignment.principalId
+//       principalType: roleAssignment.principalType
+//     }
+//   }
+// ]
 
 // this creates an identity for DAPR that can be used to get secrets
 resource daprIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2022-01-31-preview' = if (!useExistingVault && createDaprIdentity) {

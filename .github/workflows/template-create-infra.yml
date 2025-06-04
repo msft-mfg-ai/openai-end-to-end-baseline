@@ -92,7 +92,7 @@ jobs:
     # ------------------------------------------------------------------------------------------------------------------------
     env:
       envCode: ${{ inputs.envCode }}
-      generatedResourceGroupName: ${{ vars.RESOURCEGROUP_PREFIX }}-${{ inputs.envCode }}-${{ vars.RESOURCEGROUP_LOCATION }}-${{ vars.INSTANCE_NUMBER }}
+      generatedResourceGroupName: ${{ vars.RESOURCEGROUP_PREFIX }}-${{ inputs.envCode }}-${{ vars.GLOBAL_REGION_CODE }}-${{ vars.INSTANCE_NUMBER }}
       createResourceGroup: ${{ inputs.createResourceGroup }}
       publicAccessEnabled: ${{ inputs.publicAccessEnabled }}
       createDnsZones: ${{ inputs.createDnsZones }}
@@ -132,6 +132,7 @@ jobs:
           echo "vars.RESOURCEGROUP_PREFIX=${{ vars.RESOURCEGROUP_PREFIX }}"
           echo "vars.RESOURCEGROUP_LOCATION=${{ vars.RESOURCEGROUP_LOCATION }}"
           echo "vars.OPENAI_DEPLOY_LOCATION=${{ vars.OPENAI_DEPLOY_LOCATION }}"
+          echo "vars.GLOBAL_REGION_CODE=${{ vars.GLOBAL_REGION_CODE }}"
           echo "vars.INSTANCE_NUMBER=${{ vars.INSTANCE_NUMBER }}"
           echo "vars.OWNER_EMAIL=${{ vars.OWNER_EMAIL }}"
 

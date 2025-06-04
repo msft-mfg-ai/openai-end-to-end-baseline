@@ -31,6 +31,9 @@ resource existingAppEnvironmentResource 'Microsoft.App/managedEnvironments@2024-
   name: existingEnvironmentName
   scope: resourceGroup(resourceGroupName)
 }
+
+// this key is internal to this file only, so security risk in  exposing it
+#disable-next-line secure-secrets-in-params // Secret is not passed in or out of this module
 resource newAppEnvironmentResource 'Microsoft.App/managedEnvironments@2024-03-01' = if (!useExistingEnvironment) {
   name: cleanAppEnvName
   location: location
@@ -40,8 +43,6 @@ resource newAppEnvironmentResource 'Microsoft.App/managedEnvironments@2024-03-01
       destination: 'log-analytics'
       logAnalyticsConfiguration: {
         customerId: logAnalyticsCustomerId
-        // this key is internal to this file only, so security risk in  exposing it
-        // bicep:disable-next-line no-literal-secrets
         sharedKey: logAnalyticsResource.listKeys().primarySharedKey
         //sharedKey: logAnalyticsKey
       }

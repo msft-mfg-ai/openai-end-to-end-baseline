@@ -164,16 +164,16 @@ param appendResourceTokens bool = false
 // @description('Should UI container app be deployed?')
 // param deployUIApp bool = false
 @description('Should API container app be deployed?')
-param deployAPIApp bool = true
+param deployAPIApp bool = false
 @description('Should Batch container app be deployed?')
-param deployBatchApp bool = true
+param deployBatchApp bool = false
 
 @description('Global Region where the resources will be deployed, e.g. AM (America), EM (EMEA), AP (APAC), CH (China)')
 @allowed(['AM', 'EM', 'AP', 'CH'])
 param regionCode string = 'AM'
 
 @description('Instance number for the application, e.g. 001, 002, etc. This is used to differentiate multiple instances of the same application in the same environment.')
-param instanceNumber string = '01' // used to differentiate multiple instances of the same application in the same environment
+param instanceNumber string = '001' // used to differentiate multiple instances of the same application in the same environment
 
 // --------------------------------------------------------------------------------------------------------------
 // Additional Tags that may be included or not
@@ -208,7 +208,7 @@ var commonTags = {
   'application-name': appName
   'application-id': applicationId
   'environment-name': environmentName
-  'otis-region': regionCode
+  'global-region': regionCode
   'requestor-name': requestorName
   'primary-support-provider': primarySupportProviderTag == '' ? 'UNKNOWN' : primarySupportProviderTag
 }

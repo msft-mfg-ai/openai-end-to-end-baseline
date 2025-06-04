@@ -21,6 +21,8 @@ param aiServicesName string = ''
 // param aiServicesResourceGroupName string = resourceGroup().name
 param cosmosName string = ''
 // param cosmosResourceGroupName string = resourceGroup().name
+param keyVaultName string = ''
+// param keyVaultNameResourceGroupName string = resourceGroup().name
 
 // param aiHubName string = ''
 // // param aiHubResourceGroupName string = resourceGroup().name
@@ -32,7 +34,7 @@ var addStorageRoles = !empty(storageAccountName)
 var addSearchRoles = !empty(aiSearchName)
 var addCogServicesRoles = !empty(aiServicesName)
 var addCosmosRoles = !empty(cosmosName)
-
+var addKeyVaultRoles = !empty(keyVaultName)
 // var addAIHubRoles = !empty(aiHubName)
 
 // ----------------------------------------------------------------------------------------------------
@@ -192,6 +194,25 @@ resource cosmosDbUserAccessRoleAssignment 'Microsoft.DocumentDB/databaseAccounts
     principalId: identityPrincipalId
     roleDefinitionId: '${resourceGroup().id}/providers/Microsoft.DocumentDB/databaseAccounts/${cosmosAccount.name}/sqlRoleDefinitions/${roleDefinitions.cosmos.dataContributorRoleId}'
     scope: cosmosAccount.id
+  }
+}
+
+// ----------------------------------------------------------------------------------------------------
+// KeyVault Roles
+// ----------------------------------------------------------------------------------------------------
+resource keyVault 'Microsoft.KeyVault/vaults@2021-11-01-preview' existing = if (addKeyVaultRoles) {
+  name: keyVaultName
+  //scope: resourceGroup(keyVaultNameResourceGroupName)
+}
+
+resource keyVaultSecretsOfficerAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (addKeyVaultRoles) {
+  name: guid(keyVault.id, identityPrincipalId, roleDefinitions.keyvault.secretsOfficerRoleId)
+  scope: keyVault
+  properties: {
+    principalId: identityPrincipalId
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', roleDefinitions.keyvault.secretsOfficerRoleId)
+    principalType: principalType
+    description: 'Permission for ${principalType} ${identityPrincipalId} to be a Key Vault Secrets Officer'
   }
 }
 
