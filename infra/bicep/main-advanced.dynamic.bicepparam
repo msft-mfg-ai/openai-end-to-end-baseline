@@ -9,7 +9,7 @@
 //   USER_PRINCIPAL_ID   - GH Environment Secret - User Principal ID - this is you - BYO User
 //   INSTANCE_NUMBER     - GH Environment Variable
 //   OWNER_EMAIL         - GH Environment Variable - optional
-//   runBuildDeployUI    - Runtime  - User decision to deploy webapp or not
+//   runBuildDeployAPI    - Runtime  - User decision to deploy webapp or not
 //   environmentName     - Runtime  - Environment Code (e.g., dev, qa, prod)
 // --------------------------------------------------------------------------------
 
@@ -19,7 +19,6 @@ param applicationName = '#{APP_NAME}#'
 param applicationId = '#{APP_ID}#'
 param environmentName = '#{envCode}#'
 param principalId = '#{USER_PRINCIPAL_ID}#'
-param deployUIApp = #{runBuildDeployUI}#  // Should we deploy the web app?
 param instanceNumber = '#{INSTANCE_NUMBER}#'
 param ownerEmailTag = '#{OWNER_EMAIL}#' 
 param requestorName= '#{requestorName}#'
@@ -29,7 +28,8 @@ param addRoleAssignments = #{addRoleAssignments}#
 param createDnsZones = #{createDnsZones}#
 param publicAccessEnabled = #{publicAccessEnabled}#
 param deployAIHub = #{deployAIHub}#
-param deployBatchApp = #{deployBatchApp}#
+param deployAPIApp = #{runBuildDeployAPI}#  // Should we deploy the web app?
+// param deployBatchApp = #{deployBatchApp}#
 
 // param openAI_deploy_location = '#{OPENAI_DEPLOY_LOCATION}#'
 // param appendResourceTokens = false

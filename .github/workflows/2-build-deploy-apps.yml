@@ -31,7 +31,7 @@ on:
           - preston
           - chris
           - matt
-      runBuildDeployUI:
+      runBuildDeployAPI:
         description: 'Build and Deploy API'
         required: false
         default: true
@@ -59,9 +59,9 @@ env:
   # these are defined by the project itself, so they can stay here...
   ACR_REPO_NAME: 'aiapps'
 
-  UI_APP_PATH: 'website/chatui'
-  UI_ACR_APP_NAME: 'chatui'
-  UI_PORT: '8080'
+  API_APP_PATH: 'website/chatapi'
+  API_ACR_APP_NAME: 'chatapi'
+  API_PORT: '8080'
 
 # ------------------------------------------------------------------------------------------------------------------------
 jobs:
@@ -81,10 +81,10 @@ jobs:
       ACR_REPO_NAME: ${{ env.ACR_REPO_NAME }}
       CONTAINER_APP_ENV_NAME: '${{ vars.APP_NAME_NO_DASHES }}-cae-${{ inputs.deployEnvironment }}'
 
-      UI_CONTAINER_APP_NAME: '${{ vars.APP_NAME_NO_DASHES }}-ca-ui-${{ inputs.deployEnvironment }}'
-      UI_APP_PATH: ${{ env.UI_APP_PATH }}
-      UI_ACR_APP_NAME: ${{ env.UI_ACR_APP_NAME }}
-      UI_PORT: ${{ env.UI_PORT }}
+      API_CONTAINER_APP_NAME: '${{ vars.APP_NAME_NO_DASHES }}-ca-ui-${{ inputs.deployEnvironment }}'
+      API_APP_PATH: ${{ env.API_APP_PATH }}
+      API_ACR_APP_NAME: ${{ env.API_ACR_APP_NAME }}
+      API_PORT: ${{ env.API_PORT }}
 
     steps:
       - name: Set common environment variables
@@ -98,9 +98,9 @@ jobs:
 
           echo "ACR_REPO_NAME: ${{ env.ACR_REPO_NAME }}"
 
-          echo "UI_APP_PATH: ${{ env.UI_APP_PATH }}"
-          echo "UI_ACR_APP_NAME: ${{ env.UI_ACR_APP_NAME }}"
-          echo "UI_PORT: ${{ env.UI_PORT }}"
+          echo "API_APP_PATH: ${{ env.API_APP_PATH }}"
+          echo "API_ACR_APP_NAME: ${{ env.API_ACR_APP_NAME }}"
+          echo "API_PORT: ${{ env.API_PORT }}"
 
   # ------------------------------------------------------------------------------------------------------------------------
   scan-code:
@@ -127,15 +127,15 @@ jobs:
       RESOURCE_GROUP: ${{ needs.template-env.outputs.RESOURCE_GROUP_NAME }}
       ACR_REPO_NAME: ${{ needs.template-env.outputs.ACR_REPO_NAME }}
 
-      BUILD_DEPLOY_UI: ${{ inputs.runBuildDeployUI }}
-      UI_APP_PATH: ${{ needs.template-env.outputs.UI_APP_PATH }}
-      UI_ACR_APP_NAME: ${{ needs.template-env.outputs.UI_ACR_APP_NAME }}
+      BUILD_DEPLOY_API: ${{ inputs.runBuildDeployAPI }}
+      API_APP_PATH: ${{ needs.template-env.outputs.API_APP_PATH }}
+      API_ACR_APP_NAME: ${{ needs.template-env.outputs.API_ACR_APP_NAME }}
 
   # ------------------------------------------------------------------------------------------------------------------------
-  deploy-ui:
-    name: Deploy UI ${{ inputs.deployEnvironment }} ${{ inputs.deployType }}
+  deploy-api:
+    name: Deploy API ${{ inputs.deployEnvironment }} ${{ inputs.deployType }}
     uses: ./.github/workflows/template-aca-deploy.yml
-    if: inputs.runBuildDeployUI
+    if: inputs.runBuildDeployAPI
     needs:
       - build-all
       - template-env
@@ -143,8 +143,8 @@ jobs:
     with:
       ENV_CODE: ${{ needs.template-env.outputs.ENV_CODE }}
       RESOURCE_GROUP: ${{ needs.template-env.outputs.RESOURCE_GROUP_NAME }}
-      CONTAINER_APP_ENV_NAME: ${{ needs.build-all.outputs.UI_APP_PATH }}
-      CONTAINER_NAME: ${{ needs.template-env.outputs.UI_CONTAINER_APP_NAME }}
+      CONTAINER_APP_ENV_NAME: ${{ needs.build-all.outputs.API_APP_PATH }}
+      CONTAINER_NAME: ${{ needs.template-env.outputs.API_CONTAINER_APP_NAME }}
       ACR_NAME: ${{ needs.template-env.outputs.ACR_NAME }}
       IMAGE_NAME: ${{ needs.build-all.outputs.API_IMAGE_NAME }}
-      PORT: ${{ needs.template-env.outputs.UI_PORT }}
+      PORT: ${{ needs.template-env.outputs.API_PORT }}

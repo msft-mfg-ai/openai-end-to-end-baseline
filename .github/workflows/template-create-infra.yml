@@ -57,8 +57,8 @@ on:
         description: Add Role Assignments?
         type: boolean
         default: true
-      runBuildDeployUI:
-        description: Run Build and Deploy UI?
+      runBuildDeployAPI:
+        description: Run Build and Deploy API?
         type: boolean
         default: false
       loginUsingClientSecret:
@@ -99,7 +99,7 @@ jobs:
       createDnsZones: ${{ inputs.createDnsZones }}
       deployAIHub: ${{ inputs.deployAIHub }}
       addRoleAssignments: ${{ inputs.addRoleAssignments }}
-      runBuildDeployUI: ${{ inputs.runBuildDeployUI }}
+      runBuildDeployAPI: ${{ inputs.runBuildDeployAPI }}
       loginWithFederatedIdentity: ${{ secrets.CICD_CLIENT_SECRET == '' && 'true' || 'false' }}
       loginWithSecret: ${{ secrets.CICD_CLIENT_SECRET != '' && 'true' || 'false' }}
  

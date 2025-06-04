@@ -257,8 +257,8 @@ module vnet './modules/networking/vnet.bicep' = {
 module containerRegistry './modules/app/containerregistry.bicep' = {
   name: 'containerregistry${deploymentSuffix}'
   params: {
-    existingRegistryName: existing_ACR_Name
-    existing_ACR_ResourceGroupName: existing_ACR_ResourceGroupName
+    // existingRegistryName: existing_ACR_Name
+    // existing_ACR_ResourceGroupName: existing_ACR_ResourceGroupName
     newRegistryName: resourceNames.outputs.ACR_Name
     location: location
     acrSku: 'Premium'

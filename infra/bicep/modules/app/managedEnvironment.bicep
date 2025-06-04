@@ -23,7 +23,7 @@ resource logAnalyticsResource 'Microsoft.OperationalInsights/workspaces@2023-09-
   scope: resourceGroup(logAnalyticsRgName)
 }
 
-var logAnalyticsKey = logAnalyticsResource.listKeys().primarySharedKey
+//var logAnalyticsKey = logAnalyticsResource.listKeys().primarySharedKey
 var logAnalyticsCustomerId = logAnalyticsResource.properties.customerId
 
 // App Environment
