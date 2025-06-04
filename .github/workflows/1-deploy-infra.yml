@@ -69,11 +69,6 @@ on:
         required: false
         default: false
         type: boolean
-      loginUsingClientSecret:
-        description: Login using Client Secret?
-        required: false
-        default: false
-        type: boolean
           
 jobs:
   Deploy_Bicep:
