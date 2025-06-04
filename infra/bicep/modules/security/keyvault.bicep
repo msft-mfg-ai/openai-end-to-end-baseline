@@ -27,7 +27,7 @@ param enabledForDiskEncryption bool = true
 @description('Determine if soft delete is enabled on this Key Vault.')
 param enableSoftDelete bool = true
 @description('Determine if purge protection is enabled on this Key Vault.')
-param enablePurgeProtection bool = true
+param enablePurgeProtection bool = false
 @description('The number of days to retain soft deleted vaults and vault objects.')
 param softDeleteRetentionInDays int = 7
 @description('Determines if access to the objects granted using RBAC. When true, access policies are ignored.')
@@ -49,8 +49,9 @@ param createDaprIdentity bool = false
 @description('Override the default DAPR identity user name if you need to')
 param daprIdentityName string = '${keyVaultName}-dapr'
 
-@description('Optional array of role assignments')
-param roleAssignments array = []
+// Role assignments centralized in the iam/role-assignments.bicep file...
+// @description('Optional array of role assignments')
+// param roleAssignments array = []
 
 @description('The workspace to store audit logs.')
 @metadata({
@@ -99,48 +100,6 @@ var applicationUserPolicies = [for appUser in applicationUserObjectIds: {
 }]
 var accessPolicies = union(ownerAccessPolicy, adminAccessPolicies, applicationUserPolicies)
 
-// --> Copilot suggestion... not quite right... and this should be in the iam/role-assignments.bicep file
-// // RBAC is enabled via the useRBAC parameter and enableRbacAuthorization property on the Key Vault resource.
-// // Instead of access policies, assign built-in roles to users and applications as needed.
-// var rbacAssignments = [
-//   // Owner assignment
-//   keyVaultOwnerUserId == '' ? null : {
-//     name: guid(keyVaultResource.id, 'Owner', keyVaultOwnerUserId)
-//     principalId: keyVaultOwnerUserId
-//     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '00482a5a-887f-4fb3-b363-3b7fe8e74483') // Key Vault Administrator
-//     principalType: 'User'
-//   }
-// ] 
-// // Admin assignments
-// [for adminUser in adminUserObjectIds: {
-//     name: guid(keyVaultResource.id, 'Admin', adminUser)
-//     principalId: adminUser
-//     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '00482a5a-887f-4fb3-b363-3b7fe8e74483') // Key Vault Administrator
-//     principalType: 'User'
-//   }]
-// // Application assignments
-// [for appUser in applicationUserObjectIds: {
-//     name: guid(keyVaultResource.id, 'App', appUser)
-//     principalId: appUser
-//     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '4633458b-17de-408a-b874-0445c86b69e6') // Key Vault Secrets User
-//     principalType: 'ServicePrincipal'
-// }]
-// //| where(_) // filter out nulls
-
-// // Create RBAC assignments
-// resource keyVaultRbacAssignments 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for assignment in rbacAssignments: if (!useExistingVault) {
-//   name: assignment.name
-//   scope: keyVaultResource
-//   properties: {
-//     principalId: assignment.principalId
-//     roleDefinitionId: assignment.roleDefinitionId
-//     principalType: assignment.principalType
-//   }
-// }]
-
-
-
-
 var kvIpRules = keyVaultOwnerIpAddress == '' ? [] : [
   {
     value: keyVaultOwnerIpAddress
@@ -163,7 +122,7 @@ resource keyVaultResource 'Microsoft.KeyVault/vaults@2021-11-01-preview' = if (!
     }
     tenantId: subTenantId
     enableRbacAuthorization: useRBAC
-    accessPolicies: accessPolicies
+    accessPolicies: useRBAC ? [] : accessPolicies
     enabledForDeployment: enabledForDeployment
     enabledForDiskEncryption: enabledForDiskEncryption
     enabledForTemplateDeployment: enabledForTemplateDeployment
@@ -195,18 +154,19 @@ var userAssignedIdentityPolicies = (!createUserAssignedIdentity) ? [] : [{
   }
 }]
 
-// Create role assignments if provided
-resource roleAssignmentsResource 'Microsoft.Authorization/roleAssignments@2022-04-01' = [
-  for roleAssignment in roleAssignments: if (length(roleAssignments) > 0) {
-    name: guid(roleAssignment.principalId, roleAssignment.roleDefinitionId, keyVaultResource.id)
-    scope: keyVaultResource
-    properties: {
-      roleDefinitionId: resourceId('Microsoft.Authorization/roleDefinitions', roleAssignment.roleDefinitionId)
-      principalId: roleAssignment.principalId
-      principalType: roleAssignment.principalType
-    }
-  }
-]
+// // Role assignments centralized in the iam/role-assignments.bicep file...
+// // Create role assignments if provided
+// resource roleAssignmentsResource 'Microsoft.Authorization/roleAssignments@2022-04-01' = [
+//   for roleAssignment in roleAssignments: if (length(roleAssignments) > 0) {
+//     name: guid(roleAssignment.principalId, roleAssignment.roleDefinitionId, keyVaultResource.id)
+//     scope: keyVaultResource
+//     properties: {
+//       roleDefinitionId: resourceId('Microsoft.Authorization/roleDefinitions', roleAssignment.roleDefinitionId)
+//       principalId: roleAssignment.principalId
+//       principalType: roleAssignment.principalType
+//     }
+//   }
+// ]
 
 // this creates an identity for DAPR that can be used to get secrets
 resource daprIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2022-01-31-preview' = if (!useExistingVault && createDaprIdentity) {

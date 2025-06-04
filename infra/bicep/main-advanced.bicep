@@ -209,7 +209,7 @@ var commonTags = {
   'application-name': appName
   'application-id': applicationId
   'environment-name': environmentName
-  'otis-region': regionCode
+  'global-region': regionCode
   'requestor-name': requestorName
   'primary-support-provider': primarySupportProviderTag == '' ? 'UNKNOWN' : primarySupportProviderTag
 }
@@ -352,8 +352,8 @@ module keyVault './modules/security/keyvault.bicep' = {
     location: location
     commonTags: tags
     keyVaultName: resourceNames.outputs.keyVaultName
-    existingKeyVaultName: existing_KeyVault_Name
-    existingKeyVaultResourceGroupName: existing_KeyVault_ResourceGroupName
+    // existingKeyVaultName: existing_KeyVault_Name
+    // existingKeyVaultResourceGroupName: existing_KeyVault_ResourceGroupName
     keyVaultOwnerUserId: principalId
     adminUserObjectIds: [identity.outputs.managedIdentityPrincipalId]
     publicNetworkAccess: publicAccessEnabled ? 'Enabled' : 'Disabled'

@@ -173,7 +173,7 @@ param deployBatchApp bool = false
 param regionCode string = 'AM'
 
 @description('Instance number for the application, e.g. 001, 002, etc. This is used to differentiate multiple instances of the same application in the same environment.')
-param instanceNumber string = '01' // used to differentiate multiple instances of the same application in the same environment
+param instanceNumber string = '001' // used to differentiate multiple instances of the same application in the same environment
 
 // --------------------------------------------------------------------------------------------------------------
 // Additional Tags that may be included or not
@@ -208,7 +208,7 @@ var commonTags = {
   'application-name': appName
   'application-id': applicationId
   'environment-name': environmentName
-  'otis-region': regionCode
+  'global-region': regionCode
   'requestor-name': requestorName
   'primary-support-provider': primarySupportProviderTag == '' ? 'UNKNOWN' : primarySupportProviderTag
 }
@@ -345,23 +345,6 @@ module adminUserRoleAssignments './modules/iam/role-assignments.bicep' = if (add
   }
 }
 
-var roleDefinitions = loadJsonContent('./data/roleDefinitions.json')
-var userKeyVaultRoleAssignment = principalId == '' ? [] : [
-  {
-    principalId: principalId
-    roleDefinitionId: roleDefinitions.keyvault.secretsOfficer
-    principalType: 'User'
-  }
-]
-var appKeyVaultRoleAssignment = [
-  {
-    principalId: identity.outputs.managedIdentityPrincipalId
-    roleDefinitionId: roleDefinitions.keyvault.secretsOfficer
-    principalType: 'ServicePrincipal'
-  }
-]
-var allRoleAssignments = union(userKeyVaultRoleAssignment, appKeyVaultRoleAssignment)
-
 module keyVault './modules/security/keyvault.bicep' = {
   name: 'keyvault${deploymentSuffix}'
   params: {
@@ -377,7 +360,6 @@ module keyVault './modules/security/keyvault.bicep' = {
     createUserAssignedIdentity: false
     privateEndpointName: 'pe-${resourceNames.outputs.keyVaultName}'
     privateEndpointSubnetId: vnet.outputs.subnet1ResourceId
-    roleAssignments: allRoleAssignments
   }
 }
 
