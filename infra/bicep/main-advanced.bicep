@@ -158,7 +158,7 @@ param createDnsZones bool = true
 @description('Add Role Assignments for the user assigned identity?')
 param addRoleAssignments bool = true
 @description('Should we run a script to dedupe the KeyVault secrets? (this fails on private networks right now)')
-param deduplicateKeyVaultSecrets bool = true
+param deduplicateKeyVaultSecrets bool = false
 @description('Set this if you want to append all the resource names with a unique token')
 param appendResourceTokens bool = false
 
@@ -168,13 +168,6 @@ param appendResourceTokens bool = false
 param deployAPIApp bool = false
 @description('Should Batch container app be deployed?')
 param deployBatchApp bool = false
-
-@description('Global Region where the resources will be deployed, e.g. AM (America), EM (EMEA), AP (APAC), CH (China)')
-@allowed(['AM', 'EM', 'AP', 'CH'])
-param regionCode string = 'AM'
-
-@description('Instance number for the application, e.g. 001, 002, etc. This is used to differentiate multiple instances of the same application in the same environment.')
-param instanceNumber string = '001' // used to differentiate multiple instances of the same application in the same environment
 
 @description('Global Region where the resources will be deployed, e.g. AM (America), EM (EMEA), AP (APAC), CH (China)')
 @allowed(['AM', 'EM', 'AP', 'CH'])
@@ -740,8 +733,8 @@ output AI_HUB_ID string = deployAIHub ? aiHub.outputs.id : ''
 output AI_HUB_NAME string = deployAIHub ? aiHub.outputs.name : ''
 output AI_PROJECT_NAME string = resourceNames.outputs.aiHubProjectName
 output AI_SEARCH_ENDPOINT string = searchService.outputs.endpoint
-output API_CONTAINER_APP_FQDN string = containerAppAPI.outputs.fqdn
-output API_CONTAINER_APP_NAME string = containerAppAPI.outputs.name
+output API_CONTAINER_APP_FQDN string = deployAPIApp ? containerAppAPI.outputs.fqdn : ''
+output API_CONTAINER_APP_NAME string = deployAPIApp ? containerAppAPI.outputs.name : ''
 output API_KEY string = apiKeyValue
 output AZURE_CONTAINER_ENVIRONMENT_NAME string = managedEnvironment.outputs.name
 output AZURE_CONTAINER_REGISTRY_ENDPOINT string = containerRegistry.outputs.loginServer
