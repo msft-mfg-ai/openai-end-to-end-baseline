@@ -4,29 +4,37 @@
 // Anything that starts with a # and a { is a variable that will be replaced at runtime.
 // --------------------------------------------------------------------------------
 // The following values should be defined in GitHub Secrets or Environment Variables:
-//   APP_NAME          - GH Repository Variable - no need to override
-//   AGW_CERT          - GH Env Secret - AGW Certificate - BYO Certificate
-//   ADMIN_PW          - GH Env Secret - Jump Box Admin Password - BYO Password
-//   USER_PRINCIPAL_ID - GH Env Secret - User Principal ID - this is you - BYO User
-//   runBuildDeployAPI - Runtime  - User decision to deploy webapp or not
-//   envCode           - Runtime  - Environment Code (e.g., dev, qa, prod)
+//   APP_NAME            - GH Repository Variable - no need to override
+//   APP_ID              - GH Repository Variable - no need to override
+//   USER_PRINCIPAL_ID   - GH Environment Secret - User Principal ID - this is you - BYO User
+//   INSTANCE_NUMBER     - GH Environment Variable
+//   OWNER_EMAIL         - GH Environment Variable - optional
+//   runBuildDeployAPI    - Runtime  - User decision to deploy webapp or not
+//   environmentName     - Runtime  - Environment Code (e.g., dev, qa, prod)
 // --------------------------------------------------------------------------------
 
 using './main-advanced.bicep'
 
 param applicationName = '#{APP_NAME}#'
+param applicationId = '#{APP_ID}#'
 param environmentName = '#{envCode}#'
 param principalId = '#{USER_PRINCIPAL_ID}#'
-param deployUIApp = #{runBuildDeployUI}#  // Should we deploy the web app?
-
-param openAI_deploy_location = '#{OPENAI_DEPLOY_LOCATION}#'
-param appendResourceTokens = false
+param instanceNumber = '#{INSTANCE_NUMBER}#'
+param ownerEmailTag = '#{OWNER_EMAIL}#' 
+param requestorName= '#{requestorName}#'
+param regionCode = 'AM'
+param costCenterTag = 'CC'
 param addRoleAssignments = #{addRoleAssignments}#
 param createDnsZones = #{createDnsZones}#
 param publicAccessEnabled = #{publicAccessEnabled}#
-param myIpAddress = '#{ADMIN_IP_ADDRESS}#'
 param deployAIHub = #{deployAIHub}#
-param deployBatchApp = #{deployBatchApp}#
+param deployAPIApp = #{runBuildDeployAPI}#  // Should we deploy the web app?
+// param deployUIApp = #{runBuildDeployUI}#  // Should we deploy the web app?
+// param deployBatchApp = #{deployBatchApp}#
+
+// param openAI_deploy_location = '#{OPENAI_DEPLOY_LOCATION}#'
+// param appendResourceTokens = false
+// param myIpAddress = '#{ADMIN_IP_ADDRESS}#'
 
 // param existingVnetName = '#{APP_NAME_NO_DASHES}#-vnet-#{envCode}#'
 // param existingVnetResourceGroupName = '#{RESOURCEGROUP_PREFIX}#-#{envCode}#'

@@ -38,7 +38,7 @@ on:
       # instance: # moved to GH Variable
       #   description: Instance number for resource naming
       #   type: string
-      #   default: '01'
+      #   default: '001'
       createResourceGroup:
         description: Create Resource Group?
         type: boolean
@@ -59,8 +59,13 @@ on:
         description: Deploy AI Hub?
         type: boolean
         default: true
-      runBuildDeployUI:
-        description: Build and Deploy UI
+      runBuildDeployAPI:
+        description: Build and Deploy API
+        required: false
+        default: false
+        type: boolean
+      loginUsingClientSecret:
+        description: Login using Client Secret?
         required: false
         default: false
         type: boolean
@@ -91,6 +96,6 @@ jobs:
       createDnsZones: ${{ inputs.createDnsZones }}
       deployAIHub: ${{ inputs.deployAIHub }}
       addRoleAssignments: ${{ inputs.addRoleAssignments }}
-      runBuildDeployUI: ${{ inputs.runBuildDeployUI }}
+      runBuildDeployAPI: ${{ inputs.runBuildDeployAPI }}
       #instance: ${{ vars.INSTANCE_NUMBER }}
       loginUsingClientSecret: ${{ inputs.loginUsingClientSecret }}
