@@ -122,7 +122,7 @@ jobs:
           echo "vars.RESOURCEGROUP_PREFIX=${{ vars.RESOURCEGROUP_PREFIX }}"
           echo "vars.RESOURCEGROUP_LOCATION=${{ vars.RESOURCEGROUP_LOCATION }}"
           echo "env.loginWithSecret=${{ env.loginWithSecret }}"
-          echo "env.loginWithSecretTest=${{ env.loginWithSecretTest }}"
+          echo "env.loginWithFederatedIdentity=${{ env.loginWithFederatedIdentity }}"
 
           echo "templatePath=${{ inputs.templatePath }}"
           echo "templateFile=${{ inputs.templateFile }}"
