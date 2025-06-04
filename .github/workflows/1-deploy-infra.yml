@@ -64,6 +64,11 @@ on:
         required: false
         default: false
         type: boolean
+      loginUsingClientSecret:
+        description: Login using Client Secret?
+        required: false
+        default: false
+        type: boolean
           
 jobs:
   Deploy_Bicep:
@@ -88,4 +93,4 @@ jobs:
       addRoleAssignments: ${{ inputs.addRoleAssignments }}
       runBuildDeployUI: ${{ inputs.runBuildDeployUI }}
       #instance: ${{ vars.INSTANCE_NUMBER }}
-      loginUsingClientSecret: ${{ secrets.CICD_CLIENT_SECRET != '' && 'true' || 'false' }}
+      loginUsingClientSecret: ${{ inputs.loginUsingClientSecret }}
