@@ -22,6 +22,7 @@ resource logAnalyticsResource 'Microsoft.OperationalInsights/workspaces@2023-09-
   name: logAnalyticsWorkspaceName
   scope: resourceGroup(logAnalyticsRgName)
 }
+
 var logAnalyticsKey = logAnalyticsResource.listKeys().primarySharedKey
 var logAnalyticsCustomerId = logAnalyticsResource.properties.customerId
 
@@ -41,7 +42,8 @@ resource newAppEnvironmentResource 'Microsoft.App/managedEnvironments@2024-03-01
         customerId: logAnalyticsCustomerId
         // this key is internal to this file only, so security risk in  exposing it
         // bicep:disable-next-line no-literal-secrets
-        sharedKey: logAnalyticsKey
+        sharedKey: logAnalyticsResource.listKeys().primarySharedKey
+        //sharedKey: logAnalyticsKey
       }
     }
     vnetConfiguration: !empty(appSubnetId) ? {
