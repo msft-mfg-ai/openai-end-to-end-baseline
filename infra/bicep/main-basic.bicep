@@ -532,12 +532,12 @@ module documentIntelligence './modules/ai/document-intelligence.bicep' = {
   params: {
     //existing_CogServices_Name: '' //existing_DocumentIntelligence_Name
     //existing_CogServices_ResourceGroupName: '' //existing_DocumentIntelligence_RG_Name
-    name: resourceNames.outputs.documentIntelligenceServiceName
+    name: resourceNames.outputs.documentIntelligenceName
     location: location // this may be different than the other resources
     tags: tags
     publicNetworkAccess: publicAccessEnabled ? 'enabled' : 'disabled'
     privateEndpointSubnetId: vnet.outputs.subnet1ResourceId
-    privateEndpointName: 'pe-${resourceNames.outputs.documentIntelligenceServiceName}'
+    privateEndpointName: 'pe-${resourceNames.outputs.documentIntelligenceName}'
     myIpAddress: myIpAddress
     managedIdentityId: identity.outputs.managedIdentityId
   }
