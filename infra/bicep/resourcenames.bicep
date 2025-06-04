@@ -7,8 +7,9 @@ param applicationName string = ''
 @description('Environment name for the application, e.g. azd, dev, demo, qa, stg, ct, prod. This is used to differentiate resources in different environments.')
 param environmentName string = 'dev'
 
-@description('Azure region where the resources will be deployed, e.g. eastus, westus, etc.')
-param region string = ''
+@description('Global Region where the resources will be deployed, e.g. AM (America), EM (EMEA), AP (APAC), CH (China)')
+@allowed(['AM', 'EM', 'AP', 'CH'])
+param regionCode string = 'AM'
 
 @description('Instance number for the application, e.g. 001, 002, etc. This is used to differentiate multiple instances of the same application in the same environment.')
 param instance string = ''
@@ -26,9 +27,9 @@ var sanitizedAppName = replace(replace(replace(toLower(applicationName), ' ', ''
 var resourceTokenWithDash = resourceToken == '' ? '' : '-${resourceToken}'
 var resourceTokenWithoutDash = resourceToken == '' ? '' : '${resourceToken}'
 
-var dashRegionDashInstance = instance == '' ? '' : '-${region}-${instance}'
+var dashRegionDashInstance = instance == '' ? '' : '-${regionCode}-${instance}'
 var dashInstance = instance == '' ? '' : '-${instance}'
-var regionInstance = instance == '' ? '' : '${region}${instance}'
+var regionInstance = instance == '' ? '' : '${regionCode}${instance}'
 
 // pull resource abbreviations from a common JSON file
 var resourceAbbreviations = loadJsonContent('./data/abbreviation.json')

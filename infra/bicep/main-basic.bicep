@@ -16,13 +16,10 @@
 //    APIM (may already have existing instance)
 //
 //  Optional Services:
-// 		Azure AI Search (?)
+//    Azure AI Search (?)
 //    Bing Grounding (?)
 //    Document Intelligence (?)
 //
-// --------------------------------------------------------------------------------------------------------------
-//   Deploy with existing resources specified in a parameter file:
-//     az deployment group create -n manual --resource-group rg_smart_flow_test --template-file 'main.bicep' --parameters main-complete-existing.bicepparam
 // --------------------------------------------------------------------------------------------------------------
 
 targetScope = 'resourceGroup'
@@ -53,9 +50,9 @@ param myIpAddress string = ''
 @description('Id of the user executing the deployment')
 param principalId string = ''
 
-// // --------------------------------------------------------------------------------------------------------------
-// // Existing networks?
-// // --------------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------
+// Existing networks?
+// --------------------------------------------------------------------------------------------------------------
 @description('If you provide this is will be used instead of creating a new VNET')
 param existingVnetName string = ''
 @description('If you provide an existing VNET what resource group is it in?')
@@ -163,21 +160,25 @@ param addRoleAssignments bool = true
 param deduplicateKeyVaultSecrets bool = true
 @description('Set this if you want to append all the resource names with a unique token')
 param appendResourceTokens bool = false
+
 @description('Should UI container app be deployed?')
 param deployUIApp bool = true
 
+@description('Global Region where the resources will be deployed, e.g. AM (America), EM (EMEA), AP (APAC), CH (China)')
+@allowed(['AM', 'EM', 'AP', 'CH'])
+param regionCode string = 'AM'
+
 @description('Instance number for the application, e.g. 001, 002, etc. This is used to differentiate multiple instances of the same application in the same environment.')
-param instanceNumber string = '01' // used to differentiate multiple instances of the same application in the same environment
+param instanceNumber string = '001' // used to differentiate multiple instances of the same application in the same environment
 
 // --------------------------------------------------------------------------------------------------------------
 // Additional Tags that may be included or not
 // --------------------------------------------------------------------------------------------------------------
 param costCenterTag string = ''
 param ownerEmailTag string = ''
-param businessFunctionTag string = ''
-param networkModelTag string = ''
-param serverTypeTag string = ''
-param patchGroupTag string = ''
+param requestorName string = 'UNKNOWN'
+param applicationId string = ''
+param primarySupportProviderTag string = ''
 
 // --------------------------------------------------------------------------------------------------------------
 // A variable masquerading as a parameter to allow for dynamic value assignment in Bicep
@@ -199,23 +200,21 @@ var deploymentSuffix = '-${runDateTime}'
 var azdTag = azdEnvName != '' ? { 'azd-env-name': azdEnvName } : {}
 
 var commonTags = {
-  Start_Date: runDateTime
-  Application: appName
-  Environment_Name: environmentName
-  Region: location
+  'creation-date': take(runDateTime, 8)
+  'application-name': appName
+  'application-id': applicationId
+  'environment-name': environmentName
+  'otis-region': regionCode
+  'requestor-name': requestorName
+  'primary-support-provider': primarySupportProviderTag == '' ? 'UNKNOWN' : primarySupportProviderTag
 }
-var costCenterTagObject = costCenterTag == '' ? {} :  { Cost_Code: costCenterTag }
+var costCenterTagObject = costCenterTag == '' ? {} :  { 'cost-center': costCenterTag }
 var ownerEmailTagObject = ownerEmailTag == '' ? {} :  { 
-  Application_Owner: ownerEmailTag
-  Business_Owner: ownerEmailTag
-  Point_Of_Contact: ownerEmailTag
+  'application-owner': ownerEmailTag
+  'business-owner': ownerEmailTag
+  'point-of-contact': ownerEmailTag
 }
-var businessFunctionTagObject = businessFunctionTag == '' ? {} : { Business_Function: businessFunctionTag }
-var networkModelTagObject = networkModelTag == '' ? {} : { Network_Model: networkModelTag }
-var serverTypeTagObject = serverTypeTag == '' ? {} : { Server_Type: serverTypeTag }
-var patchGroupTagObject = patchGroupTag == '' ? {} : { Patch_Group: patchGroupTag }
-
-var tags = union(commonTags, azdTag, costCenterTagObject, ownerEmailTagObject, businessFunctionTagObject, networkModelTagObject, serverTypeTagObject, patchGroupTagObject)
+var tags = union(commonTags, azdTag, costCenterTagObject, ownerEmailTagObject)
 
 // Run a script to dedupe the KeyVault secrets -- this fails on private networks right now so turn if off for them
 var deduplicateKVSecrets = publicAccessEnabled ? deduplicateKeyVaultSecrets : false
@@ -229,7 +228,7 @@ module resourceNames 'resourcenames.bicep' = {
     applicationName: appName
     environmentName: environmentName
     resourceToken: appendResourceTokens ? resourceToken : ''
-    region: location
+    regionCode: regionCode
     instance: instanceNumber
   }
 }
@@ -258,8 +257,8 @@ module vnet './modules/networking/vnet.bicep' = {
 module containerRegistry './modules/app/containerregistry.bicep' = {
   name: 'containerregistry${deploymentSuffix}'
   params: {
-    // existingRegistryName: existing_ACR_Name
-    // existing_ACR_ResourceGroupName: existing_ACR_ResourceGroupName
+    existingRegistryName: existing_ACR_Name
+    existing_ACR_ResourceGroupName: existing_ACR_ResourceGroupName
     newRegistryName: resourceNames.outputs.ACR_Name
     location: location
     acrSku: 'Premium'

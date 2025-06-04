@@ -31,7 +31,7 @@ on:
       # instance: # moved to GH Variable
       #   description: Instance number for resource naming
       #   type: string
-      #   default: '01'
+      #   default: '001'
 
 permissions:
   id-token: write # This is required for requesting the JWT

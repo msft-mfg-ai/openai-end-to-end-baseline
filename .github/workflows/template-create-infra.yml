@@ -65,11 +65,15 @@ on:
         description: Login using Client Secret?
         type: boolean
         default: false
+      requestorName:
+        description: Requestor Name
+        type: string
+        default: '${{ github.actor }}'
 
       # instance:
       #   description: Instance number for resource naming
       #   type: string
-      #   default: '01'
+      #   default: '001'
 
 # ------------------------------------------------------------------------------------------------------------------------
 jobs:
