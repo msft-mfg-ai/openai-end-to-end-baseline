@@ -27,6 +27,7 @@ param costCenterTag = 'CC'
 param addRoleAssignments = #{addRoleAssignments}#
 param createDnsZones = #{createDnsZones}#
 param publicAccessEnabled = #{publicAccessEnabled}#
+
 param deployAIHub = #{deployAIHub}#
 param deployAPIApp = #{runBuildDeployAPI}#  // Should we deploy the web app?
 // param deployUIApp = #{runBuildDeployUI}#  // Should we deploy the web app?

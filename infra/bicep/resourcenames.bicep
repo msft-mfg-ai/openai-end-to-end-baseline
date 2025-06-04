@@ -27,9 +27,9 @@ var sanitizedAppName = replace(replace(replace(toLower(applicationName), ' ', ''
 var resourceTokenWithDash = resourceToken == '' ? '' : '-${resourceToken}'
 var resourceTokenWithoutDash = resourceToken == '' ? '' : '${resourceToken}'
 
-var dashRegionDashInstance = instance == '' ? '' : '-${regionCode}-${instance}'
+var dashRegionDashInstance = instance == '' ? '' : toLower('-${regionCode}-${instance}')
 var dashInstance = instance == '' ? '' : '-${instance}'
-var regionInstance = instance == '' ? '' : '${regionCode}${instance}'
+var regionInstance = instance == '' ? '' : toLower('${regionCode}${instance}')
 
 // pull resource abbreviations from a common JSON file
 var resourceAbbreviations = loadJsonContent('./data/abbreviation.json')
