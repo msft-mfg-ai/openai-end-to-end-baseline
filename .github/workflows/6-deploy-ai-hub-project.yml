@@ -53,7 +53,7 @@ jobs:
       pages: write
     with:
       envCode: ${{ inputs.deployEnvironment }}
-      resourceGroupName: ${{ vars.RESOURCEGROUP_PREFIX }}-${{ inputs.deployEnvironment }}-${{ vars.RESOURCEGROUP_LOCATION }}-${{ vars.INSTANCE_NUMBER }}
+      resourceGroupName: ${{ vars.RESOURCEGROUP_PREFIX }}-${{ inputs.deployEnvironment }}-${{ vars.GLOBAL_REGION_CODE }}-${{ vars.INSTANCE_NUMBER }}
       templatePath: './infra/bicep/'
       templateFile: 'find-ai-hub-id.bicep'
       parameterFile: 'find-ai-hub-id.gh.bicepparam'

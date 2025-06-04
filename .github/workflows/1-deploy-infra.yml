@@ -35,10 +35,7 @@ on:
         description: Parameter File
         required: true
         default: 'main-basic.dynamic.bicepparam'
-      # instance: # moved to GH Variable
-      #   description: Instance number for resource naming
-      #   type: string
-      #   default: '001'
+        type: string
       createResourceGroup:
         description: Create Resource Group?
         type: boolean
