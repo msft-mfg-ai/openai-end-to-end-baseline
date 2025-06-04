@@ -39,6 +39,8 @@ resource newAppEnvironmentResource 'Microsoft.App/managedEnvironments@2024-03-01
       destination: 'log-analytics'
       logAnalyticsConfiguration: {
         customerId: logAnalyticsCustomerId
+        // this key is internal to this file only, so security risk in  exposing it
+        // bicep:disable-next-line no-literal-secrets
         sharedKey: logAnalyticsKey
       }
     }
