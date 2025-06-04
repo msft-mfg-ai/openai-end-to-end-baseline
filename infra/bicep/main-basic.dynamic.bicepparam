@@ -19,7 +19,6 @@ param applicationName = '#{APP_NAME}#'
 param applicationId = '#{APP_ID}#'
 param environmentName = '#{envCode}#'
 param principalId = '#{USER_PRINCIPAL_ID}#'
-param deployUIApp = #{runBuildDeployAPI}#  // Should we deploy the web app?
 param instanceNumber = '#{INSTANCE_NUMBER}#'
 param ownerEmailTag = '#{OWNER_EMAIL}#' 
 param requestorName= '#{requestorName}#'
@@ -30,5 +29,6 @@ param createDnsZones = #{createDnsZones}#
 param publicAccessEnabled = #{publicAccessEnabled}#
 param deployAIHub = #{deployAIHub}#
 param deployAPIApp = #{runBuildDeployAPI}#  // Should we deploy the web app?
+// param deployUIApp = #{runBuildDeployUI}#  // Should we deploy the web app?
 // param deployBatchApp = #{deployBatchApp}#
 

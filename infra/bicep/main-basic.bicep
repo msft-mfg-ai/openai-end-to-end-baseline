@@ -161,8 +161,12 @@ param deduplicateKeyVaultSecrets bool = true
 @description('Set this if you want to append all the resource names with a unique token')
 param appendResourceTokens bool = false
 
-@description('Should UI container app be deployed?')
-param deployUIApp bool = true
+// @description('Should UI container app be deployed?')
+// param deployUIApp bool = false
+@description('Should API container app be deployed?')
+param deployAPIApp bool = true
+@description('Should Batch container app be deployed?')
+param deployBatchApp bool = true
 
 @description('Global Region where the resources will be deployed, e.g. AM (America), EM (EMEA), AP (APAC), CH (China)')
 @allowed(['AM', 'EM', 'AP', 'CH'])
@@ -651,7 +655,7 @@ var apiSettings = [
   { name: 'StorageAccountName', value: storage.outputs.name }
 ]
 
-module containerAppAPI './modules/app/containerappstub.bicep' = {
+module containerAppAPI './modules/app/containerappstub.bicep' = if (deployAPIApp) {
   name: 'ca-api-stub${deploymentSuffix}'
   params: {
     appName: resourceNames.outputs.containerAppAPIName
@@ -691,7 +695,7 @@ var batchSettings = union(apiSettings, [
   { name: 'CosmosDbContainerName', value: uiChatContainerName }
   { name: 'MaxBatchSize', value: '10' }
 ])
-module containerAppBatch './modules/app/containerappstub.bicep' = if (deployUIApp) {
+module containerAppBatch './modules/app/containerappstub.bicep' = if (deployBatchApp) {
   name: 'ca-batch-stub${deploymentSuffix}'
   params: {
     appName: resourceNames.outputs.containerAppBatchName

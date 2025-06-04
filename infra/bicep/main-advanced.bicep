@@ -162,6 +162,8 @@ param deduplicateKeyVaultSecrets bool = true
 @description('Set this if you want to append all the resource names with a unique token')
 param appendResourceTokens bool = false
 
+// @description('Should UI container app be deployed?')
+// param deployUIApp bool = false
 @description('Should API container app be deployed?')
 param deployAPIApp bool = true
 @description('Should Batch container app be deployed?')
