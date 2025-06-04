@@ -23,6 +23,7 @@ var resourceTokenWithDash = resourceToken == '' ? '' : '-${resourceToken}'
 var resourceTokenWithoutDash = resourceToken == '' ? '' : '${resourceToken}'
 
 var dashRegionDashInstance = instance == '' ? '' : '-${region}-${instance}'
+var dashInstance = instance == '' ? '' : '-${instance}'
 var regionInstance = instance == '' ? '' : '${region}${instance}'
 
 // pull resource abbreviations from a common JSON file
@@ -45,14 +46,20 @@ output searchServiceName string           = toLower('${sanitizedAppName}-${resou
 output cogServiceName string              = toLower('${sanitizedAppName}-${resourceAbbreviations.cognitiveServicesAccounts}-${sanitizedEnvironment}${resourceTokenWithDash}${dashRegionDashInstance}')
 output documentIntelligenceServiceName string = toLower('${sanitizedAppName}-${resourceAbbreviations.cognitiveServicesFormRecognizer}${sanitizedEnvironment}${resourceTokenWithDash}${dashRegionDashInstance}')
 
+// The specified resource name mfgailz-hub-project-lyle-eastus2-01 is not allowed for type workspace. 
+// Name should comply with the regex: ^[a-zA-Z0-9][a-zA-Z0-9_-]{2,32}$.
 output aiHubName string                   = toLower('${sanitizedAppName}-${resourceAbbreviations.cognitiveServicesHub}-${sanitizedEnvironment}${resourceTokenWithDash}${dashRegionDashInstance}')
-output aiHubProjectName string            = toLower('${sanitizedAppName}-${resourceAbbreviations.cognitiveServicesHub}-Project-${sanitizedEnvironment}${resourceTokenWithDash}${dashRegionDashInstance}')
+output aiHubProjectName string            = take(toLower('${sanitizedAppName}-${resourceAbbreviations.cognitiveServicesHub}-Project-${sanitizedEnvironment}${resourceTokenWithDash}${dashInstance}'), 32)
+//output aiHubProjectName string            = toLower('${sanitizedAppName}-${resourceAbbreviations.cognitiveServicesHub}-Project-${sanitizedEnvironment}${resourceTokenWithDash}${dashRegionDashInstance}')
 
 output caManagedEnvName string            = toLower('${sanitizedAppName}-${resourceAbbreviations.appManagedEnvironments}-${sanitizedEnvironment}${resourceToken}${dashRegionDashInstance}')
 // CA name must be lower case alpha or '-', must start and end with alpha, cannot have '--', length must be <= 32
-output containerAppAPIName string         = take(toLower('${sanitizedAppName}-${resourceAbbreviations.appContainerApps}-api-${sanitizedEnvironment}${resourceTokenWithDash}${dashRegionDashInstance}'), 32)
-output containerAppUIName string          = take(toLower('${sanitizedAppName}-${resourceAbbreviations.appContainerApps}-ui-${sanitizedEnvironment}${resourceTokenWithDash}${dashRegionDashInstance}'), 32)
-output containerAppBatchName string       = take(toLower('${sanitizedAppName}-${resourceAbbreviations.appContainerApps}-batch-${sanitizedEnvironment}${resourceTokenWithDash}${dashRegionDashInstance}'), 32)
+output containerAppAPIName string         = take(toLower('${sanitizedAppName}-${resourceAbbreviations.appContainerApps}-api-${sanitizedEnvironment}${resourceTokenWithDash}${dashInstance}'), 32)
+output containerAppUIName string          = take(toLower('${sanitizedAppName}-${resourceAbbreviations.appContainerApps}-ui-${sanitizedEnvironment}${resourceTokenWithDash}${dashInstance}'), 32)
+output containerAppBatchName string       = take(toLower('${sanitizedAppName}-${resourceAbbreviations.appContainerApps}-batch-${sanitizedEnvironment}${resourceTokenWithDash}${dashInstance}'), 32)
+// output containerAppAPIName string         = take(toLower('${sanitizedAppName}-${resourceAbbreviations.appContainerApps}-api-${sanitizedEnvironment}${resourceTokenWithDash}${dashRegionDashInstance}'), 32)
+// output containerAppUIName string          = take(toLower('${sanitizedAppName}-${resourceAbbreviations.appContainerApps}-ui-${sanitizedEnvironment}${resourceTokenWithDash}${dashRegionDashInstance}'), 32)
+// output containerAppBatchName string       = take(toLower('${sanitizedAppName}-${resourceAbbreviations.appContainerApps}-batch-${sanitizedEnvironment}${resourceTokenWithDash}${dashRegionDashInstance}'), 32)
 
 output caManagedIdentityName string       = toLower('${sanitizedAppName}-${resourceAbbreviations.appManagedEnvironments}-${resourceAbbreviations.managedIdentityUserAssignedIdentities}-${sanitizedEnvironment}${resourceToken}${dashRegionDashInstance}')
 output kvManagedIdentityName string       = toLower('${sanitizedAppName}-${resourceAbbreviations.keyVaultVaults}-${resourceAbbreviations.managedIdentityUserAssignedIdentities}-${sanitizedEnvironment}${resourceToken}${dashRegionDashInstance}')
