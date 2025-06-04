@@ -91,9 +91,9 @@ jobs:
       deployAIHub: ${{ inputs.deployAIHub }}
       addRoleAssignments: ${{ inputs.addRoleAssignments }}
       runBuildDeployUI: ${{ inputs.runBuildDeployUI }}
-      loginWithSecret: false
-      loginWithSecretTest: ${{ secrets.CICD_CLIENT_SECRET != '' && 'true' || 'false' }}
-
+      loginWithSecret: ${{ secrets.CICD_CLIENT_SECRET != '' && 'true' || 'false' }}
+      loginWithFederatedIdentity: ${{ secrets.CICD_CLIENT_SECRET == '' && 'true' || 'false' }}
+ 
     # ------------------------------------------------------------------------------------------------------------------------
     # Outputs
     # ------------------------------------------------------------------------------------------------------------------------
@@ -123,7 +123,7 @@ jobs:
           echo "vars.RESOURCEGROUP_LOCATION=${{ vars.RESOURCEGROUP_LOCATION }}"
           echo "env.loginWithSecret=${{ env.loginWithSecret }}"
           echo "env.loginWithSecretTest=${{ env.loginWithSecretTest }}"
-          
+
           echo "templatePath=${{ inputs.templatePath }}"
           echo "templateFile=${{ inputs.templateFile }}"
           echo "templateFilePath=${{ inputs.templatePath }}${{ inputs.templateFile }}"
@@ -163,7 +163,7 @@ jobs:
 
       # https://learn.microsoft.com/en-us/entra/workload-id/workload-identity-federation-create-trust
       - name: OIDC Login to Azure
-        if: ${{ inputs.runCreateInfra && !env.loginWithSecret }}
+        if: ${{ inputs.runCreateInfra && env.loginWithFederatedIdentity }}
         uses: azure/login@v2
         with:
           client-id: ${{ secrets.CICD_CLIENT_ID }}
