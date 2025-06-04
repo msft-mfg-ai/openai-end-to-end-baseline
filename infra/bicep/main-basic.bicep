@@ -350,12 +350,14 @@ var userKeyVaultRoleAssignment = principalId == '' ? [] : [
   {
     principalId: principalId
     roleDefinitionId: roleDefinitions.keyvault.secretsOfficer
+    principalType: 'User'
   }
 ]
 var appKeyVaultRoleAssignment = [
   {
     principalId: identity.outputs.managedIdentityPrincipalId
     roleDefinitionId: roleDefinitions.keyvault.secretsOfficer
+    principalType: 'ServicePrincipal'
   }
 ]
 var allRoleAssignments = union(userKeyVaultRoleAssignment, appKeyVaultRoleAssignment)

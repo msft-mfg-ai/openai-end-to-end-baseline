@@ -203,7 +203,7 @@ resource roleAssignmentsResource 'Microsoft.Authorization/roleAssignments@2022-0
     properties: {
       roleDefinitionId: resourceId('Microsoft.Authorization/roleDefinitions', roleAssignment.roleDefinitionId)
       principalId: roleAssignment.principalId
-      principalType: 'ServicePrincipal'
+      principalType: roleAssignment.principalType
     }
   }
 ]
