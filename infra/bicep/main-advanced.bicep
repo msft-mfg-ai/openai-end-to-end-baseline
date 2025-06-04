@@ -176,6 +176,13 @@ param regionCode string = 'AM'
 @description('Instance number for the application, e.g. 001, 002, etc. This is used to differentiate multiple instances of the same application in the same environment.')
 param instanceNumber string = '001' // used to differentiate multiple instances of the same application in the same environment
 
+@description('Global Region where the resources will be deployed, e.g. AM (America), EM (EMEA), AP (APAC), CH (China)')
+@allowed(['AM', 'EM', 'AP', 'CH'])
+param regionCode string = 'AM'
+
+@description('Instance number for the application, e.g. 001, 002, etc. This is used to differentiate multiple instances of the same application in the same environment.')
+param instanceNumber string = '001' // used to differentiate multiple instances of the same application in the same environment
+
 // --------------------------------------------------------------------------------------------------------------
 // Additional Tags that may be included or not
 // --------------------------------------------------------------------------------------------------------------

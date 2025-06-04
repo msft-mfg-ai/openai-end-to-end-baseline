@@ -100,6 +100,48 @@ var applicationUserPolicies = [for appUser in applicationUserObjectIds: {
 }]
 var accessPolicies = union(ownerAccessPolicy, adminAccessPolicies, applicationUserPolicies)
 
+// --> Copilot suggestion... not quite right... and this should be in the iam/role-assignments.bicep file
+// // RBAC is enabled via the useRBAC parameter and enableRbacAuthorization property on the Key Vault resource.
+// // Instead of access policies, assign built-in roles to users and applications as needed.
+// var rbacAssignments = [
+//   // Owner assignment
+//   keyVaultOwnerUserId == '' ? null : {
+//     name: guid(keyVaultResource.id, 'Owner', keyVaultOwnerUserId)
+//     principalId: keyVaultOwnerUserId
+//     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '00482a5a-887f-4fb3-b363-3b7fe8e74483') // Key Vault Administrator
+//     principalType: 'User'
+//   }
+// ] 
+// // Admin assignments
+// [for adminUser in adminUserObjectIds: {
+//     name: guid(keyVaultResource.id, 'Admin', adminUser)
+//     principalId: adminUser
+//     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '00482a5a-887f-4fb3-b363-3b7fe8e74483') // Key Vault Administrator
+//     principalType: 'User'
+//   }]
+// // Application assignments
+// [for appUser in applicationUserObjectIds: {
+//     name: guid(keyVaultResource.id, 'App', appUser)
+//     principalId: appUser
+//     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '4633458b-17de-408a-b874-0445c86b69e6') // Key Vault Secrets User
+//     principalType: 'ServicePrincipal'
+// }]
+// //| where(_) // filter out nulls
+
+// // Create RBAC assignments
+// resource keyVaultRbacAssignments 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for assignment in rbacAssignments: if (!useExistingVault) {
+//   name: assignment.name
+//   scope: keyVaultResource
+//   properties: {
+//     principalId: assignment.principalId
+//     roleDefinitionId: assignment.roleDefinitionId
+//     principalType: assignment.principalType
+//   }
+// }]
+
+
+
+
 var kvIpRules = keyVaultOwnerIpAddress == '' ? [] : [
   {
     value: keyVaultOwnerIpAddress
