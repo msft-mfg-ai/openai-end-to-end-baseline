@@ -60,6 +60,10 @@ on:
         required: false
         default: false
         type: boolean
+      instance:
+        description: Instance number for resource naming
+        type: string
+        default: '01'
           
 jobs:
   Deploy_Bicep:
@@ -83,3 +87,4 @@ jobs:
       deployAIHub: ${{ inputs.deployAIHub }}
       addRoleAssignments: ${{ inputs.addRoleAssignments }}
       runBuildDeployUI: ${{ inputs.runBuildDeployUI }}
+      instance: ${{ inputs.instance }}

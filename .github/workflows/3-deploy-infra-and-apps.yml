@@ -72,7 +72,7 @@ on:
       instance:
         description: Instance number for resource naming
         type: string
-        default: '001'
+        default: '01'
 
 permissions:
   id-token: write # This is required for requesting the JWT
