@@ -16,8 +16,10 @@ param applicationName = '#{APP_NAME}#'
 param environmentName = '#{envCode}#'
 param principalId = '#{USER_PRINCIPAL_ID}#'
 param deployUIApp = #{runBuildDeployUI}#  // Should we deploy the web app?
-param instanceNumber = '01'
-
-// Optional future parameters to be overridden if needed
-// param customDomainName = 'contoso.com'
-// param publishFileName = 'chatui.zip'
+param instanceNumber = '#{INSTANCE_NUMBER}#'
+param ownerEmailTag = '#{OWNER_EMAIL}#' 
+param costCenterTag = 'CC'
+param businessFunctionTag = 'BF'
+param networkModelTag = 'NM'
+param serverTypeTag = 'ST' 
+param patchGroupTag = 'PGT'

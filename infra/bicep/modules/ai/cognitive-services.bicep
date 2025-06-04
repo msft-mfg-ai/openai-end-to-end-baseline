@@ -153,11 +153,11 @@ resource connection 'Microsoft.CognitiveServices/accounts/connections@2025-04-01
   parent: account
   properties: {
     category: 'AppInsights'
-    group: 'ServicesAndApps'
+    //group: 'ServicesAndApps'  // read-only...
     target: appInsights.id
     authType: 'ApiKey'
     isSharedToAll: true
-    isDefault: true
+    //isDefault: true  // not valid property
     credentials: {
       key: appInsights.properties.InstrumentationKey
     }
@@ -184,4 +184,4 @@ output cognitiveServicesKeySecretName string = cognitiveServicesKeySecretName
 output textEmbeddings array = textEmbeddings
 output chatGpt_Standard object = chatGpt_Standard
 output kind string = kind
-output privateEndpointName string = privateEndpoint.name
+output privateEndpointName string = privateEndpoint.outputs.privateEndpointName

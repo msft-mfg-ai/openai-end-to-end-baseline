@@ -61,10 +61,15 @@ on:
         description: Run Build and Deploy UI?
         type: boolean
         default: false
-      instance:
-        description: Instance number for resource naming
-        type: string
-        default: '001'
+      loginUsingClientSecret:
+        description: Login using Client Secret?
+        type: boolean
+        default: false
+
+      # instance:
+      #   description: Instance number for resource naming
+      #   type: string
+      #   default: '01'
 
 # ------------------------------------------------------------------------------------------------------------------------
 jobs:
@@ -84,14 +89,16 @@ jobs:
     # ------------------------------------------------------------------------------------------------------------------------
     env:
       envCode: ${{ inputs.envCode }}
-      generatedResourceGroupName: ${{ vars.RESOURCEGROUP_PREFIX }}-${{ inputs.envCode }}-${{ vars.RESOURCEGROUP_LOCATION }}-${{ inputs.instance }}
+      generatedResourceGroupName: ${{ vars.RESOURCEGROUP_PREFIX }}-${{ inputs.envCode }}-${{ vars.RESOURCEGROUP_LOCATION }}-${{ vars.INSTANCE_NUMBER }}
       createResourceGroup: ${{ inputs.createResourceGroup }}
       publicAccessEnabled: ${{ inputs.publicAccessEnabled }}
       createDnsZones: ${{ inputs.createDnsZones }}
       deployAIHub: ${{ inputs.deployAIHub }}
       addRoleAssignments: ${{ inputs.addRoleAssignments }}
       runBuildDeployUI: ${{ inputs.runBuildDeployUI }}
-
+      loginWithFederatedIdentity: ${{ secrets.CICD_CLIENT_SECRET == '' && 'true' || 'false' }}
+      loginWithSecret: ${{ secrets.CICD_CLIENT_SECRET != '' && 'true' || 'false' }}
+ 
     # ------------------------------------------------------------------------------------------------------------------------
     # Outputs
     # ------------------------------------------------------------------------------------------------------------------------
@@ -115,16 +122,23 @@ jobs:
         run: |-
           echo "inputs.envCode=${{ inputs.envCode }}"
           echo "env.generatedResourceGroupName=${{ env.generatedResourceGroupName }}"
+          echo "templateFilePath=${{ inputs.templatePath }}${{ inputs.templateFile }}"
+          echo "parameterFilePath=${{ inputs.templatePath }}${{ inputs.parameterFile }}"
+
           echo "vars.APP_NAME=${{ vars.APP_NAME }}"
-          echo "vars.APP_PREFIX=${{ vars.APP_PREFIX }}"
           echo "vars.RESOURCEGROUP_PREFIX=${{ vars.RESOURCEGROUP_PREFIX }}"
           echo "vars.RESOURCEGROUP_LOCATION=${{ vars.RESOURCEGROUP_LOCATION }}"
+          echo "vars.OPENAI_DEPLOY_LOCATION=${{ vars.OPENAI_DEPLOY_LOCATION }}"
+          echo "vars.INSTANCE_NUMBER=${{ vars.INSTANCE_NUMBER }}"
+          echo "vars.OWNER_EMAIL=${{ vars.OWNER_EMAIL }}"
+
+          echo "env.loginWithSecret=${{ env.loginWithSecret }}"
+          echo "env.loginWithFederatedIdentity=${{ env.loginWithFederatedIdentity }}"
+          echo "inputs.loginUsingClientSecret=${{ inputs.loginUsingClientSecret }}"
 
           echo "templatePath=${{ inputs.templatePath }}"
           echo "templateFile=${{ inputs.templateFile }}"
-          echo "templateFilePath=${{ inputs.templatePath }}${{ inputs.templateFile }}"
           echo "parameterFile=${{ inputs.parameterFile }}"
-          echo "parameterFilePath=${{ inputs.templatePath }}${{ inputs.parameterFile }}"
           echo "parameterFileReplaceTokens=${{ inputs.parameterFileReplaceTokens }}"
           echo "---------------------------------"
           echo "##[group]All Variables:"
@@ -159,15 +173,20 @@ jobs:
 
       # https://learn.microsoft.com/en-us/entra/workload-id/workload-identity-federation-create-trust
       - name: OIDC Login to Azure
-        if: ${{ inputs.runCreateInfra }}
+        if: ${{ !inputs.loginUsingClientSecret }}
+        # if: $ { { env.loginWithFederatedIdentity } }
         uses: azure/login@v2
         with:
           client-id: ${{ secrets.CICD_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-      # or - Log into Azure with Secret
-      # with:
-      #   creds: '{'clientId':'${{ secrets.AZURE_CLIENT_ID }}','clientSecret':'${{ secrets.AZURE_CLIENT_SECRET }}','subscriptionId':'${{ secrets.AZURE_SUBSCRIPTION_ID }}','tenantId':'${{ secrets.AZURE_TENANT_ID }}'}'
+
+      - name: Login to Azure with Secret
+        if: ${{ inputs.loginUsingClientSecret }}
+        # if: $ { { env.loginWithSecret } }  // this looks right but it ALWAYS runs then fails if secret is missing...
+        uses: azure/login@v2
+        with:
+          creds: '{"clientId":"${{ secrets.CICD_CLIENT_ID }}","clientSecret":"${{ secrets.CICD_CLIENT_SECRET }}","tenantId":"${{ secrets.AZURE_TENANT_ID }}","subscriptionId":"${{ secrets.AZURE_SUBSCRIPTION_ID }}"}'
 
       - name: Create Resource Group
         if: ${{ inputs.runCreateInfra && inputs.deployInResourceGroup }}

@@ -35,6 +35,10 @@ on:
         description: Parameter File
         required: true
         default: 'main-basic.dynamic.bicepparam'
+      # instance: # moved to GH Variable
+      #   description: Instance number for resource naming
+      #   type: string
+      #   default: '01'
       createResourceGroup:
         description: Create Resource Group?
         type: boolean
@@ -46,7 +50,7 @@ on:
       createDnsZones:
         description: Create DNS Zones?
         type: boolean
-        default: false
+        default: true
       addRoleAssignments:
         description: Add Role Assignments?
         type: boolean
@@ -57,6 +61,11 @@ on:
         default: true
       runBuildDeployUI:
         description: Build and Deploy UI
+        required: false
+        default: false
+        type: boolean
+      loginUsingClientSecret:
+        description: Login using Client Secret?
         required: false
         default: false
         type: boolean
@@ -83,3 +92,5 @@ jobs:
       deployAIHub: ${{ inputs.deployAIHub }}
       addRoleAssignments: ${{ inputs.addRoleAssignments }}
       runBuildDeployUI: ${{ inputs.runBuildDeployUI }}
+      #instance: ${{ vars.INSTANCE_NUMBER }}
+      loginUsingClientSecret: ${{ inputs.loginUsingClientSecret }}

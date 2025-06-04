@@ -56,10 +56,10 @@ param principalId string = ''
 // // --------------------------------------------------------------------------------------------------------------
 // // Existing networks?
 // // --------------------------------------------------------------------------------------------------------------
-// @description('If you provide this is will be used instead of creating a new VNET')
-// param existingVnetName string = ''
-// @description('If you provide an existing VNET what resource group is it in?')
-// param existingVnetResourceGroupName string = ''
+@description('If you provide this is will be used instead of creating a new VNET')
+param existingVnetName string = ''
+@description('If you provide an existing VNET what resource group is it in?')
+param existingVnetResourceGroupName string = ''
 @description('If you provide this is will be used instead of creating a new VNET')
 param vnetPrefix string = '10.2.0.0/16'
 @description('If new VNET, this is the Subnet name for the private endpoints')
@@ -167,7 +167,7 @@ param appendResourceTokens bool = false
 param deployUIApp bool = true
 
 @description('Instance number for the application, e.g. 001, 002, etc. This is used to differentiate multiple instances of the same application in the same environment.')
-param instanceNumber string = '001' // used to differentiate multiple instances of the same application in the same environment
+param instanceNumber string = '01' // used to differentiate multiple instances of the same application in the same environment
 
 // --------------------------------------------------------------------------------------------------------------
 // Additional Tags that may be included or not
@@ -241,8 +241,8 @@ module vnet './modules/networking/vnet.bicep' = {
   name: 'vnet${deploymentSuffix}'
   params: {
     location: location
-    // existingVirtualNetworkName: existingVnetName
-    // existingVnetResourceGroupName: existingVnetResourceGroupName
+    existingVirtualNetworkName: existingVnetName
+    existingVnetResourceGroupName: existingVnetResourceGroupName
     newVirtualNetworkName: resourceNames.outputs.vnet_Name
     vnetAddressPrefix: vnetPrefix
     subnet1Name: !empty(subnet1Name) ? subnet1Name : resourceNames.outputs.vnetPeSubnetName
@@ -532,12 +532,12 @@ module documentIntelligence './modules/ai/document-intelligence.bicep' = {
   params: {
     //existing_CogServices_Name: '' //existing_DocumentIntelligence_Name
     //existing_CogServices_ResourceGroupName: '' //existing_DocumentIntelligence_RG_Name
-    name: resourceNames.outputs.documentIntelligenceServiceName
+    name: resourceNames.outputs.documentIntelligenceName
     location: location // this may be different than the other resources
     tags: tags
     publicNetworkAccess: publicAccessEnabled ? 'enabled' : 'disabled'
     privateEndpointSubnetId: vnet.outputs.subnet1ResourceId
-    privateEndpointName: 'pe-${resourceNames.outputs.documentIntelligenceServiceName}'
+    privateEndpointName: 'pe-${resourceNames.outputs.documentIntelligenceName}'
     myIpAddress: myIpAddress
     managedIdentityId: identity.outputs.managedIdentityId
   }

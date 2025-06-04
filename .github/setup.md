@@ -6,9 +6,9 @@ The GitHub workflows in this project require several secrets set at the reposito
 
 ## Workflow Definitions
 
-- **[1_deploy_infra.yml](./workflows/1_deploy_infra.yml):** Deploys the main.bicep template with all new resources and does nothing else. You can use this to do a `what-if` deployment to see what resources will be created/updated/deleted by the [main.bicep](../infra/bicep/main.bicep) file.
+- **[1_deploy_infra.yml](./workflows/1_deploy_infra.yml):** Deploys the main.bicep template with all new resources and does nothing else. You can use this to do a `what-if` deployment to see what resources will be created/updated/deleted by the [main-basic.bicep](../infra/bicep/main-basic.bicep) file or  [main-advanced.bicep](../infra/bicep/main-advanced.bicep) file.
 - **[2-build-deploy-apps.yml](./workflows/2-build-deploy-apps.yml):** Builds the app and deploys it to Azure - this could/should be set up to happen automatically after each check-in to main branch app folder
-- **[3-deploy-infra-and-apps](./workflows/1-infra-build-deploy-all.yml):** Deploys the main.bicep template then builds and deploys all the apps
+- **[3-deploy-infra-and-apps](./workflows/1-infra-build-deploy-all.yml):** Deploys the main*.bicep template then builds and deploys all the apps
 - **[4_scan_build_pr.yml](./workflows/4_scan_build_pr.yml):** Runs each time a Pull Request is submitted and includes the results in the PR
 - **[5_scheduled_scan.yml](./workflows/5_scheduled_scan.yml):** Runs a scheduled periodic scan of the app for security vulnerabilities
 - **[6-deploy-ai-hub-project.yml](./workflows/6-deploy-ai-hub-project.yml):** Deploys an AI Foundry Hub
@@ -19,18 +19,22 @@ The GitHub workflows in this project require several secrets set at the reposito
 
 Follow these steps to get started quickly:
 
-1. Set up a federated App Registration configuration for this repo with your environment name.
+1. Set up a federated App Registration configuration for this repo with your environment name. Alternatively, you can create a regular App Registration and use the Client Secret, but using a Federated Identity is recommended for security.
 
     See [https://learn.microsoft.com/en-us/entra/workload-id/workload-identity-federation-create-trust](https://learn.microsoft.com/en-us/entra/workload-id/workload-identity-federation-create-trust)
 
 1. Create these environment secrets either manually or by customizing these commands. They should be in each environment if you are using multiple environments, or could be at the repository level if you are only deploying one version.
 
-    *(Note that you only need to use CLIENT_SECRET if you are NOT using a Federated Identity. If you want to use a Federated Identity, you could omit that secret.)*
-
     ```bash
     gh secret set --env <envName> AZURE_SUBSCRIPTION_ID -b xxx-xx-xx-xx-xxxx
     gh secret set --env <envName> AZURE_TENANT_ID -b xxx-xx-xx-xx-xxxx
     gh secret set --env <envName> CICD_CLIENT_ID -b xxx-xx-xx-xx-xxxx
+    ```
+
+    Optional:
+    *(Note that you only need to use CLIENT_SECRET if you are NOT using a Federated Identity. If you want to use a Federated Identity, you should omit this secret.)*
+
+    ```bash
     gh secret set --env <envName> CLIENT_SECRET -b xxxxxxxxxx
     ```
 
@@ -38,24 +42,37 @@ Follow these steps to get started quickly:
 
      Make sure the App_Name variable is unique to your deploy. It will be used as the basis for the application name and for all the other Azure resources, some of which must be globally unique.    Update `APP_NAME` with a value that is unique to your deployment, which can contain dashes or underscores (i.e. 'xxx-doc-review'). The `APP_NAME` will be used as the basis for all of the resource names, with the environment name (i.e. dev/qa/prod) appended to each resource name.
 
-    The Resource Group Name created will be `<RESOURCEGROUP_PREFIX>-<ENVIRONMENT>` and will be created in the `<RESOURCEGROUP_LOCATION>` Azure region. If you want to use an existing Resource Group Name or change the format of the `generatedResourceGroupName` variable in the [template-create-infra.yml](./workflows/template-create-infra.yml) file.
+    The Resource Group Name created will be `<RESOURCEGROUP_PREFIX>-<ENVIRONMENT>-<LOCATION>-<INSTANCE>` and will be created in the `<RESOURCEGROUP_LOCATION>` Azure region. If you want to use an existing Resource Group Name or change the format of the `generatedResourceGroupName` variable in the [template-create-infra.yml](./workflows/template-create-infra.yml) file (and a few other YML files... search for `RESOURCEGROUP_PREFIX`).
 
     The `<OPENAI_DEPLOY_LOCATION>` can be specified if you want to deploy the OpenAI resources in a different region than the rest of the resources due to region constraints.
 
     ```bash
-    gh variable set --env <envName> APP_NAME -b YOUR-APP-NAME-aichat
-    gh variable set --env <envName> RESOURCEGROUP_PREFIX -b rg-aichat
+    gh variable set --env <envName> APP_NAME -b YOUR-APP-NAME
+    gh variable set --env <envName> RESOURCEGROUP_PREFIX -b rg-APP-NAME
     gh variable set --env <envName> RESOURCEGROUP_LOCATION -b eastus2
     gh variable set --env <envName> OPENAI_DEPLOY_LOCATION -b eastus2
+    gh variable set --env <envName> INSTANCE_NUMBER -b 01
     ```
 
-    <!-- if you're doing advanced networking, you will need these:
+    Other optional variables can be used to supplement Tags, including:
 
+    ```bash
+    gh variable set --env <envName> OWNER_EMAIL -b yourname@yourdomain.com
+    gh variable set --env <envName> COST_CENTER -b 'CC'
+    gh variable set --env <envName> BUSINESS_FUNCTION -b 'BF'
+    gh variable set --env <envName> NETWORK_MODEL -b 'NM'
+    gh variable set --env <envName> SERVER_TYPE -b 'ST'
+    gh variable set --env <envName> PATCH_GROUP -b 'PGT'
+    ```
+
+    <!-- 
+    If you're doing advanced networking, you will need these:
     ```bash
     gh variable set --env <envName> VNET_NAME -b vnet-aichat
     gh variable set --env <envName> SUBNET_NAME -b subnet-aichat
     gh variable set --env <envName> SUBNET_PREFIX -b
-    ``` -->
+    ``` 
+    -->
 
 1. Run the **[1-infra-build-deploy-all](./workflows/1-infra-build-deploy-all.yml):** action in this repo to deploy the UI.
 
