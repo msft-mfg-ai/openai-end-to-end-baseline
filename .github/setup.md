@@ -48,10 +48,12 @@ Follow these steps to get started quickly:
 
     ```bash
     gh variable set --env <envName> APP_NAME -b YOUR-APP-NAME
+    gh variable set --env <envName> APP_ID -b YOUR-APP-ID
     gh variable set --env <envName> RESOURCEGROUP_PREFIX -b rg-APP-NAME
     gh variable set --env <envName> RESOURCEGROUP_LOCATION -b eastus2
     gh variable set --env <envName> OPENAI_DEPLOY_LOCATION -b eastus2
     gh variable set --env <envName> INSTANCE_NUMBER -b 01
+    gh variable set --env <envName> GLOBAL_REGION_CODE -b AM
     ```
 
     Other optional variables can be used to supplement Tags, including:
@@ -59,10 +61,6 @@ Follow these steps to get started quickly:
     ```bash
     gh variable set --env <envName> OWNER_EMAIL -b yourname@yourdomain.com
     gh variable set --env <envName> COST_CENTER -b 'CC'
-    gh variable set --env <envName> BUSINESS_FUNCTION -b 'BF'
-    gh variable set --env <envName> NETWORK_MODEL -b 'NM'
-    gh variable set --env <envName> SERVER_TYPE -b 'ST'
-    gh variable set --env <envName> PATCH_GROUP -b 'PGT'
     ```
 
     <!-- 
@@ -82,12 +80,18 @@ That's it - you should have a fully working deployed environment!
 
 ### Admin Rights
 
-ADMIN_IP_ADDRESS and ADMIN_PRINCIPAL_ID are optional settings at the environment level - set these only if you want your admin to have access to the Key Vault and Container Registry. You can customize and run the following commands, or you can set these secrets up manually.
+USER_PRINCIPAL_ID is an optional settings at the environment level - set this only if you want your admin to have access to the Key Vault and Container Registry. You can customize and run the following commands, or you can set these secrets up manually.
+
+```bash
+gh secret set --env dev USER_PRINCIPAL_ID <yourGuid>
+```
+
+<!-- ADMIN_IP_ADDRESS and USER_PRINCIPAL_ID are optional settings at the environment level - set these only if you want your admin to have access to the Key Vault and Container Registry. You can customize and run the following commands, or you can set these secrets up manually.
 
 ```bash
 gh secret set --env dev ADMIN_IP_ADDRESS 192.168.1.1
-gh secret set --env dev ADMIN_PRINCIPAL_ID <yourGuid>
-```
+gh secret set --env dev USER_PRINCIPAL_ID <yourGuid>
+``` -->
 
 ---
 
