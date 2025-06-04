@@ -35,6 +35,10 @@ on:
         description: Parameter File
         required: true
         default: 'main-basic.dynamic.bicepparam'
+      instance:
+        description: Instance number for resource naming
+        type: string
+        default: '01'
       createResourceGroup:
         description: Create Resource Group?
         type: boolean
@@ -60,10 +64,6 @@ on:
         required: false
         default: false
         type: boolean
-      instance:
-        description: Instance number for resource naming
-        type: string
-        default: '01'
           
 jobs:
   Deploy_Bicep:
