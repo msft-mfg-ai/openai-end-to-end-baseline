@@ -43,6 +43,7 @@ resource newAppEnvironmentResource 'Microsoft.App/managedEnvironments@2024-03-01
       destination: 'log-analytics'
       logAnalyticsConfiguration: {
         customerId: logAnalyticsCustomerId
+        #disable-next-line secure-secrets-in-params // Secret is not passed in or out of this module
         sharedKey: logAnalyticsResource.listKeys().primarySharedKey
         //sharedKey: logAnalyticsKey
       }

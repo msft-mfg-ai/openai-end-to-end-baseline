@@ -27,7 +27,7 @@ param enabledForDiskEncryption bool = true
 @description('Determine if soft delete is enabled on this Key Vault.')
 param enableSoftDelete bool = true
 @description('Determine if purge protection is enabled on this Key Vault.')
-param enablePurgeProtection bool = false
+param enablePurgeProtection bool = true
 @description('The number of days to retain soft deleted vaults and vault objects.')
 param softDeleteRetentionInDays int = 7
 @description('Determines if access to the objects granted using RBAC. When true, access policies are ignored.')
