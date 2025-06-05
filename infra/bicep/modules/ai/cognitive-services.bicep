@@ -105,7 +105,7 @@ resource account 'Microsoft.CognitiveServices/accounts@2025-04-01-preview' = if 
 }
 
 @batchSize(1)
-resource deployment 'Microsoft.CognitiveServices/accounts/deployments@2023-05-01' = [
+resource deployment 'Microsoft.CognitiveServices/accounts/deployments@2025-04-01-preview' = [
   for deployment in deployments: if (!useExistingService) {
     parent: account
     name: deployment.name
@@ -185,14 +185,3 @@ output chatGpt_Standard object = chatGpt_Standard
 output kind string = kind
 output privateEndpointName string = deployInVNET && !useExistingService ? privateEndpoint.outputs.privateEndpointName : ''
 output privateEndpointName2 string = deployInVNET && !useExistingService ? privateEndpoint2.outputs.privateEndpointName: ''
-
-
-@description('Array of all deployed models with their details')
-output deployments array = [
-  for (deployment, i) in deployments: {
-    name: deployment.name
-    model: deployment.model.name
-    capacity: deployment.sku.capacity
-    version: deployment.model.version
-  }
-]

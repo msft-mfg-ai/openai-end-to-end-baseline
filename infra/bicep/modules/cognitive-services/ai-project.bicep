@@ -97,23 +97,26 @@ resource project 'Microsoft.CognitiveServices/accounts/projects@2025-04-01-previ
     }
   }
 
+  // Gets error:  Multiple connection with same category (AppInsights) created, we only allow to have 1 connection for category (AppInsights),
+  //   existing connection (applicationInsights), new connection (appi-mfgaicw-lyle-am-009)  (Code: ValidationError)
+
   // Creates the Azure Foundry connection to your Azure App Insights resource
-  resource connection 'connections@2025-04-01-preview' = {
-    name: appInsightsName
-    properties: {
-      category: 'AppInsights'
-      target: appInsights.id
-      authType: 'ApiKey'
-      isSharedToAll: true
-      credentials: {
-        key: appInsights.properties.ConnectionString
-      }
-      metadata: {
-        ApiType: 'Azure'
-        ResourceId: appInsights.id
-      }
-    }
-  }
+  // resource connection 'connections@2025-04-01-preview' = {
+  //   name: appInsightsName
+  //   properties: {
+  //     category: 'AppInsights'
+  //     target: appInsights.id
+  //     authType: 'ApiKey'
+  //     isSharedToAll: true
+  //     credentials: {
+  //       key: appInsights.properties.ConnectionString
+  //     }
+  //     metadata: {
+  //       ApiType: 'Azure'
+  //       ResourceId: appInsights.id
+  //     }
+  //   }
+  // }
 }
 
 output projectName string = project.name

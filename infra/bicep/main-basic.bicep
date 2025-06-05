@@ -405,10 +405,12 @@ module searchSecret './modules/security/keyvault-search-secret.bicep' = {
 // --------------------------------------------------------------------------------------------------------------
 var uiDatabaseName = 'ChatHistory'
 var uiChatContainerName = 'ChatTurn'
+var uiChatContainerName2 = 'ChatHistory'
 var cosmosContainerArray = [
   { name: 'AgentLog', partitionKey: '/requestId' }
   { name: 'UserDocuments', partitionKey: '/userId' }
   { name: uiChatContainerName, partitionKey: '/chatId' }
+  { name: uiChatContainerName2, partitionKey: '/chatId' }
 ]
 module cosmos './modules/database/cosmosdb.bicep' = {
   name: 'cosmos${deploymentSuffix}'
@@ -562,7 +564,7 @@ module aiProject './modules/cognitive-services/ai-project.bicep' = {
     aiSearchServiceResourceGroupName: resourceGroup().name
     aiSearchServiceSubscriptionId: subscription().subscriptionId
 
-    cosmosDBName: cosmos.outputs.databaseName
+    cosmosDBName: cosmos.outputs.name
     cosmosDBResourceGroupName: resourceGroup().name
     cosmosDBSubscriptionId: subscription().subscriptionId
 
