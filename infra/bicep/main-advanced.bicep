@@ -59,15 +59,17 @@ param existingVnetName string = ''
 @description('If you provide an existing VNET what resource group is it in?')
 param existingVnetResourceGroupName string = ''
 @description('If you provide this is will be used instead of creating a new VNET')
-param vnetPrefix string = '10.2.0.0/16'
+//param vnetPrefix string = '10.2.0.0/16'
+param vnetPrefix string = '10.183.4.0/22' // This is the default for the MFG AI LZ, it can be changed to fit your needs
 @description('If new VNET, this is the Subnet name for the private endpoints')
 param subnet1Name string = ''
 @description('If new VNET, this is the Subnet addresses for the private endpoints, i.e. 10.2.0.0/26') //Provided subnet must have a size of at least /23
-param subnet1Prefix string = '10.2.0.0/23'
+//param subnet1Prefix string = '10.2.0.0/23'
+param subnet1Prefix string = '10.183.4.0/23'
 @description('If new VNET, this is the Subnet name for the application')
 param subnet2Name string = ''
 @description('If new VNET, this is the Subnet addresses for the application, i.e. 10.2.2.0/23') // Provided subnet must have a size of at least /23
-param subnet2Prefix string = '10.2.2.0/23'
+param subnet2Prefix string = '10.183.6.0/23'
 
 // --------------------------------------------------------------------------------------------------------------
 // Existing container registry?
