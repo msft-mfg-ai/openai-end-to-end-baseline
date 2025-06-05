@@ -32,13 +32,7 @@ var useExistingResource = !empty(existingVirtualNetworkName)
 resource existingVirtualNetwork 'Microsoft.Network/virtualNetworks@2024-01-01' existing = if (useExistingResource) {
   name: existingVirtualNetworkName
   scope: resourceGroup(existingVnetResourceGroupName)
-  resource subnet1 'subnets' existing = {
-    name: subnetAppGwName
-  }
-  resource subnet2 'subnets' existing = {
-    name: subnetAppSeName
-  }
-    resource subnetAppGw 'subnets' existing = {
+  resource subnetAppGw 'subnets' existing = {
     name: subnetAppGwName
   }
   resource subnetAppSe 'subnets' existing = {
@@ -61,7 +55,7 @@ resource existingVirtualNetwork 'Microsoft.Network/virtualNetworks@2024-01-01' e
   }
   resource subnetScoring 'subnets' existing = {
     name: subnetScoringName
-  } 
+  }
 }
 module appSubnetNSG './network-security-group.bicep' = if (!useExistingResource) {
   name: 'nsg'
@@ -82,16 +76,55 @@ resource newVirtualNetwork 'Microsoft.Network/virtualNetworks@2024-01-01' = if (
     }
     subnets: [
       {
-        name: subnetAppGwName // The subnet for the Application Gateway
+        name: subnetAppGwName
         properties: {
-          addressPrefix: subnetAppGwPrefix // The address prefix for the Application Gateway subnet
+          addressPrefix: subnetAppGwPrefix
+        }
+      }
+      {
+        name: subnetPeName
+        properties: {
+          addressPrefix: subnetPePrefix
+          // The subnet of the private endpoint must be delegated to the service 'Microsoft.Network/privateEndpoints'
+        }
+      }
+      {
+        name: subnetAgentName
+        properties: {
+          addressPrefix: subnetAgentPrefix
+        }
+      }
+      {
+        name: subnetBastionName
+        properties: {
+          addressPrefix: subnetBastionPrefix
+          // The subnet of the bastion host must be named 'AzureBastionSubnet'
+          // and must have a /27 or larger prefix
+        }
+      }
+      {
+        name: subnetJumpboxName 
+        properties: {
+          addressPrefix: subnetJumpboxPrefix
+        }
+      }
+      {
+        name: subnetTrainingName
+        properties: {
+          addressPrefix: subnetTrainingPrefix
+        }
+      }
+      {
+        name: subnetScoringName
+        properties: {
+          addressPrefix: subnetScoringPrefix
         }
       }
       {
         // The subnet of the managed environment must be delegated to the service 'Microsoft.App/environments'
-        name: subnetAppSeName // The subnet for the Container Apps Environment
+        name: subnetAppSeName
         properties: {
-          addressPrefix: subnetAppSePrefix // The address prefix for the Container Apps Environment subnet
+          addressPrefix: subnetAppSePrefix
           networkSecurityGroup: {
             id: appSubnetNSG.outputs.id
           }
@@ -107,60 +140,20 @@ resource newVirtualNetwork 'Microsoft.Network/virtualNetworks@2024-01-01' = if (
           ] 
         }
       }
-      {name: subnetPeName // The subnet for the Private Endpoints
-        properties: {
-          addressPrefix: subnetPePrefix // The address prefix for the Private Endpoint subnet
-        }
-      }
-      {name: subnetAgentName // The subnet for the Container Apps Agent Pool
-        properties: {
-          addressPrefix: subnetAgentPrefix // The address prefix for the Container Apps Agent Pool subnet
-        }
-      }
-      {name: subnetAgentName // The subnet for the Container Apps Agent Pool
-        properties: {
-          addressPrefix: subnetAgentPrefix // The address prefix for the Container Apps Agent Pool subnet
-        }
-      }
-      {name: subnetBastionName // The subnet for the Azure Bastion
-        properties: {
-          addressPrefix: subnetBastionPrefix // The address prefix for the Azure Bastion subnet
-        }
-      }
-      {name: subnetJumpboxName // The subnet for the Jumpbox
-        properties: {
-          addressPrefix: subnetJumpboxPrefix // The address prefix for the Jumpbox subnet
-        }
-      }
-      {name: subnetTrainingName // The subnet for the Training
-        properties: {
-          addressPrefix: subnetTrainingPrefix // The address prefix for the Training subnet
-        }
-      }
-      {name: subnetScoringName // The subnet for the Scoring
-        properties: {
-          addressPrefix: subnetScoringPrefix // The address prefix for the Scoring subnet
-        }
-      }
     ]
   }
 
- // resource subnet1 'subnets' existing = {
- //   name: subnetAppGwName
- // }
-//
-//  resource subnet2 'subnets' existing = {
-//    name: subnet2Name
-//  }
   resource subnetAppGw 'subnets' existing = {
-    name: subnetAppGwName  }
+    name: subnetAppGwName
+  }
+
   resource subnetAppSe 'subnets' existing = {
     name: subnetAppSeName
   }
   resource subnetPe 'subnets' existing = {
     name: subnetPeName
   }
-  resource subnetAgent 'subnets' existing = {
+  resource subnetAgent'subnets' existing = {
     name: subnetAgentName
   }
   resource subnetBastion 'subnets' existing = {
@@ -174,7 +167,7 @@ resource newVirtualNetwork 'Microsoft.Network/virtualNetworks@2024-01-01' = if (
   }
   resource subnetScoring 'subnets' existing = {
     name: subnetScoringName
-  } 
+  }
 }
 
 output vnetResourceId string = useExistingResource ? existingVirtualNetwork.id : newVirtualNetwork.id
