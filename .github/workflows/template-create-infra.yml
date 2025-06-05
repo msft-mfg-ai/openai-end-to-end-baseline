@@ -207,6 +207,7 @@ jobs:
           template: ${{ inputs.templatePath }}${{ inputs.templateFile }}
           parameters: ${{ inputs.templatePath }}${{ inputs.parameterFile }}
           deploymentMode: ${{ inputs.deploymentMode }} # Must be: Incremental | Complete | Validation
+          failOnStdErr: false # if set to true, then any warning thrown by Bicep will cause the action to fail
 
       - name: Deploy Azure Resources (RG)
         uses: azure/arm-deploy@v2

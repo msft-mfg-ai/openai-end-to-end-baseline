@@ -20,6 +20,7 @@
   "cognitiveServicesAccounts": "cog",
   "cognitiveServicesAccounts-prefix": "cog-",
   "cognitiveServicesFormRecognizer": "cog-fr-",
+  "cognitiveServicesFormRecognizer-prefix": "cog-fr",
   "cognitiveServicesHub": "hub",
   "cognitiveServicesTextAnalytics": "cog-ta-",
   "computeAvailabilitySets": "avail-",
