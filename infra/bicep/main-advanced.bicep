@@ -71,22 +71,22 @@ param vnetPrefix string = '10.183.4.0/22' // This is the default for the MFG AI 
 //@description('If new VNET, this is the Subnet addresses for the application, i.e. 10.2.2.0/23') // Provided subnet must have a size of at least /23
 //param subnet2Prefix string = '10.183.6.0/23'
 
-param vnetAppGwSubnetName string = ''
-param vnetAppGwSubnetPrefix string = '10.183.5.0/24'
-param vnetAppSeSubnetName string = ''
-param vnetAppSeSubnetPrefix string = '10.183.4.0/24'
-param vnetPeSubnetName string = ''
-param vnetPeSubnetPrefix string = '10.183.6.0/27'
-param vnetAgentSubnetName string = ''
-param vnetAgentSubnetPrefix string = '10.183.6.32/27'.
-param vnetBastionSubnetName string = '' // This is the default for the MFG AI LZ, it can be changed to fit your needs
-param vnetBastionSubnetPrefix string = '10.183.6.64/26'
-param vnetJumpboxSubnetName string = '' // This is the default for the MFG AI LZ, it can be changed to fit your needs
-param vnetJumpboxSubnetPrefix string = '10.183.6.128/28'
-param vnetTrainingSubnetName string = ''
-param vnetTrainingSubnetPrefix string = '10.183.7.0/25'
-param vnetScoringSubnetName string = ''
-param vnetScoringSubnetPrefix string = 10.183.7.128/25
+param subnetAppGwName string = ''
+param subnetAppGwPrefix string = '10.183.5.0/24'
+param subnetAppSeName string = ''
+param subnetAppSePrefix string = '10.183.4.0/24'
+param subnetPeName string = ''
+param subnetPePrefix string = '10.183.6.0/27'
+param subnetAgentName string = ''
+param subnetAgentPrefix string = '10.183.6.32/27'
+param subnetBastionName string = '' // This is the default for the MFG AI LZ, it can be changed to fit your needs
+param subnetBastionPrefix string = '10.183.6.64/26'
+param subnetJumpboxName string = '' // This is the default for the MFG AI LZ, it can be changed to fit your needs
+param subnetJumpboxPrefix string = '10.183.6.128/28'
+param subnetTrainingName string = ''
+param subnetTrainingPrefix string = '10.183.7.0/25'
+param subnetScoringName string = ''
+param subnetScoringPrefix string = '10.183.7.128/25'
 
 
 
@@ -270,22 +270,22 @@ module vnet './modules/networking/vnet.bicep' = {
     existingVnetResourceGroupName: existingVnetResourceGroupName
     newVirtualNetworkName: resourceNames.outputs.vnet_Name
     vnetAddressPrefix: vnetPrefix
-    vnetAppGwSubnetName: !empty(vnetAppGwSubnetName) ? vnetAppGwSubnetName  : resourceNames.outputs.vnetAppGwSubnetName
-    vnetAppGwSubnetPrefix: vnetAppGwSubnetPrefix 
-    vnetAppSeSubnetName: !empty(vnetAppSeSubnetName ) ? vnetAppSeSubnetName  : resourceNames.outputs.vnetAppSeSubnetName
-    vnetAppSeSubnetPrefix: vnetAppSeSubnetPrefix
-    vnetPeSubnetName: !empty(vnetPeSubnetName  ) ? vnetPeSubnetName   : resourceNames.outputs.vnetPeSubnetName 
-    vnetPeSubnetPrefix : vnetPeSubnetPrefix 
-    vnetAgentSubnetName: !empty(vnetAgentSubnetName) ? vnetAgentSubnetName : resourceNames.outputs.vnetAgentSubnetName
-    vnetAgentSubnetPrefix: vnetAgentSubnetPrefix
-    vnetBastionSubnetName: !empty(vnetBastionSubnetName) ? vnetBastionSubnetName : resourceNames.outputs.vnetBastionSubnetName
-    vnetBastionSubnetPrefix: vnetBastionSubnetPrefix
-    vnetJumpboxSubnetName: !empty(vnetJumpboxSubnetName) ? vnetJumpboxSubnetName : resourceNames.outputs.vnetJumpboxSubnetName
-    vnetJumpboxSubnetPrefix: vnetJumpboxSubnetPrefix
-    vnetTrainingSubnetName: !empty(vnetTrainingSubnetName) ? vnetTrainingSubnetName : resourceNames.outputs.vnetTrainingSubnetName
-    vnetTrainingSubnetPrefix: vnetTrainingSubnetPrefix
-    vnetScoringSubnetName: !empty(vnetScoringSubnetName) ? vnetScoringSubnetName : resourceNames.outputs.vnetScoringSubnetName
-    vnetScoringSubnetPrefix: vnetScoringSubnetPrefix
+    subnetAppGwName: !empty(subnetAppGwName) ? subnetAppGwName  : resourceNames.outputs.subnetAppGwName
+    subnetAppGwPrefix: subnetAppGwPrefix 
+    subnetAppSeName: !empty(subnetAppSeName ) ? subnetAppSeName  : resourceNames.outputs.subnetAppSeName
+    subnetAppSePrefix: subnetAppSePrefix
+    subnetPeName: !empty(subnetPeName  ) ? subnetPeName   : resourceNames.outputs.subnetPeName 
+    subnetPePrefix : subnetPePrefix 
+    subnetAgentName: !empty(subnetAgentName) ? subnetAgentName : resourceNames.outputs.subnetAgentName
+    subnetAgentPrefix: subnetAgentPrefix
+    subnetBastionName: !empty(subnetBastionName) ? subnetBastionName : resourceNames.outputs.subnetBastionName
+    subnetBastionPrefix: subnetBastionPrefix
+    subnetJumpboxName: !empty(subnetJumpboxName) ? subnetJumpboxName : resourceNames.outputs.subnetJumpboxName
+    subnetJumpboxPrefix: subnetJumpboxPrefix
+    subnetTrainingName: !empty(subnetTrainingName) ? subnetTrainingName : resourceNames.outputs.subnetTrainingName
+    subnetTrainingPrefix: subnetTrainingPrefix
+    subnetScoringName: !empty(subnetScoringName) ? subnetScoringName : resourceNames.outputs.subnetScoringName
+    subnetScoringPrefix: subnetScoringPrefix
 
     
   }
@@ -305,7 +305,7 @@ module containerRegistry './modules/app/containerregistry.bicep' = {
     tags: tags
     publicAccessEnabled: publicAccessEnabled
     privateEndpointName: 'pe-${resourceNames.outputs.ACR_Name}'
-    privateEndpointSubnetId: vnet.outputs.subnet1ResourceId
+    privateEndpointSubnetId: vnet.outputs.subnetAppSeResourceID
     myIpAddress: myIpAddress
   }
 }
@@ -336,7 +336,7 @@ module storage './modules/storage/storage-account.bicep' = {
     location: location
     tags: tags
     // publicNetworkAccess: publicAccessEnabled
-    privateEndpointSubnetId: vnet.outputs.subnet1ResourceId
+    privateEndpointSubnetId: vnet.outputs.subnetAppSeResourceID
     privateEndpointBlobName: 'pe-blob-${resourceNames.outputs.storageAccountName}'
     privateEndpointQueueName: 'pe-queue-${resourceNames.outputs.storageAccountName}'
     privateEndpointTableName: 'pe-table-${resourceNames.outputs.storageAccountName}'
@@ -395,7 +395,7 @@ module keyVault './modules/security/keyvault.bicep' = {
     keyVaultOwnerIpAddress: myIpAddress
     createUserAssignedIdentity: false
     privateEndpointName: 'pe-${resourceNames.outputs.keyVaultName}'
-    privateEndpointSubnetId: vnet.outputs.subnet1ResourceId
+    privateEndpointSubnetId: vnet.outputs.subnetAppGwResourceID
   }
 }
 
@@ -492,7 +492,7 @@ module cosmos './modules/database/cosmosdb.bicep' = {
     containerArray: cosmosContainerArray
     location: location
     tags: tags
-    privateEndpointSubnetId: vnet.outputs.subnet1ResourceId
+    privateEndpointSubnetId: vnet.outputs.subnetAppSeResourceID
     privateEndpointName: 'pe-${resourceNames.outputs.cosmosName}'
     managedIdentityPrincipalId: identity.outputs.managedIdentityPrincipalId
     userPrincipalId: principalId
@@ -513,7 +513,7 @@ module searchService './modules/search/search-services.bicep' = {
     existingSearchServiceResourceGroupName: existing_SearchService_ResourceGroupName
     publicNetworkAccess: publicAccessEnabled ? 'enabled' : 'disabled'
     myIpAddress: myIpAddress
-    privateEndpointSubnetId: vnet.outputs.subnet1ResourceId
+    privateEndpointSubnetId: vnet.outputs.subnetAppSeResourceID
     privateEndpointName: 'pe-${resourceNames.outputs.searchServiceName}'
     managedIdentityId: identity.outputs.managedIdentityId
     sku: {
@@ -557,7 +557,7 @@ module openAI './modules/ai/cognitive-services.bicep' = {
       DeploymentCapacity: 10
     }
     publicNetworkAccess: publicAccessEnabled ? 'enabled' : 'disabled'
-    privateEndpointSubnetId: vnet.outputs.subnet1ResourceId
+    privateEndpointSubnetId: vnet.outputs.subnetAppSeResourceID
     privateEndpointName: 'pe-${resourceNames.outputs.cogServiceName}'
     myIpAddress: myIpAddress
   }
@@ -575,7 +575,7 @@ module documentIntelligence './modules/ai/document-intelligence.bicep' = {
     location: location // this may be different than the other resources
     tags: tags
     publicNetworkAccess: publicAccessEnabled ? 'enabled' : 'disabled'
-    privateEndpointSubnetId: vnet.outputs.subnet1ResourceId
+    privateEndpointSubnetId: vnet.outputs.subnetAppSeResourceID
     privateEndpointName: 'pe-${resourceNames.outputs.documentIntelligenceName}'
     myIpAddress: myIpAddress
     managedIdentityId: identity.outputs.managedIdentityId
@@ -659,7 +659,7 @@ module managedEnvironment './modules/app/managedEnvironment.bicep' = {
     location: location
     logAnalyticsWorkspaceName: logAnalytics.outputs.logAnalyticsWorkspaceName
     logAnalyticsRgName: resourceGroupName
-    appSubnetId: vnet.outputs.subnet2ResourceId
+    appSubnetId: vnet.outputs.subnetAppSeResourceID
     tags: tags
     publicAccessEnabled: publicAccessEnabled
     containerAppEnvironmentWorkloadProfiles: containerAppEnvironmentWorkloadProfiles

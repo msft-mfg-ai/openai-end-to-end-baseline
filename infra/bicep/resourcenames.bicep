@@ -61,14 +61,14 @@ output kvManagedIdentityName string       = toLower('${sanitizedAppName}-${resou
 output userAssignedIdentityName string    = toLower('${sanitizedAppName}-app-${resourceAbbreviations.managedIdentityUserAssignedIdentities}${dashInstance}-${sanitizedEnvironment}')
 
 output vnet_Name string                   = toLower('${sanitizedAppName}-${resourceAbbreviations.networkVirtualNetworks}-${sanitizedEnvironment}${resourceTokenWithDash}${dashRegionDashInstance}')
-output vnetAppGwSubnetName string           = toLower('snet-app-gateway')
-output vnetAppSeSubnetName string            = toLower('snet-app-services')
-output vnetPeSubnetName string           = toLower('snet-private-endpoint')
-output vnetAgentSubnetName string           = toLower('snet-agent')
-output vnetBastionSubnetName string       = toLower('AzureBastionSubnet') // Must be exactly this name for Azure Bastion
-output vnetJumpboxSubnetName string       = toLower('snet-jumpbox')  
-output vnetTrainingSubnetName string      = toLower('snet-training')
-output vnetScoringSubnetName string       = toLower('snet-scoring')
+output subnetAppGwName string           = toLower('snet-app-gateway')
+output subnetAppSeName string            = toLower('snet-app-services')
+output subnetPeName string           = toLower('snet-private-endpoint')
+output subnetAgentName string           = toLower('snet-agent')
+output subnetBastionName string       = toLower('AzureBastionSubnet') // Must be exactly this name for Azure Bastion
+output subnetJumpboxName string       = toLower('snet-jumpbox')  
+output subnetTrainingName string      = toLower('snet-training')
+output subnetScoringName string       = toLower('snet-scoring')
 
 
 // ----------------------------------------------------------------------------------------------------------------------------------------------------------------
