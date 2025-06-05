@@ -39,11 +39,13 @@ param deployAPIApp = #{runBuildDeployAPI}#  // Should we deploy the web app?
 
 // param existingVnetName = '#{APP_NAME_NO_DASHES}#-vnet-#{envCode}#'
 // param existingVnetResourceGroupName = '#{RESOURCEGROUP_PREFIX}#-#{envCode}#'
-param vnetPrefix = '10.2.0.0/16'
-param subnet1Name = 'subnet1dynamic'
-param subnet1Prefix = '10.2.0.64/26'
-param subnet2Name = 'subnet2dyanamic'
-param subnet2Prefix = '10.2.2.0/23'
+//param vnetPrefix = '10.2.0.0/16'
+//param subnet1Name = 'subnet1dynamic'
+//param subnet1Prefix = '10.2.0.64/26'
+//param subnet2Name = 'subnet2dyanamic'
+//param subnet2Prefix = '10.2.2.0/23'
+
+
 
 // param existing_ACR_Name = '#{APP_NAME_NO_DASHES}#cr#{envCode}#'
 // param existing_ACR_ResourceGroupName = '#{RESOURCEGROUP_PREFIX}#-#{envCode}#'
