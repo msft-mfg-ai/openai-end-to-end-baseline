@@ -4,7 +4,7 @@ param publisherEmail string
 param publisherName string
 param appInsightsName string
 param commonTags object = {}
-param roleAssignments array = []
+// param roleAssignments array = []
 param subscriptionName string
 
 @description('The pricing tier of this API Management service')

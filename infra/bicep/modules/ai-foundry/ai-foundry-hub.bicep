@@ -31,11 +31,11 @@ param aiSearchName string
 @description('Resource ID of the AI Search resource')
 param aiSearchId string
 
-@description('Optional deployment settings for models')
-param aoaiModelDeployments array = []
+// @description('Optional deployment settings for models')
+// param aoaiModelDeployments array = []
 
-@description('Role assignments')
-param roleAssignments array = []
+// @description('Role assignments')
+// param roleAssignments array = []
 
 param skuName string = 'Basic'
 param skuTier string = 'Basic'
@@ -46,7 +46,7 @@ var kindAIServicesExists = aiServiceKind == 'AIServices'
 
 var aiServiceConnectionName = kindAIServicesExists ? '${name}-connection-AIServices' : aoaiConnection
 
-resource aiServices 'Microsoft.CognitiveServices/accounts@2024-10-01' existing = {
+resource aiServices 'Microsoft.CognitiveServices/accounts@2025-04-01-preview' existing = {
   name: aiServicesName
 }
 
@@ -54,7 +54,7 @@ resource aiSearch 'Microsoft.Search/searchServices@2024-06-01-preview' existing 
   name: aiSearchName
 }
 
-resource foundryHub 'Microsoft.MachineLearningServices/workspaces@2025-01-01-preview' = {
+resource foundryHub 'Microsoft.MachineLearningServices/workspaces@2025-04-01-preview' = {
   name: name
   location: location
   sku: {
@@ -76,7 +76,7 @@ resource foundryHub 'Microsoft.MachineLearningServices/workspaces@2025-01-01-pre
   }
 }
 
-resource connection_aisvc 'Microsoft.MachineLearningServices/workspaces/connections@2025-01-01-preview' = {
+resource connection_aisvc 'Microsoft.MachineLearningServices/workspaces/connections@2025-04-01' = {
   name: aiServiceConnectionName
   parent: foundryHub
   properties: {
@@ -93,7 +93,7 @@ resource connection_aisvc 'Microsoft.MachineLearningServices/workspaces/connecti
   }
 }
 
-resource connection_search 'Microsoft.MachineLearningServices/workspaces/connections@2025-01-01-preview' = {
+resource connection_search 'Microsoft.MachineLearningServices/workspaces/connections@2025-04-01' = {
   name: '${name}-connection-search'
   parent: foundryHub
   properties: {
@@ -110,7 +110,7 @@ resource connection_search 'Microsoft.MachineLearningServices/workspaces/connect
   }
 }
 
-// resource capabilityHosts_Agent 'Microsoft.MachineLearningServices/workspaces/capabilityHosts@2025-01-01-preview' = {
+// resource capabilityHosts_Agent 'Microsoft.MachineLearningServices/workspaces/capabilityHosts@2025-04-01' = {
 //   parent: foundryHub
 //   name: '${name}-capabilityHosts-Agent'
 //   properties: {

@@ -5,6 +5,8 @@
 // --------------------------------------------------------------------------------------------------------------
 // You can test it with this command:
 //   az deployment group create -n manual --resource-group rg_mfg-ai-lz --template-file 'main-basic.bicep' --parameters environmentName=dev applicationName=myApp
+// Or with a parameter file:
+//   az deployment group create -n manual --resource-group rg_mfg-ai-lz --template-file 'main-basic.bicep' --parameters main-basic.your.bicepparam
 // --------------------------------------------------------------------------------------------------------------
 // 	Services Needed for Chat Agent Programs:
 // 		Container Apps
@@ -92,6 +94,8 @@ param aiProjectFriendlyName string = 'Agents Project resource'
 param aiProjectDescription string = 'This is an example AI Project resource for use in Azure AI Studio.'
 @description('Should we deploy an AI Foundry Hub?')
 param deployAIHub bool = true
+@description('Should we deploy an APIM?')
+param deployAPIM bool = false
 
 // --------------------------------------------------------------------------------------------------------------
 // APIM Parameters
@@ -518,7 +522,7 @@ module aiFoundryHub './modules/ai-foundry/ai-foundry-hub.bicep' = {
     aiServicesId: openAI.outputs.id
     aiServicesName: openAI.outputs.name
     aiServicesTarget: openAI.outputs.endpoint
-    aoaiModelDeployments: openAI.outputs.deployments
+    //aoaiModelDeployments: openAI.outputs.deployments
     aiSearchId: searchService.outputs.id
     aiSearchName: searchService.outputs.name
   }
@@ -531,8 +535,8 @@ module aiFoundryProject './modules/ai-foundry/ai-foundry-project.bicep' = {
     name: resourceNames.outputs.aiHubFoundryProjectName
     tags: commonTags
     hubId: aiFoundryHub.outputs.id
-    hubName: aiFoundryHub.outputs.name
-    aiServicesConnectionName: [aiFoundryHub.outputs.connection_aisvcName]
+    //hubName: aiFoundryHub.outputs.name
+    //aiServicesConnectionName: [aiFoundryHub.outputs.connection_aisvcName]
   }
 }
 module aiFoundryIdentityRoleAssignments './modules/iam/role-assignments.bicep' = if (addRoleAssignments) {
@@ -624,7 +628,7 @@ module formatProjectWorkspaceId './modules/cognitive-services/format-project-wor
 // --------------------------------------------------------------------------------------------------------------
 // -- APIM ------------------------------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------------------------------
-module apim './modules/api-management/apim.bicep' = {
+module apim './modules/api-management/apim.bicep' = if (deployAPIM) {
   name: 'apim${deploymentSuffix}'
   params: {
     location: location
@@ -637,7 +641,7 @@ module apim './modules/api-management/apim.bicep' = {
   }
 }
 
-module apimConfiguration './modules/api-management/apim-oai-config.bicep' = {
+module apimConfiguration './modules/api-management/apim-oai-config.bicep' = if (deployAPIM) {
   name: 'apimConfig${deploymentSuffix}'
   params: {
     apimName: apim.outputs.name
@@ -646,7 +650,7 @@ module apimConfiguration './modules/api-management/apim-oai-config.bicep' = {
   }
 }
 
-module apimIdentityRoleAssignments './modules/iam/role-assignments.bicep' = if (addRoleAssignments) {
+module apimIdentityRoleAssignments './modules/iam/role-assignments.bicep' = if (deployAPIM && addRoleAssignments) {
   name: 'apim-roles${deploymentSuffix}'
   params: {
     identityPrincipalId: aiFoundryProject.outputs.principalId

@@ -46,7 +46,7 @@ module apimApisOpenAI 'apis/openai-api.bicep' = {
   name: 'apim-openai-api${deploymentSuffix}'
   params: {
     serviceName: apimName
-    backendName: apimBackendsOpenAI.outputs.backendPoolName
+    // backendName: apimBackendsOpenAI.outputs.backendPoolName
     apimLoggerName: apimLoggerName
   }
   dependsOn: [

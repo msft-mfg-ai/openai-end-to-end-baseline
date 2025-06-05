@@ -32,6 +32,7 @@ param chatGpt_Premium object = {}
 // --------------------------------------------------------------------------------------------------------------
 var resourceGroupName = resourceGroup().name
 var useExistingService = !empty(existing_CogServices_Name)
+var deployInVNET = !empty(privateEndpointSubnetId)
 var cognitiveServicesKeySecretName = 'cognitive-services-key'
 var deployments = union(
   textEmbeddings,
@@ -118,7 +119,7 @@ resource deployment 'Microsoft.CognitiveServices/accounts/deployments@2023-05-01
   }
 ]
 
-module privateEndpoint '../networking/private-endpoint.bicep' = if (empty(existing_CogServices_Name) && !empty(privateEndpointSubnetId)) {
+module privateEndpoint '../networking/private-endpoint.bicep' = if (deployInVNET && !useExistingService) {
   name: '${name}-private-endpoint'
   params: {
     tags: tags
@@ -130,7 +131,7 @@ module privateEndpoint '../networking/private-endpoint.bicep' = if (empty(existi
   }
 }
 
-module privateEndpoint2 '../networking/private-endpoint.bicep' = if (empty(existing_CogServices_Name) && !empty(privateEndpointSubnetId)) {
+module privateEndpoint2 '../networking/private-endpoint.bicep' = if (deployInVNET && !useExistingService) {
   name: '${name}-openai-private-endpoint'
   params: {
     tags: tags
@@ -171,20 +172,19 @@ resource connection 'Microsoft.CognitiveServices/accounts/connections@2025-04-01
 // --------------------------------------------------------------------------------------------------------------
 // Outputs
 // --------------------------------------------------------------------------------------------------------------
-output id string = !empty(existing_CogServices_Name) ? existingAccount.id : account.id
-output name string = !empty(existing_CogServices_Name) ? existingAccount.name : account.name
-output endpoint string = !empty(existing_CogServices_Name)
+output id string = useExistingService ? existingAccount.id : account.id
+output name string = useExistingService ? existingAccount.name : account.name
+output endpoint string = useExistingService
   ? existingAccount.properties.endpoint
   : account.properties.endpoint
-output resourceGroupName string = !empty(existing_CogServices_Name) ? existing_CogServices_RG_Name : resourceGroupName
+output resourceGroupName string = useExistingService ? existing_CogServices_RG_Name : resourceGroupName
 output cognitiveServicesKeySecretName string = cognitiveServicesKeySecretName
-// output privateEndpointName string = !empty(privateEndpointSubnetId) ? privateEndpoint.outputs.privateEndpointName : ''
-// output privateEndpointName2 string = !empty(privateEndpointSubnetId) ? privateEndpoint2.outputs.privateEndpointName: ''
 
 output textEmbeddings array = textEmbeddings
 output chatGpt_Standard object = chatGpt_Standard
 output kind string = kind
-output privateEndpointName string = privateEndpoint.outputs.privateEndpointName
+output privateEndpointName string = deployInVNET && !useExistingService ? privateEndpoint.outputs.privateEndpointName : ''
+output privateEndpointName2 string = deployInVNET && !useExistingService ? privateEndpoint2.outputs.privateEndpointName: ''
 
 
 @description('Array of all deployed models with their details')
@@ -192,7 +192,6 @@ output deployments array = [
   for (deployment, i) in deployments: {
     name: deployment.name
     model: deployment.model.name
-    sku: deployment.sku.name
     capacity: deployment.sku.capacity
     version: deployment.model.version
   }

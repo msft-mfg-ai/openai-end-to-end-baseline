@@ -10,22 +10,22 @@ param tags object = {}
 @description('The ID of the AI Foundry Hub to associate with this project.')
 param hubId string
 
-@description('Name of the AI Foundry Hub resource')
-param hubName string
+// @description('Name of the AI Foundry Hub resource')
+// param hubName string
 
-@description('Role assignments for the AI Foundry Project')
-param roleAssignments array = []
+// @description('Role assignments for the AI Foundry Project')
+// param roleAssignments array = []
 
-param aiServicesConnectionName array = []
+// param aiServicesConnectionName array = []
 
-@description('Optional deployment settings for models')
-param modelDeployments array = []
+// @description('Optional deployment settings for models')
+// param modelDeployments array = []
 
-resource hub 'Microsoft.MachineLearningServices/workspaces@2025-01-01-preview' existing = {
-  name: hubName
-}
+// resource hub 'Microsoft.MachineLearningServices/workspaces@2025-01-01-preview' existing = {
+//   name: hubName
+// }
 
-resource foundryProject 'Microsoft.MachineLearningServices/workspaces@2025-01-01-preview' = {
+resource foundryProject 'Microsoft.MachineLearningServices/workspaces@2025-04-01' = {
   name: name
   location: location
   kind: 'project'
@@ -44,7 +44,7 @@ resource foundryProject 'Microsoft.MachineLearningServices/workspaces@2025-01-01
   }
 }
 
-// resource capabilityHosts_Agent 'Microsoft.MachineLearningServices/workspaces/capabilityHosts@2025-01-01-preview' = {
+// resource capabilityHosts_Agent 'Microsoft.MachineLearningServices/workspaces/capabilityHosts@2025-04-01' = {
 //   parent: foundryProject
 //   name: '${name}-capabilityHosts-Agent'
 //   properties: {
