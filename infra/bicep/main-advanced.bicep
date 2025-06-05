@@ -128,8 +128,8 @@ param containerAppEnvironmentWorkloadProfiles array = [
 // --------------------------------------------------------------------------------------------------------------
 @description('Name of an existing Cognitive Services account to use')
 param existing_CogServices_Name string = ''
-@description('Resource Group where existing Cognitive Services account Lives')
-param existing_CogServices_ResourceGroupName string = ''
+//@description('Resource Group where existing Cognitive Services account Lives')
+//param existing_CogServices_ResourceGroupName string = ''
 
 @description('Name of an existing Search Services account to use')
 param existing_SearchService_Name string = ''
@@ -152,10 +152,10 @@ param existing_Cosmos_ResourceGroupName string = ''
 // --------------------------------------------------------------------------------------------------------------
 // Existing Key Vault?
 // --------------------------------------------------------------------------------------------------------------
-@description('Name of an existing Key Vault to use')
-param existing_KeyVault_Name string = ''
-@description('Resource Group where existing Key Vault Lives')
-param existing_KeyVault_ResourceGroupName string = ''
+//@description('Name of an existing Key Vault to use')
+//param existing_KeyVault_Name string = ''
+//@description('Resource Group where existing Key Vault Lives')
+//param existing_KeyVault_ResourceGroupName string = ''
 
 // --------------------------------------------------------------------------------------------------------------
 // AI Hub Parameters
@@ -245,6 +245,8 @@ var tags = union(commonTags, azdTag, costCenterTagObject, ownerEmailTagObject)
 // Run a script to dedupe the KeyVault secrets -- this fails on private networks right now so turn if off for them
 var deduplicateKVSecrets = publicAccessEnabled ? deduplicateKeyVaultSecrets : false
 
+var vnetAddressPrefix = vnetPrefix
+
 // --------------------------------------------------------------------------------------------------------------
 // -- Generate Resource Names -----------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------------------------------
@@ -269,7 +271,7 @@ module vnet './modules/networking/vnet.bicep' = {
     existingVirtualNetworkName: existingVnetName
     existingVnetResourceGroupName: existingVnetResourceGroupName
     newVirtualNetworkName: resourceNames.outputs.vnet_Name
-    vnetAddressPrefix: vnetPrefix
+    vnetAddressPrefix: vnetAddressPrefix
     subnetAppGwName: !empty(subnetAppGwName) ? subnetAppGwName  : resourceNames.outputs.subnetAppGwName
     subnetAppGwPrefix: subnetAppGwPrefix 
     subnetAppSeName: !empty(subnetAppSeName ) ? subnetAppSeName  : resourceNames.outputs.subnetAppSeName
