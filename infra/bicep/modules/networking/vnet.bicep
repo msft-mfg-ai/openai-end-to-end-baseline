@@ -4,10 +4,28 @@ param existingVirtualNetworkName string = ''
 param existingVnetResourceGroupName string = resourceGroup().name
 param newVirtualNetworkName string = ''
 param vnetAddressPrefix string
-param subnet1Name string
-param subnet2Name string
-param subnet1Prefix string
-param subnet2Prefix string
+//param subnet1Name string    - commented out to avoid confusion with existingVirtualNetworkName
+//param subnet2Name string - commented out to avoid confusion with existingVirtualNetworkName
+//param subnet1Prefix string - commented out to avoid confusion with existingVirtualNetworkName
+//param subnet2Prefix string - commented out to avoid confusion with existingVirtualNetworkName
+
+// Additional subnet name and prefix parameters for all subnets used below
+param vnetAppGwSubnetName string
+param vnetAppGwSubnetPrefix string
+param vnetAppSeSubnetName string
+param vnetAppSeSubnetPrefix string
+param vnetPeSubnetName string
+param vnetPeSubnetPrefix string
+param vnetAgentSubnetName string
+param vnetAgentSubnetPrefix string
+param vnetBastionSubnetName string
+param vnetBastionSubnetPrefix string
+param vnetJumpboxSubnetName string
+param vnetJumpboxSubnetPrefix string
+param vnetTrainingSubnetName string
+param vnetTrainingSubnetPrefix string
+param vnetScoringSubnetName string
+param vnetScoringSubnetPrefix string
 
 var useExistingResource = !empty(existingVirtualNetworkName)
 
@@ -15,16 +33,16 @@ resource existingVirtualNetwork 'Microsoft.Network/virtualNetworks@2024-01-01' e
   name: existingVirtualNetworkName
   scope: resourceGroup(existingVnetResourceGroupName)
   resource subnet1 'subnets' existing = {
-    name: subnet1Name
+    name: vnetAppGwSubnetName
   }
   resource subnet2 'subnets' existing = {
-    name: subnet2Name
+    name: vnetAppSeSubnetName
   }
 }
 module appSubnetNSG './network-security-group.bicep' = if (!useExistingResource) {
   name: 'nsg'
   params: {
-    nsgName: '${newVirtualNetworkName}-${subnet2Name}-nsg-${location}'
+    nsgName: '${newVirtualNetworkName}-${vnetAppSeSubnetName}-nsg-${location}'
     location: location
   }
 }
@@ -40,16 +58,16 @@ resource newVirtualNetwork 'Microsoft.Network/virtualNetworks@2024-01-01' = if (
     }
     subnets: [
       {
-        name: subnet1Name
+        name: vnetAppGwSubnetName // The subnet for the Application Gateway
         properties: {
-          addressPrefix: subnet1Prefix
+          addressPrefix: vnetAppGwSubnetPrefix // The address prefix for the Application Gateway subnet
         }
       }
       {
         // The subnet of the managed environment must be delegated to the service 'Microsoft.App/environments'
-        name: subnet2Name
+        name: vnetAppSeSubnetName // The subnet for the Container Apps Environment
         properties: {
-          addressPrefix: subnet2Prefix
+          addressPrefix: vnetAppSeSubnetPrefix // The address prefix for the Container Apps Environment subnet
           networkSecurityGroup: {
             id: appSubnetNSG.outputs.id
           }
@@ -65,15 +83,50 @@ resource newVirtualNetwork 'Microsoft.Network/virtualNetworks@2024-01-01' = if (
           ] 
         }
       }
+      {name: vnetPeSubnetName // The subnet for the Private Endpoints
+        properties: {
+          addressPrefix: vnetPeSubnetPrefix // The address prefix for the Private Endpoint subnet
+        }
+      }
+      {name: vnetAgentSubnetName // The subnet for the Container Apps Agent Pool
+        properties: {
+          addressPrefix: vnetAgentSubnetPrefix // The address prefix for the Container Apps Agent Pool subnet
+        }
+      }
+      {name: vnetAgentSubnetName // The subnet for the Container Apps Agent Pool
+        properties: {
+          addressPrefix: vnetAgentSubnetPrefix // The address prefix for the Container Apps Agent Pool subnet
+        }
+      }
+      {name: vnetBastionSubnetName // The subnet for the Azure Bastion
+        properties: {
+          addressPrefix: vnetBastionSubnetPrefix // The address prefix for the Azure Bastion subnet
+        }
+      }
+      {name: vnetJumpboxSubnetName // The subnet for the Jumpbox
+        properties: {
+          addressPrefix: vnetJumpboxSubnetPrefix // The address prefix for the Jumpbox subnet
+        }
+      }
+      {name: vnetTrainingSubnetName // The subnet for the Training
+        properties: {
+          addressPrefix: vnetTrainingSubnetPrefix // The address prefix for the Training subnet
+        }
+      }
+      {name: vnetScoringSubnetName // The subnet for the Scoring
+        properties: {
+          addressPrefix: vnetScoringSubnetPrefix // The address prefix for the Scoring subnet
+        }
+      }
     ]
   }
 
   resource subnet1 'subnets' existing = {
-    name: subnet1Name
+    name: vnetAppGwSubnetName
   }
 
   resource subnet2 'subnets' existing = {
-    name: subnet2Name
+    name: vnetAppSeSubnetName
   }
 }
 
