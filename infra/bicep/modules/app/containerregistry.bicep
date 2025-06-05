@@ -54,7 +54,7 @@ resource newContainerRegistry 'Microsoft.ContainerRegistry/registries@2023-01-01
 }
 
 module privateEndpoint '../networking/private-endpoint.bicep' =
-  if (!useExistingResource) {
+  if (!useExistingResource && !empty(privateEndpointSubnetId)) {
     name: '${newRegistryName}-private-endpoint'
     params: {
       location: location

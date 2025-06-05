@@ -40,24 +40,16 @@ on:
         description: Create Resource Group?
         type: boolean
         default: true
-      publicAccessEnabled:
-        description: Public Access Enabled?
-        type: boolean
-        default: true
-      createDnsZones:
-        description: Create DNS Zones?
-        type: boolean
-        default: true
       addRoleAssignments:
         description: Add Role Assignments?
         type: boolean
         default: true
-      deployAIHub:
-        description: Deploy AI Hub?
+      deployAPIM:
+        description: Deploy APIM?
         type: boolean
         default: true
       runBuildDeployAPI:
-        description: Build and Deploy API
+        description: Build and Deploy API?
         required: false
         default: false
         type: boolean
@@ -66,7 +58,21 @@ on:
         required: false
         default: false
         type: boolean
-          
+        
+      # runBuildDeployUI:
+      #   description: Build and Deploy UI
+      #   required: false
+      #   default: false
+      #   type: boolean
+      # publicAccessEnabled:
+      #   description: Public Access Enabled?
+      #   type: boolean
+      #   default: true
+      # createDnsZones:
+      #   description: Create DNS Zones?
+      #   type: boolean
+      #   default: true
+
 jobs:
   Deploy_Bicep:
     name: Deploy ${{ inputs.deployEnvironment }} Bicep
@@ -83,11 +89,14 @@ jobs:
       templateFile: ${{ inputs.bicepFile }}
       parameterFile: ${{ inputs.parameterFile }}
       parameterFileReplaceTokens: 'true'
+
       createResourceGroup: ${{ inputs.createResourceGroup }}
-      publicAccessEnabled: ${{ inputs.publicAccessEnabled }}
-      createDnsZones: ${{ inputs.createDnsZones }}
-      deployAIHub: ${{ inputs.deployAIHub }}
       addRoleAssignments: ${{ inputs.addRoleAssignments }}
       runBuildDeployAPI: ${{ inputs.runBuildDeployAPI }}
-      #instance: ${{ vars.INSTANCE_NUMBER }}
+      deployAPIM: ${{ inputs.deployAPIM }}
       loginUsingClientSecret: ${{ inputs.loginUsingClientSecret }}
+
+      deployAIHub: true
+      publicAccessEnabled: true
+      createDnsZones: false
+      requestorName: ${{ github.actor }}

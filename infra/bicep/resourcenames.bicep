@@ -42,13 +42,15 @@ output logAnalyticsWorkspaceName string   = toLower('${resourceAbbreviations.ope
 
 output cosmosName string                  = toLower('${resourceAbbreviations.documentDBDatabaseAccounts}-${sanitizedAppName}-${sanitizedEnvironment}${resourceTokenWithDash}${dashRegionDashInstance}')
 
+output apimName string                    = toLower('${resourceAbbreviations.apiManagementService}-${sanitizedAppName}-${sanitizedEnvironment}${resourceTokenWithDash}${dashRegionDashInstance}')
+
 output searchServiceName string           = toLower('${resourceAbbreviations.searchSearchServices}-${sanitizedAppName}-${sanitizedEnvironment}${resourceTokenWithDash}${dashRegionDashInstance}')
 output cogServiceName string              = toLower('${resourceAbbreviations.cognitiveServicesAccounts}-${sanitizedAppName}-${sanitizedEnvironment}${resourceTokenWithDash}${dashRegionDashInstance}')
-output documentIntelligenceName string    = toLower('${resourceAbbreviations.cognitiveServicesFormRecognizer}-${sanitizedAppName}-${sanitizedEnvironment}-${resourceTokenWithDash}${dashRegionDashInstance}')
-
+output documentIntelligenceName string    = toLower('${resourceAbbreviations.cognitiveServicesFormRecognizer}-${sanitizedAppName}-${sanitizedEnvironment}${resourceTokenWithDash}${dashRegionDashInstance}')
 output aiHubName string                   = toLower('${resourceAbbreviations.cognitiveServicesHub}-${sanitizedAppName}-${sanitizedEnvironment}${resourceTokenWithDash}${dashRegionDashInstance}')
-// Project name must be alpha numeric characters or '-', length must be <= 32
-output aiHubProjectName string            = take(toLower('${resourceAbbreviations.cognitiveServicesHub}-Project-${sanitizedAppName}-${sanitizedEnvironment}${resourceTokenWithDash}${dashInstance}'), 32)
+// AI Hub Project name must be alpha numeric characters or '-', length must be <= 32
+output aiHubProjectName string            = take(toLower('${resourceAbbreviations.cognitiveServicesHub}-proj-${sanitizedAppName}-${sanitizedEnvironment}${resourceTokenWithDash}${dashInstance}'), 32)
+output aiHubFoundryProjectName string     = take(toLower('${resourceAbbreviations.cognitiveServicesHub}-fproj-${sanitizedAppName}-${sanitizedEnvironment}${resourceTokenWithDash}${dashInstance}'), 32)
 
 output caManagedEnvName string            = toLower('${resourceAbbreviations.appManagedEnvironments}-${sanitizedAppName}-${sanitizedEnvironment}${resourceToken}${dashRegionDashInstance}')
 // CA name must be lower case alpha or '-', must start and end with alpha, cannot have '--', length must be <= 32

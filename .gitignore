@@ -41,3 +41,5 @@ appgw.crt
 
 *.~vsdx
 docs/media/~$$openai-end-to-end.~vsdx
+infra/bicep/main-basic.lyle.bicepparam
+infra/bicep/main-basic.fernando.bicepparam

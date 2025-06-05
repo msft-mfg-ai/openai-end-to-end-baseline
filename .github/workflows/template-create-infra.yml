@@ -61,6 +61,10 @@ on:
         description: Run Build and Deploy API?
         type: boolean
         default: false
+      deployAPIM:
+        description: Run Deploy APIM?
+        type: boolean
+        default: false
       loginUsingClientSecret:
         description: Login using Client Secret?
         type: boolean
@@ -68,11 +72,7 @@ on:
       requestorName:
         description: Requestor Name
         type: string
-        default: '${{ github.actor }}'
-      # instance:
-      #   description: Instance number for resource naming
-      #   type: string
-      #   default: '001'
+        default: 'UNKNOWN'
 
 # ------------------------------------------------------------------------------------------------------------------------
 jobs:
@@ -99,6 +99,7 @@ jobs:
       deployAIHub: ${{ inputs.deployAIHub }}
       addRoleAssignments: ${{ inputs.addRoleAssignments }}
       runBuildDeployAPI: ${{ inputs.runBuildDeployAPI }}
+      deployAPIM: ${{ inputs.deployAPIM }}
       loginWithFederatedIdentity: ${{ secrets.CICD_CLIENT_SECRET == '' && 'true' || 'false' }}
       loginWithSecret: ${{ secrets.CICD_CLIENT_SECRET != '' && 'true' || 'false' }}
  
@@ -207,6 +208,7 @@ jobs:
           template: ${{ inputs.templatePath }}${{ inputs.templateFile }}
           parameters: ${{ inputs.templatePath }}${{ inputs.parameterFile }}
           deploymentMode: ${{ inputs.deploymentMode }} # Must be: Incremental | Complete | Validation
+          failOnStdErr: false # if set to true, then any warning thrown by Bicep will cause the action to fail
 
       - name: Deploy Azure Resources (RG)
         uses: azure/arm-deploy@v2
@@ -220,6 +222,7 @@ jobs:
           template: ${{ inputs.templatePath }}${{ inputs.templateFile }}
           parameters: ${{ inputs.templatePath }}${{ inputs.parameterFile }}
           deploymentMode: ${{ inputs.deploymentMode }} # Must be: Incremental | Complete | Validation
+          failOnStdErr: false # if set to true, then any warning thrown by Bicep will cause the action to fail
 
       - name: Display Output
         if: ${{ inputs.runCreateInfra }}
