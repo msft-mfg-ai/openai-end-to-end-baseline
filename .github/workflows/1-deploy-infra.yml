@@ -89,11 +89,13 @@ jobs:
       templateFile: ${{ inputs.bicepFile }}
       parameterFile: ${{ inputs.parameterFile }}
       parameterFileReplaceTokens: 'true'
+
       createResourceGroup: ${{ inputs.createResourceGroup }}
-      publicAccessEnabled: ${{ inputs.publicAccessEnabled }}
-      createDnsZones: ${{ inputs.createDnsZones }}
-      deployAIHub: ${{ inputs.deployAIHub }}
       addRoleAssignments: ${{ inputs.addRoleAssignments }}
       runBuildDeployAPI: ${{ inputs.runBuildDeployAPI }}
       loginUsingClientSecret: ${{ inputs.loginUsingClientSecret }}
+
+      deployAIHub: true
+      publicAccessEnabled: true
+      createDnsZones: false
       requestorName: ${{ github.actor }}
