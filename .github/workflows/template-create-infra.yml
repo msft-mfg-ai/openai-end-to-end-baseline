@@ -68,11 +68,7 @@ on:
       requestorName:
         description: Requestor Name
         type: string
-        default: '${{ github.actor }}'
-      # instance:
-      #   description: Instance number for resource naming
-      #   type: string
-      #   default: '001'
+        default: 'UNKNOWN'
 
 # ------------------------------------------------------------------------------------------------------------------------
 jobs:

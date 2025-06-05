@@ -122,17 +122,17 @@ resource apimDiagnostic 'Microsoft.ApiManagement/service/diagnostics@2024-06-01-
   }
 }
 
-resource roleAssignmentsResource 'Microsoft.Authorization/roleAssignments@2022-04-01' = [
-  for roleAssignment in roleAssignments: if(length(roleAssignment) > 0 ) {
-    name: guid(roleAssignment.principalId, roleAssignment.roleDefinitionId, apimService.id)
-    scope: apimService
-    properties: {
-      roleDefinitionId: resourceId('Microsoft.Authorization/roleDefinitions', roleAssignment.roleDefinitionId)
-      principalId: apimService.identity.principalId
-      principalType: 'ServicePrincipal'
-    }
-  }
-]
+// resource roleAssignmentsResource 'Microsoft.Authorization/roleAssignments@2022-04-01' = [
+//   for roleAssignment in roleAssignments: if(length(roleAssignment) > 0 ) {
+//     name: guid(roleAssignment.principalId, roleAssignment.roleDefinitionId, apimService.id)
+//     scope: apimService
+//     properties: {
+//       roleDefinitionId: resourceId('Microsoft.Authorization/roleDefinitions', roleAssignment.roleDefinitionId)
+//       principalId: apimService.identity.principalId
+//       principalType: 'ServicePrincipal'
+//     }
+//   }
+// ]
 
 output id string = apimService.id
 output name string = apimService.name

@@ -185,3 +185,15 @@ output textEmbeddings array = textEmbeddings
 output chatGpt_Standard object = chatGpt_Standard
 output kind string = kind
 output privateEndpointName string = privateEndpoint.outputs.privateEndpointName
+
+
+@description('Array of all deployed models with their details')
+output deployments array = [
+  for (deployment, i) in deployments: {
+    name: deployment.name
+    model: deployment.model.name
+    sku: deployment.sku.name
+    capacity: deployment.sku.capacity
+    version: deployment.model.version
+  }
+]

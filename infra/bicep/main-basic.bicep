@@ -94,6 +94,16 @@ param aiProjectDescription string = 'This is an example AI Project resource for 
 param deployAIHub bool = true
 
 // --------------------------------------------------------------------------------------------------------------
+// APIM Parameters
+// --------------------------------------------------------------------------------------------------------------
+@description('Name of the APIM Subscription. Defaults to aiagent-subscription')
+param apimSubscriptionName string = 'aiagent-subscription'
+@description('Email of the APIM Publisher')
+param apimPublisherEmail string = 'somebody@somewhere.com'
+@description('Name of the APIM Publisher')
+param adminPublisherName string = 'AI Agent Admin'
+
+// --------------------------------------------------------------------------------------------------------------
 // Existing images
 // --------------------------------------------------------------------------------------------------------------
 param apiImageName string = ''
@@ -102,6 +112,9 @@ param batchImageName string = ''
 // --------------------------------------------------------------------------------------------------------------
 // Other deployment switches
 // --------------------------------------------------------------------------------------------------------------
+@description('Should VNET be used in this deploy?')
+param deployVNET bool = false
+
 @description('Should resources be created with public access?')
 param publicAccessEnabled bool = true
 @description('Create DNS Zones?')
@@ -191,7 +204,7 @@ module resourceNames 'resourcenames.bicep' = {
 // --------------------------------------------------------------------------------------------------------------
 // -- VNET ------------------------------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------------------------------
-module vnet './modules/networking/vnet.bicep' = {
+module vnet './modules/networking/vnet.bicep' = if (deployVNET) {
   name: 'vnet${deploymentSuffix}'
   params: {
     location: location
@@ -218,7 +231,7 @@ module containerRegistry './modules/app/containerregistry.bicep' = {
     tags: tags
     publicAccessEnabled: publicAccessEnabled
     privateEndpointName: 'pe-${resourceNames.outputs.ACR_Name}'
-    privateEndpointSubnetId: vnet.outputs.subnet1ResourceId
+    privateEndpointSubnetId: deployVNET ? vnet.outputs.subnet1ResourceId : ''
     myIpAddress: myIpAddress
   }
 }
@@ -246,7 +259,7 @@ module storage './modules/storage/storage-account.bicep' = {
     location: location
     tags: tags
     // publicNetworkAccess: publicAccessEnabled
-    privateEndpointSubnetId: vnet.outputs.subnet1ResourceId
+    privateEndpointSubnetId: deployVNET ? vnet.outputs.subnet1ResourceId : ''
     privateEndpointBlobName: 'pe-blob-${resourceNames.outputs.storageAccountName}'
     privateEndpointQueueName: 'pe-queue-${resourceNames.outputs.storageAccountName}'
     privateEndpointTableName: 'pe-table-${resourceNames.outputs.storageAccountName}'
@@ -256,7 +269,7 @@ module storage './modules/storage/storage-account.bicep' = {
 }
 
 // --------------------------------------------------------------------------------------------------------------
-// -- Key Vault Resources ---------------------------------------------------------------------------------------
+// -- Identity and Access Resources -----------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------------------------------
 module identity './modules/iam/identity.bicep' = {
   name: 'app-identity${deploymentSuffix}'
@@ -266,7 +279,7 @@ module identity './modules/iam/identity.bicep' = {
   }
 }
 module appIdentityRoleAssignments './modules/iam/role-assignments.bicep' = if (addRoleAssignments) {
-  name: 'identity-access${deploymentSuffix}'
+  name: 'identity-roles${deploymentSuffix}'
   params: {
     identityPrincipalId: identity.outputs.managedIdentityPrincipalId
     principalType: 'ServicePrincipal'
@@ -279,7 +292,7 @@ module appIdentityRoleAssignments './modules/iam/role-assignments.bicep' = if (a
 }
 
 module adminUserRoleAssignments './modules/iam/role-assignments.bicep' = if (addRoleAssignments && !empty(principalId)) {
-  name: 'user-access${deploymentSuffix}'
+  name: 'user-roles${deploymentSuffix}'
   params: {
     identityPrincipalId: principalId
     principalType: 'User'
@@ -291,6 +304,9 @@ module adminUserRoleAssignments './modules/iam/role-assignments.bicep' = if (add
   }
 }
 
+// --------------------------------------------------------------------------------------------------------------
+// -- Key Vault Resources ---------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------
 module keyVault './modules/security/keyvault.bicep' = {
   name: 'keyvault${deploymentSuffix}'
   params: {
@@ -303,7 +319,7 @@ module keyVault './modules/security/keyvault.bicep' = {
     keyVaultOwnerIpAddress: myIpAddress
     createUserAssignedIdentity: false
     privateEndpointName: 'pe-${resourceNames.outputs.keyVaultName}'
-    privateEndpointSubnetId: vnet.outputs.subnet1ResourceId
+    privateEndpointSubnetId: deployVNET ? vnet.outputs.subnet1ResourceId : ''
   }
 }
 
@@ -398,7 +414,7 @@ module cosmos './modules/database/cosmosdb.bicep' = {
     containerArray: cosmosContainerArray
     location: location
     tags: tags
-    privateEndpointSubnetId: vnet.outputs.subnet1ResourceId
+    privateEndpointSubnetId: deployVNET ? vnet.outputs.subnet1ResourceId : ''
     privateEndpointName: 'pe-${resourceNames.outputs.cosmosName}'
     managedIdentityPrincipalId: identity.outputs.managedIdentityPrincipalId
     userPrincipalId: principalId
@@ -408,7 +424,7 @@ module cosmos './modules/database/cosmosdb.bicep' = {
 }
 
 // --------------------------------------------------------------------------------------------------------------
-// -- Cognitive Services Resources ------------------------------------------------------------------------------
+// -- Search Service Resource ------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------------------------------
 module searchService './modules/search/search-services.bicep' = {
   name: 'search${deploymentSuffix}'
@@ -417,7 +433,7 @@ module searchService './modules/search/search-services.bicep' = {
     name: resourceNames.outputs.searchServiceName
     publicNetworkAccess: publicAccessEnabled ? 'enabled' : 'disabled'
     myIpAddress: myIpAddress
-    privateEndpointSubnetId: vnet.outputs.subnet1ResourceId
+    privateEndpointSubnetId: deployVNET ? vnet.outputs.subnet1ResourceId : ''
     privateEndpointName: 'pe-${resourceNames.outputs.searchServiceName}'
     managedIdentityId: identity.outputs.managedIdentityId
     sku: {
@@ -459,7 +475,7 @@ module openAI './modules/ai/cognitive-services.bicep' = {
       DeploymentCapacity: 10
     }
     publicNetworkAccess: publicAccessEnabled ? 'enabled' : 'disabled'
-    privateEndpointSubnetId: vnet.outputs.subnet1ResourceId
+    privateEndpointSubnetId: deployVNET ? vnet.outputs.subnet1ResourceId : ''
     privateEndpointName: 'pe-${resourceNames.outputs.cogServiceName}'
     myIpAddress: myIpAddress
   }
@@ -475,7 +491,7 @@ module documentIntelligence './modules/ai/document-intelligence.bicep' = {
     location: location // this may be different than the other resources
     tags: tags
     publicNetworkAccess: publicAccessEnabled ? 'enabled' : 'disabled'
-    privateEndpointSubnetId: vnet.outputs.subnet1ResourceId
+    privateEndpointSubnetId: deployVNET ? vnet.outputs.subnet1ResourceId : ''
     privateEndpointName: 'pe-${resourceNames.outputs.documentIntelligenceName}'
     myIpAddress: myIpAddress
     managedIdentityId: identity.outputs.managedIdentityId
@@ -485,48 +501,164 @@ module documentIntelligence './modules/ai/document-intelligence.bicep' = {
   ]
 }
 
-module aiHub './modules/ai/ai-hub-secure.bicep' = if (deployAIHub) {
-  name: 'aiHub${deploymentSuffix}'
+
+// --------------------------------------------------------------------------------------------------------------
+// AI Foundry Hub and Project V2
+// Imported from https://github.com/adamhockemeyer/ai-agent-experience
+// --------------------------------------------------------------------------------------------------------------
+module aiFoundryHub './modules/ai-foundry/ai-foundry-hub.bicep' = {
+  name:  'aiHub${deploymentSuffix}'
   params: {
-    aiHubName: resourceNames.outputs.aiHubName
     location: location
-    tags: tags
-
-    // dependent resources
-    aiServicesId: openAI.outputs.id
-    aiServicesTarget: openAI.outputs.endpoint
-    aiSearchName: searchService.outputs.name
+    name: resourceNames.outputs.aiHubName
+    tags: commonTags
     applicationInsightsId: logAnalytics.outputs.applicationInsightsId
-    containerRegistryId: containerRegistry.outputs.id
-    keyVaultId: keyVault.outputs.id
     storageAccountId: storage.outputs.id
-
-    // add data scientist role to user and application
-    addRoleAssignments: addRoleAssignments
-    userObjectId: principalId
-    userObjectType: 'User'
-    managedIdentityPrincipalId: identity.outputs.managedIdentityPrincipalId
-    managedIdentityType: 'ServicePrincipal'
+    aiServiceKind: openAI.outputs.kind
+    aiServicesId: openAI.outputs.id
+    aiServicesName: openAI.outputs.name
+    aiServicesTarget: openAI.outputs.endpoint
+    aoaiModelDeployments: openAI.outputs.deployments
+    aiSearchId: searchService.outputs.id
+    aiSearchName: searchService.outputs.name
   }
 }
 
-module aiProject './modules/ai/ai-hub-project.bicep' = if (deployAIHub) {
+module aiFoundryProject './modules/ai-foundry/ai-foundry-project.bicep' = {
+  name: 'aiFoundryProject${deploymentSuffix}'
+  params: {
+    location: location
+    name: resourceNames.outputs.aiHubFoundryProjectName
+    tags: commonTags
+    hubId: aiFoundryHub.outputs.id
+    hubName: aiFoundryHub.outputs.name
+    aiServicesConnectionName: [aiFoundryHub.outputs.connection_aisvcName]
+  }
+}
+module aiFoundryIdentityRoleAssignments './modules/iam/role-assignments.bicep' = if (addRoleAssignments) {
+  name: 'foundry-roles${deploymentSuffix}'
+  params: {
+    identityPrincipalId: aiFoundryProject.outputs.principalId
+    principalType: 'ServicePrincipal'
+    aiServicesName: openAI.outputs.name
+  }
+}
+
+// AI Project and Capability Host
+module aiProject './modules/cognitive-services/ai-project.bicep' = {
   name: 'aiProject${deploymentSuffix}'
   params: {
-    aiProjectName: resourceNames.outputs.aiHubProjectName
-    aiProjectFriendlyName: aiProjectFriendlyName
-    aiProjectDescription: aiProjectDescription
     location: location
-    tags: tags
-    aiHubId: aiHub.outputs.id
+    accountName: openAI.outputs.name
+    projectName:  resourceNames.outputs.aiHubProjectName
+    projectDescription:aiProjectDescription
+    displayName: aiProjectFriendlyName
+    // Connect to existing resources
+    aiSearchName: searchService.outputs.name
+    aiSearchServiceResourceGroupName: resourceGroup().name
+    aiSearchServiceSubscriptionId: subscription().subscriptionId
+
+    cosmosDBName: cosmos.outputs.databaseName
+    cosmosDBResourceGroupName: resourceGroup().name
+    cosmosDBSubscriptionId: subscription().subscriptionId
+
+    azureStorageName: storage.outputs.name
+    azureStorageResourceGroupName: resourceGroup().name
+    azureStorageSubscriptionId: subscription().subscriptionId
+
+    // Connect to App Insights
+    appInsightsName: logAnalytics.outputs.applicationInsightsName
+    appInsightsResourceGroupName: resourceGroup().name
+    appInsightsSubscriptionId: subscription().subscriptionId
   }
 }
 
+module formatProjectWorkspaceId './modules/cognitive-services/format-project-workspace-id.bicep' = {
+  name: 'aiProjectFormatWorkspaceId${deploymentSuffix}'
+  params: {
+    projectWorkspaceId: aiProject.outputs.projectWorkspaceId
+  }
+}
+
+// --------------------------------------------------------------------------------------------------------------
+// AI Foundry Hub and Project V1
+// Imported from https://github.com/msft-mfg-ai/smart-flow-public
+// --------------------------------------------------------------------------------------------------------------
+// module aiHub_v1 './modules/ai/ai-hub-secure.bicep' = if (deployAIHub) {
+//   name: 'aiHub${deploymentSuffix}'
+//   params: {
+//     aiHubName: resourceNames.outputs.aiHubName
+//     location: location
+//     tags: tags
+
+//     // dependent resources
+//     aiServicesId: openAI.outputs.id
+//     aiServicesTarget: openAI.outputs.endpoint
+//     aiSearchName: searchService.outputs.name
+//     applicationInsightsId: logAnalytics.outputs.applicationInsightsId
+//     containerRegistryId: containerRegistry.outputs.id
+//     keyVaultId: keyVault.outputs.id
+//     storageAccountId: storage.outputs.id
+
+//     // add data scientist role to user and application
+//     addRoleAssignments: addRoleAssignments
+//     userObjectId: principalId
+//     userObjectType: 'User'
+//     managedIdentityPrincipalId: identity.outputs.managedIdentityPrincipalId
+//     managedIdentityType: 'ServicePrincipal'
+//   }
+// }
+
+// module aiProject_v1 './modules/ai/ai-hub-project.bicep' = if (deployAIHub) {
+//   name: 'aiProject${deploymentSuffix}'
+//   params: {
+//     aiProjectName: resourceNames.outputs.aiHubProjectName
+//     aiProjectFriendlyName: aiProjectFriendlyName
+//     aiProjectDescription: aiProjectDescription
+//     location: location
+//     tags: tags
+//     aiHubId: aiHub.outputs.id
+//   }
+// }
+
+// --------------------------------------------------------------------------------------------------------------
+// -- APIM ------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------
+module apim './modules/api-management/apim.bicep' = {
+  name: 'apim${deploymentSuffix}'
+  params: {
+    location: location
+    name: resourceNames.outputs.apimName
+    commonTags: commonTags
+    publisherEmail: apimPublisherEmail
+    publisherName: adminPublisherName
+    appInsightsName: logAnalytics.outputs.applicationInsightsName
+    subscriptionName: apimSubscriptionName
+  }
+}
+
+module apimConfiguration './modules/api-management/apim-oai-config.bicep' = {
+  name: 'apimConfig${deploymentSuffix}'
+  params: {
+    apimName: apim.outputs.name
+    apimLoggerName: apim.outputs.loggerName
+    cognitiveServicesName: openAI.outputs.name
+  }
+}
+
+module apimIdentityRoleAssignments './modules/iam/role-assignments.bicep' = if (addRoleAssignments) {
+  name: 'apim-roles${deploymentSuffix}'
+  params: {
+    identityPrincipalId: aiFoundryProject.outputs.principalId
+    principalType: 'ServicePrincipal'
+    apimName: apim.outputs.name
+  }
+}
 
 // --------------------------------------------------------------------------------------------------------------
 // -- DNS ZONES ---------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------------------------------
-module allDnsZones './modules/networking/all-zones.bicep' = if (createDnsZones) {
+module allDnsZones './modules/networking/all-zones.bicep' = if (deployVNET && createDnsZones) {
   name: 'all-dns-zones${deploymentSuffix}'
   params: {
     tags: tags
@@ -558,20 +690,12 @@ module managedEnvironment './modules/app/managedEnvironment.bicep' = {
     location: location
     logAnalyticsWorkspaceName: logAnalytics.outputs.logAnalyticsWorkspaceName
     logAnalyticsRgName: resourceGroupName
-    appSubnetId: vnet.outputs.subnet2ResourceId
+    appSubnetId: deployVNET ? vnet.outputs.subnet2ResourceId : ''
     tags: tags
     publicAccessEnabled: publicAccessEnabled
     containerAppEnvironmentWorkloadProfiles: containerAppEnvironmentWorkloadProfiles
   }
 }
-
-// Applications use managed identity to access resources, keys are not needed but kept for future reference
-// var accessKeys = [
-//   { name: 'AOAIStandardServiceKey', secretRef: 'aikey' }
-//   { name: 'AzureDocumentIntelligenceKey', secretRef: 'docintellikey' }
-//   { name: 'AzureAISearchKey', secretRef: 'searchkey' }
-//   { name: 'CosmosDbKey', secretRef: 'cosmos' }
-// ]
 
 var apiTargetPort = 8080
 var apiSettings = [
@@ -663,8 +787,8 @@ output SUBSCRIPTION_ID string = subscription().subscriptionId
 output ACR_NAME string = containerRegistry.outputs.name
 output ACR_URL string = containerRegistry.outputs.loginServer
 output AI_ENDPOINT string = openAI.outputs.endpoint
-output AI_HUB_ID string = deployAIHub ? aiHub.outputs.id : ''
-output AI_HUB_NAME string = deployAIHub ? aiHub.outputs.name : ''
+output AI_HUB_ID string = deployAIHub ? aiFoundryHub.outputs.id : ''
+output AI_HUB_NAME string = deployAIHub ? aiFoundryHub.outputs.name : ''
 output AI_PROJECT_NAME string = resourceNames.outputs.aiHubProjectName
 output AI_SEARCH_ENDPOINT string = searchService.outputs.endpoint
 output API_CONTAINER_APP_FQDN string = deployAPIApp ? containerAppAPI.outputs.fqdn : ''
@@ -685,6 +809,6 @@ output STORAGE_ACCOUNT_BATCH_IN_CONTAINER string = storage.outputs.containerName
 output STORAGE_ACCOUNT_BATCH_OUT_CONTAINER string = storage.outputs.containerNames[2].name
 output STORAGE_ACCOUNT_CONTAINER string = storage.outputs.containerNames[0].name
 output STORAGE_ACCOUNT_NAME string = storage.outputs.name
-output VNET_CORE_ID string = vnet.outputs.vnetResourceId
-output VNET_CORE_NAME string = vnet.outputs.vnetName
-output VNET_CORE_PREFIX string = vnet.outputs.vnetAddressPrefix
+output VNET_CORE_ID string = deployVNET ? vnet.outputs.vnetResourceId : ''
+output VNET_CORE_NAME string = deployVNET ? vnet.outputs.vnetName : ''
+output VNET_CORE_PREFIX string = deployVNET ? vnet.outputs.vnetAddressPrefix : ''

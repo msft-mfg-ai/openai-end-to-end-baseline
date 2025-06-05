@@ -89,5 +89,5 @@ jobs:
       deployAIHub: ${{ inputs.deployAIHub }}
       addRoleAssignments: ${{ inputs.addRoleAssignments }}
       runBuildDeployAPI: ${{ inputs.runBuildDeployAPI }}
-      #instance: ${{ vars.INSTANCE_NUMBER }}
       loginUsingClientSecret: ${{ inputs.loginUsingClientSecret }}
+      requestorName: ${{ github.actor }}
