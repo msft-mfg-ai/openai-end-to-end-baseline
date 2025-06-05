@@ -49,7 +49,7 @@ on:
         type: boolean
         default: true
       runBuildDeployAPI:
-        description: Build and Deploy API
+        description: Build and Deploy API?
         required: false
         default: false
         type: boolean
@@ -93,6 +93,7 @@ jobs:
       createResourceGroup: ${{ inputs.createResourceGroup }}
       addRoleAssignments: ${{ inputs.addRoleAssignments }}
       runBuildDeployAPI: ${{ inputs.runBuildDeployAPI }}
+      deployAPIM: ${{ inputs.deployAPIM }}
       loginUsingClientSecret: ${{ inputs.loginUsingClientSecret }}
 
       deployAIHub: true

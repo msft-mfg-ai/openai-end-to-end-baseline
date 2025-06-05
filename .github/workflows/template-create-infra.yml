@@ -61,6 +61,10 @@ on:
         description: Run Build and Deploy API?
         type: boolean
         default: false
+      deployAPIM:
+        description: Run Deploy APIM?
+        type: boolean
+        default: false
       loginUsingClientSecret:
         description: Login using Client Secret?
         type: boolean
