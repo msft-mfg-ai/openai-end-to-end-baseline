@@ -47,28 +47,28 @@ Follow these steps to get started quickly:
     The `<OPENAI_DEPLOY_LOCATION>` can be specified if you want to deploy the OpenAI resources in a different region than the rest of the resources due to region constraints.
 
     ```bash
-    gh variable set --env <envName> APP_NAME -b YOUR-APP-NAME
-    gh variable set --env <envName> APP_ID -b YOUR-APP-ID
-    gh variable set --env <envName> RESOURCEGROUP_PREFIX -b rg-APP-NAME
-    gh variable set --env <envName> RESOURCEGROUP_LOCATION -b eastus2
-    gh variable set --env <envName> OPENAI_DEPLOY_LOCATION -b eastus2
-    gh variable set --env <envName> INSTANCE_NUMBER -b 01
-    gh variable set --env <envName> GLOBAL_REGION_CODE -b AM
+    gh variable set APP_NAME -b YOUR-APP-NAME
+    gh variable set APP_ID -b YOUR-APP-ID
+    gh variable set RESOURCEGROUP_PREFIX -b rg-PREFIX
+    gh variable set RESOURCEGROUP_LOCATION -b eastus2
+    gh variable set OPENAI_DEPLOY_LOCATION -b eastus2
+    gh variable set INSTANCE_NUMBER -b 01
+    gh variable set GLOBAL_REGION_CODE -b AM
     ```
 
     Other optional variables can be used to supplement Tags, including:
 
     ```bash
-    gh variable set --env <envName> OWNER_EMAIL -b yourname@yourdomain.com
-    gh variable set --env <envName> COST_CENTER -b 'CC'
+    gh variable set OWNER_EMAIL -b yourname@yourdomain.com
+    gh variable set COST_CENTER -b 'CC'
     ```
 
     <!-- 
     If you're doing advanced networking, you will need these:
     ```bash
-    gh variable set --env <envName> VNET_NAME -b vnet-aichat
-    gh variable set --env <envName> SUBNET_NAME -b subnet-aichat
-    gh variable set --env <envName> SUBNET_PREFIX -b
+    gh variable set VNET_NAME -b vnet-aichat
+    gh variable set SUBNET_NAME -b subnet-aichat
+    gh variable set SUBNET_PREFIX -b
     ``` 
     -->
 
