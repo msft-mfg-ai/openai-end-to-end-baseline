@@ -61,23 +61,23 @@ output kvManagedIdentityName string       = toLower('${sanitizedAppName}-${resou
 output userAssignedIdentityName string    = toLower('${sanitizedAppName}-app-${resourceAbbreviations.managedIdentityUserAssignedIdentities}${dashInstance}-${sanitizedEnvironment}')
 
 output vnet_Name string                   = toLower('${sanitizedAppName}-${resourceAbbreviations.networkVirtualNetworks}-${sanitizedEnvironment}${resourceTokenWithDash}${dashRegionDashInstance}')
-param vnetPrefix string = '10.183.4.0/22'
+//param vnetPrefix string = '10.183.4.0/22'
 output subnetAppGwName string           = toLower('snet-app-gateway')
-param subnetAppGwPrefix string = '10.183.5.0/24'
+//param subnetAppGwPrefix string = '10.183.5.0/24'
 output subnetAppSeName string            = toLower('snet-app-services')
-param subnetAppSePrefix string = '10.183.4.0/24'
+//param subnetAppSePrefix string = '10.183.4.0/24'
 output subnetPeName string           = toLower('snet-private-endpoint')
-param subnetPePrefix string = '10.183.6.0/27'
+//param subnetPePrefix string = '10.183.6.0/27'
 output subnetAgentName string           = toLower('snet-agent')
-param subnetAgentPrefix string = '10.183.6.32/27'
+//param subnetAgentPrefix string = '10.183.6.32/27'
 output subnetBastionName string       = 'AzureBastionSubnet' // Must be exactly this name for Azure Bastion
-param subnetBastionPrefix string = '10.183.6.64/26'
+//param subnetBastionPrefix string = '10.183.6.64/26'
 output subnetJumpboxName string       = toLower('snet-jumpbox')  
-param subnetJumpboxPrefix string = '10.183.6.128/28'
+//param subnetJumpboxPrefix string = '10.183.6.128/28'
 output subnetTrainingName string      = toLower('snet-training')
-param subnetTrainingPrefix string = '10.183.7.0/25'
+//param subnetTrainingPrefix string = '10.183.7.0/25'
 output subnetScoringName string       = toLower('snet-scoring')
-param subnetScoringPrefix string = '10.183.7.128/25'
+//param subnetScoringPrefix string = '10.183.7.128/25'
 
 
 
