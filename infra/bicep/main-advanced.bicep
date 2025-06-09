@@ -58,9 +58,9 @@ param principalId string = ''
 param existingVnetName string = ''
 @description('If you provide an existing VNET what resource group is it in?')
 param existingVnetResourceGroupName string = ''
-@description('If you provide this is will be used instead of creating a new VNET')
+//@description('If you provide this is will be used instead of creating a new VNET')
 //param vnetPrefix string = '10.2.0.0/16'
-param vnetPrefix string = '10.183.4.0/22' // This is the default for the MFG AI LZ, it can be changed to fit your needs
+//param vnetPrefix string = '10.183.4.0/22' //// commented on 06/09 - moved to param fileThis is the default for the MFG AI LZ, it can be changed to fit your needs
 @description('If new VNET, this is the Subnet name for the private endpoints')
 //param subnet1Name string = ''
 //@description('If new VNET, this is the Subnet addresses for the private endpoints, i.e. 10.2.0.0/26') //Provided subnet must have a size of at least /23
@@ -71,24 +71,42 @@ param vnetPrefix string = '10.183.4.0/22' // This is the default for the MFG AI 
 //@description('If new VNET, this is the Subnet addresses for the application, i.e. 10.2.2.0/23') // Provided subnet must have a size of at least /23
 //param subnet2Prefix string = '10.183.6.0/23'
 
+//backup changes on 06/09 fernando ewald
+//param subnetAppGwName string = ''
+//param subnetAppGwPrefix string = '10.183.5.0/24'
+//param subnetAppSeName string = ''
+//param subnetAppSePrefix string = '10.183.4.0/24'
+//param subnetPeName string = ''
+//param subnetPePrefix string = '10.183.6.0/27'
+//param subnetAgentName string = ''
+//param subnetAgentPrefix string = '10.183.6.32/27'
+//param subnetBastionName string = '' // This is the default for the MFG AI LZ, it can be changed to fit your needs
+//param subnetBastionPrefix string = '10.183.6.64/26'
+//param subnetJumpboxName string = '' // This is the default for the MFG AI LZ, it can be changed to fit your needs
+//param subnetJumpboxPrefix string = '10.183.6.128/28'
+//param subnetTrainingName string = ''
+//param subnetTrainingPrefix string = '10.183.7.0/25'
+//param subnetScoringName string = ''
+//param subnetScoringPrefix string = '10.183.7.128/25'
+
+// added after moving the parameters of network to the resources.bicep file
+param vnetPrefix string = '' 
 param subnetAppGwName string = ''
-param subnetAppGwPrefix string = '10.183.5.0/24'
+param subnetAppGwPrefix string = ''
 param subnetAppSeName string = ''
-param subnetAppSePrefix string = '10.183.4.0/24'
+param subnetAppSePrefix string = ''
 param subnetPeName string = ''
-param subnetPePrefix string = '10.183.6.0/27'
+param subnetPePrefix string = ''
 param subnetAgentName string = ''
-param subnetAgentPrefix string = '10.183.6.32/27'
+param subnetAgentPrefix string = ''
 param subnetBastionName string = '' // This is the default for the MFG AI LZ, it can be changed to fit your needs
-param subnetBastionPrefix string = '10.183.6.64/26'
+param subnetBastionPrefix string = ''
 param subnetJumpboxName string = '' // This is the default for the MFG AI LZ, it can be changed to fit your needs
-param subnetJumpboxPrefix string = '10.183.6.128/28'
+param subnetJumpboxPrefix string = ''
 param subnetTrainingName string = ''
-param subnetTrainingPrefix string = '10.183.7.0/25'
+param subnetTrainingPrefix string = ''
 param subnetScoringName string = ''
-param subnetScoringPrefix string = '10.183.7.128/25'
-
-
+param subnetScoringPrefix string = ''
 
 // --------------------------------------------------------------------------------------------------------------
 // Existing container registry?

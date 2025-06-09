@@ -61,14 +61,26 @@ output kvManagedIdentityName string       = toLower('${sanitizedAppName}-${resou
 output userAssignedIdentityName string    = toLower('${sanitizedAppName}-app-${resourceAbbreviations.managedIdentityUserAssignedIdentities}${dashInstance}-${sanitizedEnvironment}')
 
 output vnet_Name string                   = toLower('${sanitizedAppName}-${resourceAbbreviations.networkVirtualNetworks}-${sanitizedEnvironment}${resourceTokenWithDash}${dashRegionDashInstance}')
+output vnetPrefix string = '10.183.4.0/22'
 output subnetAppGwName string           = toLower('snet-app-gateway')
+output subnetAppGwPrefix string = '10.183.5.0/24'
 output subnetAppSeName string            = toLower('snet-app-services')
+output subnetAppSePrefix string = '10.183.4.0/24'
 output subnetPeName string           = toLower('snet-private-endpoint')
+output subnetPePrefix string = '10.183.6.0/27'
 output subnetAgentName string           = toLower('snet-agent')
+output subnetAgentPrefix string = '10.183.6.32/27'
 output subnetBastionName string       = 'AzureBastionSubnet' // Must be exactly this name for Azure Bastion
+output subnetBastionPrefix string = '10.183.6.64/26'
 output subnetJumpboxName string       = toLower('snet-jumpbox')  
+output subnetJumpboxPrefix string = '10.183.6.128/28'
 output subnetTrainingName string      = toLower('snet-training')
+output subnetTrainingPrefix string = '10.183.7.0/25'
 output subnetScoringName string       = toLower('snet-scoring')
+output subnetScoringPrefix string = '10.183.7.128/25'
+
+
+
 
 
 // ----------------------------------------------------------------------------------------------------------------------------------------------------------------
