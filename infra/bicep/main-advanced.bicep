@@ -88,7 +88,7 @@ param existingVnetResourceGroupName string = ''
 //param subnetTrainingPrefix string = '10.183.7.0/25'
 //param subnetScoringName string = ''
 //param subnetScoringPrefix string = '10.183.7.128/25'
-
+//commented on 06/09 - moved to param file
 // added after moving the parameters of network to the resources.bicep file
 param vnetPrefix string = '' 
 param subnetAppGwName string = ''
@@ -291,21 +291,21 @@ module vnet './modules/networking/vnet.bicep' = {
     newVirtualNetworkName: resourceNames.outputs.vnet_Name
     vnetAddressPrefix: vnetAddressPrefix
     subnetAppGwName: !empty(subnetAppGwName) ? subnetAppGwName  : resourceNames.outputs.subnetAppGwName
-    subnetAppGwPrefix: subnetAppGwPrefix 
+    subnetAppGwPrefix: resourceNames.outputs.subnetAppGwPrefix 
     subnetAppSeName: !empty(subnetAppSeName ) ? subnetAppSeName  : resourceNames.outputs.subnetAppSeName
-    subnetAppSePrefix: subnetAppSePrefix
+    subnetAppSePrefix: resourceNames.outputs.subnetAppSePrefix
     subnetPeName: !empty(subnetPeName  ) ? subnetPeName   : resourceNames.outputs.subnetPeName 
-    subnetPePrefix : subnetPePrefix 
+    subnetPePrefix : resourceNames.outputs.subnetPePrefix 
     subnetAgentName: !empty(subnetAgentName) ? subnetAgentName : resourceNames.outputs.subnetAgentName
-    subnetAgentPrefix: subnetAgentPrefix
+    subnetAgentPrefix: resourceNames.outputs.subnetAgentPrefix
     subnetBastionName: !empty(subnetBastionName) ? subnetBastionName : resourceNames.outputs.subnetBastionName
-    subnetBastionPrefix: subnetBastionPrefix
+    subnetBastionPrefix: resourceNames.outputs.subnetBastionPrefix
     subnetJumpboxName: !empty(subnetJumpboxName) ? subnetJumpboxName : resourceNames.outputs.subnetJumpboxName
-    subnetJumpboxPrefix: subnetJumpboxPrefix
+    subnetJumpboxPrefix: resourceNames.outputs.subnetJumpboxPrefix
     subnetTrainingName: !empty(subnetTrainingName) ? subnetTrainingName : resourceNames.outputs.subnetTrainingName
-    subnetTrainingPrefix: subnetTrainingPrefix
+    subnetTrainingPrefix: resourceNames.outputs.subnetTrainingPrefix
     subnetScoringName: !empty(subnetScoringName) ? subnetScoringName : resourceNames.outputs.subnetScoringName
-    subnetScoringPrefix: subnetScoringPrefix
+    subnetScoringPrefix: resourceNames.outputs.subnetScoringPrefix
 
     
   }
