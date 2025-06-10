@@ -315,7 +315,7 @@ module virtualMachine './modules/virtualMachine/virtualMachine.bicep' = if (!emp
     // Required parameters
     admin_username: admin_username 
     admin_password: admin_password 
-    vnet_id: vnet.outputs.vnetResourceId
+    vnet_id: vnet.outputs.vnetR
     vm_name: vm_name
     subnet_name: !empty(subnetJumpboxName) ? subnetJumpboxName : resourceNames.outputs.subnetJumpboxName
     // VM configuration
@@ -344,7 +344,7 @@ module containerRegistry './modules/app/containerregistry.bicep' = {
     tags: tags
     publicAccessEnabled: publicAccessEnabled
     privateEndpointName: 'pe-${resourceNames.outputs.ACR_Name}'
-    privateEndpointSubnetId: vnet.outputs.subnetAppSeResourceID
+    privateEndpointSubnetId: vnet.outputs.subnetPeResourceID
     myIpAddress: myIpAddress
   }
 }
@@ -531,7 +531,7 @@ module cosmos './modules/database/cosmosdb.bicep' = {
     containerArray: cosmosContainerArray
     location: location
     tags: tags
-    privateEndpointSubnetId: vnet.outputs.subnetAppSeResourceID
+    privateEndpointSubnetId: vnet.outputs.subnetPeResourceID
     privateEndpointName: 'pe-${resourceNames.outputs.cosmosName}'
     managedIdentityPrincipalId: identity.outputs.managedIdentityPrincipalId
     userPrincipalId: principalId
@@ -596,7 +596,7 @@ module openAI './modules/ai/cognitive-services.bicep' = {
       DeploymentCapacity: 10
     }
     publicNetworkAccess: publicAccessEnabled ? 'enabled' : 'disabled'
-    privateEndpointSubnetId: vnet.outputs.subnetAppSeResourceID
+    privateEndpointSubnetId: vnet.outputs.subnetPeResourceID
     privateEndpointName: 'pe-${resourceNames.outputs.cogServiceName}'
     myIpAddress: myIpAddress
   }
