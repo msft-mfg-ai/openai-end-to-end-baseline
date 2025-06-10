@@ -310,7 +310,7 @@ module vnet './modules/networking/vnet.bicep' = {
 // -- JumpBox ------------------------------------------------------------------------------------------------------
 //   = if (!empty(admin_username) && !empty(admin_password) && !empty(vm_name))  -----
 // --------------------------------------------------------------------------------------------------------------
-module virtualMachine './modules/virtualMachine/virtualMachine.bicep' {
+module virtualMachine './modules/virtualMachine/virtualMachine.bicep' = {
   name: 'jumpboxVirtualMachineDeployment'
   params: {
     // Required parameters
