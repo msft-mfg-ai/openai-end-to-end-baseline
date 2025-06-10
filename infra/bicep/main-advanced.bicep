@@ -375,7 +375,7 @@ module storage './modules/storage/storage-account.bicep' = {
     location: location
     tags: tags
     // publicNetworkAccess: publicAccessEnabled
-    privateEndpointSubnetId: vnet.outputs.subnetAppSeResourceID
+    privateEndpointSubnetId: vnet.outputs.subnetPeResourceID
     privateEndpointBlobName: 'pe-blob-${resourceNames.outputs.storageAccountName}'
     privateEndpointQueueName: 'pe-queue-${resourceNames.outputs.storageAccountName}'
     privateEndpointTableName: 'pe-table-${resourceNames.outputs.storageAccountName}'
@@ -434,7 +434,7 @@ module keyVault './modules/security/keyvault.bicep' = {
     keyVaultOwnerIpAddress: myIpAddress
     createUserAssignedIdentity: false
     privateEndpointName: 'pe-${resourceNames.outputs.keyVaultName}'
-    privateEndpointSubnetId: vnet.outputs.subnetAppGwResourceID
+    privateEndpointSubnetId: vnet.outputs.subnetPeResourceID
   }
 }
 
@@ -552,7 +552,7 @@ module searchService './modules/search/search-services.bicep' = {
     existingSearchServiceResourceGroupName: existing_SearchService_ResourceGroupName
     publicNetworkAccess: publicAccessEnabled ? 'enabled' : 'disabled'
     myIpAddress: myIpAddress
-    privateEndpointSubnetId: vnet.outputs.subnetAppSeResourceID
+    privateEndpointSubnetId: vnet.outputs.subnetPeResourceID
     privateEndpointName: 'pe-${resourceNames.outputs.searchServiceName}'
     managedIdentityId: identity.outputs.managedIdentityId
     sku: {
@@ -614,7 +614,7 @@ module documentIntelligence './modules/ai/document-intelligence.bicep' = {
     location: location // this may be different than the other resources
     tags: tags
     publicNetworkAccess: publicAccessEnabled ? 'enabled' : 'disabled'
-    privateEndpointSubnetId: vnet.outputs.subnetAppSeResourceID
+    privateEndpointSubnetId: vnet.outputs.subnetPeResourceID
     privateEndpointName: 'pe-${resourceNames.outputs.documentIntelligenceName}'
     myIpAddress: myIpAddress
     managedIdentityId: identity.outputs.managedIdentityId
