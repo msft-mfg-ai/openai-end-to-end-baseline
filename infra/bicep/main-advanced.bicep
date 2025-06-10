@@ -317,7 +317,6 @@ module virtualMachine './modules/virtualMachine/virtualMachine.bicep' = if (!emp
     admin_password: admin_password 
     vm_name: vm_name
     subnet_name: !empty(subnetJumpboxName) ? subnetJumpboxName : resourceNames.outputs.subnetJumpboxName
-    vnet_id: vnet.outputs.vnetResourceId
     // VM configuration
     vm_size: 'Standard_B2s_v2'
     os_disk_size_gb: 128
