@@ -47,6 +47,28 @@ param deployAPIApp = false // Should we deploy the web app?
 //param subnet2Name = 'subnet2dyanamic'
 //param subnet2Prefix = '10.2.2.0/23'
 
+// Example parameters file for deploying main-advanced.bicep with jumpbox VM
+// Usage: az deployment group create --resource-group <your-rg> --template-file main-advanced.bicep --parameters @main-advanced.jumpbox.bicepparam
+
+// Basic deployment parameters
+
+// OpenAI configuration
+param openAI_deploy_location = 'East US'
+
+// Network security
+param myIpAddress = '47.198.33.41'
+
+// Jumpbox VM configuration (optional - remove or leave empty to skip VM deployment)
+param vm_name = 'jumpbox-vm'
+
+// Example Application Gateway certificate (if needed)
+// param appGatewayListenerCertificate = '<base64-encoded-certificate-data>'
+
+// Existing resources (optional)
+// param existing_ACR_Name = ''
+// param existing_ACR_ResourceGroupName = ''
+
+
 
 
 // param existing_ACR_Name = '#{APP_NAME_NO_DASHES}#cr#{envCode}#'

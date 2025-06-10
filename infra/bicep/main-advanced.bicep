@@ -91,15 +91,14 @@ param subnetScoringPrefix string = '10.183.7.128/25'
 
 
 
-//06/09/2025 parameters for vitualmachine jumpbox
+//06/09/2025 parameters for virtualmachine jumpbox
+@description('Admin username for the VM (optional - only deploy VM if provided)')
 param admin_username string = ''
 @secure()
+@description('Admin password for the VM (optional - only deploy VM if provided)')
 param admin_password string = ''
+@description('VM name (optional - only deploy VM if provided)')
 param vm_name string = ''
-param vm_nic_name string = ''
-param vm_pip_name string = ''
-param vm_os_disk_name string = ''
-param vm_nsg_name string = ''
 
 // --------------------------------------------------------------------------------------------------------------
 // Existing container registry?
@@ -304,36 +303,31 @@ module vnet './modules/networking/vnet.bicep' = {
   }
 }
 
+
+
+
 // --------------------------------------------------------------------------------------------------------------
 // -- JumpBox ------------------------------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------------------------------
-// module virtualMachine './modules/virtualMachine/virtualMachine.bicep' = {
-//   name: 'linuxVirtualMachineDeployment'
-//   params: {
-// // Required parameters
-// admin_username: admin_username 
-// admin_password: admin_password 
-// vm_name: vm_name
-// subnet_name: !empty(subnetJumpboxName) ? subnetJumpboxName : resourceNames.outputs.subnetJumpboxName
-// vnet_id: vnet.outputs.vnetResourceId
-// nic_name: vm_nic_name
-// pip_name: vm_pip_name
-// os_disk: vm_os_disk_name
-// nsg_name: vm_nsg_name
-// osDisk: {
-//   caching: 'ReadWrite'
-//   diskSizeGB: 128
-//   managedDisk: {
-//     storageAccountType: 'Standard_LRS'
-//   }
-// }
-// osType: 'Linux'
-// vmSize: 'Standard_B2s_v2'
-// zone: 0
-// // Non-required parameters
-// location: location
-//   }
-// }
+module virtualMachine './modules/virtualMachine/virtualMachine.bicep' = if (!empty(admin_username) && !empty(admin_password) && !empty(vm_name)) {
+  name: 'jumpboxVirtualMachineDeployment'
+  params: {
+    // Required parameters
+    admin_username: admin_username 
+    admin_password: admin_password 
+    vm_name: vm_name
+    subnet_name: !empty(subnetJumpboxName) ? subnetJumpboxName : resourceNames.outputs.subnetJumpboxName
+    vnet_id: vnet.outputs.vnetResourceId
+    // VM configuration
+    vm_size: 'Standard_B2s_v2'
+    os_disk_size_gb: 128
+    os_type: 'Linux'
+    my_ip_address: myIpAddress
+    // Location and tags
+    location: location
+    tags: tags
+  }
+}
 
 
 // --------------------------------------------------------------------------------------------------------------
@@ -834,3 +828,8 @@ output STORAGE_ACCOUNT_NAME string = storage.outputs.name
 output VNET_CORE_ID string = vnet.outputs.vnetResourceId
 output VNET_CORE_NAME string = vnet.outputs.vnetName
 output VNET_CORE_PREFIX string = vnet.outputs.vnetAddressPrefix
+
+// Virtual Machine outputs (if deployed)
+output VM_ID string = (!empty(admin_username) && !empty(vm_name)) ? virtualMachine.outputs.vm_id : ''
+output VM_PRIVATE_IP string = (!empty(admin_username) && !empty(vm_name)) ? virtualMachine.outputs.vm_private_ip : ''
+output VM_PUBLIC_IP string = (!empty(admin_username) && !empty(vm_name)) ? virtualMachine.outputs.vm_public_ip : ''
