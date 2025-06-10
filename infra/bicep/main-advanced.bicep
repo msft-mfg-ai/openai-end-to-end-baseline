@@ -321,7 +321,7 @@ module virtualMachine './modules/virtualMachine/virtualMachine.bicep' = if (!emp
     // VM configuration
     vm_size: 'Standard_B2s_v2'
     os_disk_size_gb: 128
-    os_type: 'Linux'
+    os_type: 'Windows'
     my_ip_address: myIpAddress
     // Location and tags
     location: location
