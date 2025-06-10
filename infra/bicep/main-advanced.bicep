@@ -60,7 +60,7 @@ param existingVnetName string = ''
 param existingVnetResourceGroupName string = ''
 @description('If you provide this is will be used instead of creating a new VNET')
 //param vnetPrefix string = '10.2.0.0/16'
-param vnetPrefix string = '10.183.4.0/22' //// commented on 06/09 - moved to param fileThis is the default for the MFG AI LZ, it can be changed to fit your needs
+param vnetPrefix string = '10.183.4.0/22' // moved to param fileThis is the default for the MFG AI LZ, it can be changed to fit your needs
 @description('If new VNET, this is the Subnet name for the private endpoints')
 //param subnet1Name string = ''
 //@description('If new VNET, this is the Subnet addresses for the private endpoints, i.e. 10.2.0.0/26') //Provided subnet must have a size of at least /23
@@ -90,6 +90,16 @@ param subnetScoringName string = ''
 param subnetScoringPrefix string = '10.183.7.128/25'
 
 
+
+//06/09/2025 parameters for vitualmachine jumpbox
+param admin_username string = ''
+@secure()
+param admin_password string = ''
+param vm_name string = ''
+param vm_nic_name string = ''
+param vm_pip_name string = ''
+param vm_os_disk_name string = ''
+param vm_nsg_name string = ''
 
 // --------------------------------------------------------------------------------------------------------------
 // Existing container registry?
@@ -293,6 +303,38 @@ module vnet './modules/networking/vnet.bicep' = {
     
   }
 }
+
+// --------------------------------------------------------------------------------------------------------------
+// -- JumpBox ------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------
+module virtualMachine './modules/virtualMachine/virtualMachine.bicep' = {
+  name: 'linuxVirtualMachineDeployment'
+  params: {
+// Required parameters
+admin_username: admin_username 
+admin_password: admin_password 
+vm_name: vm_name
+subnet_name: !empty(subnetJumpboxName) ? subnetJumpboxName : resourceNames.outputs.subnetJumpboxName
+vnet_id: vnet.outputs.vnetResourceId
+nic_name: vm_nic_name
+pip_name: vm_pip_name
+os_disk: vm_os_disk_name
+nsg_name: vm_nsg_name
+osDisk: {
+  caching: 'ReadWrite'
+  diskSizeGB: 128
+  managedDisk: {
+    storageAccountType: 'Standard_LRS'
+  }
+}
+osType: 'Linux'
+vmSize: 'Standard_B2s_v2'
+zone: 0
+// Non-required parameters
+location: location
+  }
+}
+
 
 // --------------------------------------------------------------------------------------------------------------
 // -- Container Registry ----------------------------------------------------------------------------------------

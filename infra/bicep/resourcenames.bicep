@@ -17,6 +17,10 @@ param instance string = ''
 @description('Optional resource token to ensure uniqueness - leave blank if desired')
 param resourceToken string = ''
 
+//06/09/2025 parameters for vitualmachine jumpbox
+
+
+
 // ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Scrub inputs and create repeatable variables
 // ----------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -80,6 +84,12 @@ output subnetScoringName string       = toLower('snet-scoring')
 //param subnetScoringPrefix string = '10.183.7.128/25'
 
 
+//06/09/2023 - Added Virtual Machine names by Fernando Ewald
+output vm_name string                  = toLower('${sanitizedAppName}-${resourceAbbreviations.computeVirtualMachines}${dashInstance}-${sanitizedEnvironment}')
+output vm_nic_name string              = toLower('${sanitizedAppName}-${resourceAbbreviations.networkNetworkInterfaces}${dashInstance}-${sanitizedEnvironment}')  
+output vm_pip_name string              = toLower('${sanitizedAppName}-${resourceAbbreviations.networkPublicIPAddresses}${dashInstance}-${sanitizedEnvironment}')
+output vm_os_disk_name string          = toLower('${sanitizedAppName}-${resourceAbbreviations.computeDisks}${dashInstance}-${sanitizedEnvironment}')     
+output vm_nsg_name string              = toLower('${sanitizedAppName}-${resourceAbbreviations.networkNetworkSecurityGroups}${dashInstance}-${sanitizedEnvironment}')
 
 
 

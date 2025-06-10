@@ -27,6 +27,8 @@ param costCenterTag = 'CC'
 param addRoleAssignments = #{addRoleAssignments}#
 param createDnsZones = #{createDnsZones}#
 param publicAccessEnabled = #{publicAccessEnabled}#
+param admin_username = '#{ADMIN_USERNAME}#' // This is the username for the admin user of jumpboxvm
+param admin_password = '#{ADMIN_PASSWORD}#' // This is the password for the admin user of jumpboxvm
 
 param deployAIHub = #{deployAIHub}#
 param deployAPIApp = #{runBuildDeployAPI}#  // Should we deploy the web app?
