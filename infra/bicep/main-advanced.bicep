@@ -172,7 +172,7 @@ param existing_Cosmos_ResourceGroupName string = ''
 // AI Hub Parameters
 // --------------------------------------------------------------------------------------------------------------
 @description('Should we deploy an AI Foundry Hub?')
-param deployAIHub bool = true
+param deployAIHub bool
 
 // --------------------------------------------------------------------------------------------------------------
 // Existing images
@@ -197,13 +197,13 @@ param appendResourceTokens bool = false
 // @description('Should UI container app be deployed?')
 // param deployUIApp bool = false
 @description('Should API container app be deployed?')
-param deployAPIApp bool = false
+param deployAPIApp bool
 @description('Should Batch container app be deployed?')
 param deployBatchApp bool = false
 
 @description('Global Region where the resources will be deployed, e.g. AM (America), EM (EMEA), AP (APAC), CH (China)')
-@allowed(['AM', 'EM', 'AP', 'CH'])
-param regionCode string = 'AM'
+// @allowed(['AM', 'EM', 'AP', 'CH'])
+param regionCode string
 
 @description('Instance number for the application, e.g. 001, 002, etc. This is used to differentiate multiple instances of the same application in the same environment.')
 param instanceNumber string = '001' // used to differentiate multiple instances of the same application in the same environment
@@ -307,33 +307,33 @@ module vnet './modules/networking/vnet.bicep' = {
 // --------------------------------------------------------------------------------------------------------------
 // -- JumpBox ------------------------------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------------------------------
-module virtualMachine './modules/virtualMachine/virtualMachine.bicep' = {
-  name: 'linuxVirtualMachineDeployment'
-  params: {
-// Required parameters
-admin_username: admin_username 
-admin_password: admin_password 
-vm_name: vm_name
-subnet_name: !empty(subnetJumpboxName) ? subnetJumpboxName : resourceNames.outputs.subnetJumpboxName
-vnet_id: vnet.outputs.vnetResourceId
-nic_name: vm_nic_name
-pip_name: vm_pip_name
-os_disk: vm_os_disk_name
-nsg_name: vm_nsg_name
-osDisk: {
-  caching: 'ReadWrite'
-  diskSizeGB: 128
-  managedDisk: {
-    storageAccountType: 'Standard_LRS'
-  }
-}
-osType: 'Linux'
-vmSize: 'Standard_B2s_v2'
-zone: 0
-// Non-required parameters
-location: location
-  }
-}
+// module virtualMachine './modules/virtualMachine/virtualMachine.bicep' = {
+//   name: 'linuxVirtualMachineDeployment'
+//   params: {
+// // Required parameters
+// admin_username: admin_username 
+// admin_password: admin_password 
+// vm_name: vm_name
+// subnet_name: !empty(subnetJumpboxName) ? subnetJumpboxName : resourceNames.outputs.subnetJumpboxName
+// vnet_id: vnet.outputs.vnetResourceId
+// nic_name: vm_nic_name
+// pip_name: vm_pip_name
+// os_disk: vm_os_disk_name
+// nsg_name: vm_nsg_name
+// osDisk: {
+//   caching: 'ReadWrite'
+//   diskSizeGB: 128
+//   managedDisk: {
+//     storageAccountType: 'Standard_LRS'
+//   }
+// }
+// osType: 'Linux'
+// vmSize: 'Standard_B2s_v2'
+// zone: 0
+// // Non-required parameters
+// location: location
+//   }
+// }
 
 
 // --------------------------------------------------------------------------------------------------------------

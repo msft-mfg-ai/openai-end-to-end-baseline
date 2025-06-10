@@ -1,3 +1,5 @@
+// potential conflict with main-advanced.dynamic.bicepparam so renamed this file from .bicepparam with new extention .param.txt 
+
 // --------------------------------------------------------------------------------
 // This file contains the parameters for the Bicep deployment.
 // Note: This is dynamically modified by the build process.

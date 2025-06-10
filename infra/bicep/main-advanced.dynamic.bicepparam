@@ -24,14 +24,14 @@ param ownerEmailTag = '#{OWNER_EMAIL}#'
 param requestorName= '#{requestorName}#'
 param regionCode = '#{GLOBAL_REGION_CODE}#' 
 param costCenterTag = 'CC'
-param addRoleAssignments = #{addRoleAssignments}#
-param createDnsZones = #{createDnsZones}#
-param publicAccessEnabled = #{publicAccessEnabled}#
+// param addRoleAssignments = '#{addRoleAssignments}#'
+param createDnsZones = true // Should we create DNS zones?
+param publicAccessEnabled = true // Should we enable public access to the web app?
 param admin_username = '#{ADMIN_USERNAME}#' // This is the username for the admin user of jumpboxvm
 param admin_password = '#{ADMIN_PASSWORD}#' // This is the password for the admin user of jumpboxvm
 
-param deployAIHub = #{deployAIHub}#
-param deployAPIApp = #{runBuildDeployAPI}#  // Should we deploy the web app?
+param deployAIHub = true
+param deployAPIApp = false // Should we deploy the web app?
 // param deployUIApp = #{runBuildDeployUI}#  // Should we deploy the web app?
 // param deployBatchApp = #{deployBatchApp}#
 
