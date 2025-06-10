@@ -315,6 +315,7 @@ module virtualMachine './modules/virtualMachine/virtualMachine.bicep' = if (!emp
     // Required parameters
     admin_username: admin_username 
     admin_password: admin_password 
+    vnet_id: vnet.outputs.vnetResourceId
     vm_name: vm_name
     subnet_name: !empty(subnetJumpboxName) ? subnetJumpboxName : resourceNames.outputs.subnetJumpboxName
     // VM configuration
