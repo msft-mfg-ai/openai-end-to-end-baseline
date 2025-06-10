@@ -59,7 +59,7 @@ param openAI_deploy_location = 'East US'
 param myIpAddress = '47.198.33.41'
 
 // Jumpbox VM configuration (optional - remove or leave empty to skip VM deployment)
-param vm_name = 'jumpbox-vm'
+param vm_name = '' 
 
 // Example Application Gateway certificate (if needed)
 // param appGatewayListenerCertificate = '<base64-encoded-certificate-data>'
