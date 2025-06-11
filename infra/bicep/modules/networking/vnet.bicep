@@ -180,3 +180,4 @@ output subnetBastionResourceID string = useExistingResource ? existingVirtualNet
 output subnetJumpboxResourceID string = useExistingResource ? existingVirtualNetwork::subnetJumpbox.id : newVirtualNetwork::subnetJumpbox.id
 output subnetTrainingResourceID string = useExistingResource ? existingVirtualNetwork::subnetTraining.id : newVirtualNetwork::subnetTraining.id
 output subnetScoringResourceID string = useExistingResource ? existingVirtualNetwork::subnetScoring.id : newVirtualNetwork::subnetScoring.id
+output vnetAddressPrefix string = useExistingResource ? existingVirtualNetwork.properties.addressSpace.addressPrefixes[0] : newVirtualNetwork.properties.addressSpace.addressPrefixes[0]
