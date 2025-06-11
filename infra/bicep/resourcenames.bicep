@@ -85,7 +85,7 @@ output subnetScoringName string       = toLower('snet-scoring')
 
 
 //06/09/2023 - Added Virtual Machine names by Fernando Ewald
-output vm_name string                  = toLower('${sanitizedAppName}-${resourceAbbreviations.computeVirtualMachines}${dashInstance}-${sanitizedEnvironment}')
+output vm_name string                  = take(toLower('${sanitizedAppName}-${resourceAbbreviations.computeVirtualMachines}${dashInstance}-${sanitizedEnvironment}'),15)
 output vm_nic_name string              = toLower('${sanitizedAppName}-${resourceAbbreviations.networkNetworkInterfaces}${dashInstance}-${sanitizedEnvironment}')  
 output vm_pip_name string              = toLower('${sanitizedAppName}-${resourceAbbreviations.networkPublicIPAddresses}${dashInstance}-${sanitizedEnvironment}')
 output vm_os_disk_name string          = toLower('${sanitizedAppName}-${resourceAbbreviations.computeDisks}${dashInstance}-${sanitizedEnvironment}')     
