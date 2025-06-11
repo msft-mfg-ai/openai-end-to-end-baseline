@@ -31,12 +31,20 @@ param os_type string = 'Windows'
 param my_ip_address string = ''
 
 @description('Tags to apply to resources')
-param tags object = {}
+//param tags object = {}
+param tags string = ''
 
-var nic_name = '${vm_name}-nic'
-var pip_name = '${vm_name}-pip'
-var os_disk_name = '${vm_name}-osdisk'
-var nsg_name = '${vm_name}-nsg'
+
+param vm_nic_name string = ''
+vm_pip_name string = ''
+param vm_os_disk_name string = ''
+param vm_nsg_name string = ''
+
+
+var nic_name = vm_nic_name
+var pip_name = vm_pip_name
+var os_disk_name = vm_os_disk_name
+var nsg_name = vm_nsg_name
 
 resource publicIP 'Microsoft.Network/publicIPAddresses@2023-04-01' = {
   name: pip_name
