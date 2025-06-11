@@ -42,8 +42,6 @@ on:
         required: true
         type: string
         default: 'DEV'
-
-# ------------------------------------------------------------------------------------------------------------------------
     outputs:
       IMAGE_VERSION:
         value: ${{ jobs.build.outputs.IMAGE_VERSION  }}
