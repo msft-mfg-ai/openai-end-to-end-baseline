@@ -31,12 +31,12 @@ param os_type string = 'Windows'
 param my_ip_address string = ''
 
 @description('Tags to apply to resources')
-//param tags object = {}
-param tags string = ''
+param tags object
+//param tags string
 
 
 param vm_nic_name string = ''
-vm_pip_name string = ''
+param vm_pip_name string = ''
 param vm_os_disk_name string = ''
 param vm_nsg_name string = ''
 
