@@ -167,6 +167,14 @@ param existing_Cosmos_ResourceGroupName string = ''
 //@description('Resource Group where existing Key Vault Lives')
 //param existing_KeyVault_ResourceGroupName string = ''
 
+///home/runner/work/openai-end-to-end-baseline/openai-end-to-end-baseline/infra/bicep/main-advanced.bicep(315,3) : Error BCP035: The specified "object" 
+//declaration is missing the following required properties: "vm_nic_name", "vm_nsg_name", "vm_os_disk_name", "vm_pip_name". 
+
+param vm_nic_name string
+param vm_pip_name string
+param vm_os_disk_name string
+param vm_nsg_name string
+
 // --------------------------------------------------------------------------------------------------------------
 // AI Hub Parameters
 // --------------------------------------------------------------------------------------------------------------
@@ -318,6 +326,11 @@ module virtualMachine './modules/virtualMachine/virtualMachine.bicep' = {
     admin_password: admin_password 
     vnet_id: vnet.outputs.vnetResourceId
     vm_name: vm_name
+    vm_nic_name: vm_nic_name
+    vm_pip_name: vm_pip_name
+    vm_os_disk_name: vm_os_disk_name
+    vm_nsg_name: vm_nsg_name
+    
     subnet_name: !empty(subnetJumpboxName) ? subnetJumpboxName : resourceNames.outputs.subnetJumpboxName
     // VM configuration
     vm_size: 'Standard_B2s_v2'

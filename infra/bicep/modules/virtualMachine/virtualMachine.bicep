@@ -41,6 +41,10 @@ param vm_os_disk_name string
 param vm_nsg_name string
 
 
+
+///home/runner/work/openai-end-to-end-baseline/openai-end-to-end-baseline/infra/bicep/main-advanced.bicep(315,3) : Error BCP035: The specified "object" 
+//declaration is missing the following required properties: "vm_nic_name", "vm_nsg_name", "vm_os_disk_name", "vm_pip_name". 
+
 var nic_name = vm_nic_name
 var pip_name = vm_pip_name
 var os_disk_name = vm_os_disk_name
