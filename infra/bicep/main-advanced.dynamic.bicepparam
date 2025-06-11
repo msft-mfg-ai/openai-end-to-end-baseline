@@ -32,12 +32,7 @@ param admin_password = '#{ADMIN_PASSWORD}#' // This is the password for the admi
 param deployAIHub = true
 param deployAPIApp = false // Should we deploy the web app?
 
-
-param vm_nic_name string = resourcenames.output.vm_nic_name
-param vm_pip_name string
-param vm_os_disk_name string
-param vm_nsg_name string
-
+// VM resource names are now generated automatically from resourceNames.bicep module outputs
 
 // param deployUIApp = #{runBuildDeployUI}#  // Should we deploy the web app?
 // param deployBatchApp = #{deployBatchApp}#

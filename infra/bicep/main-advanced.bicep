@@ -170,10 +170,7 @@ param existing_Cosmos_ResourceGroupName string = ''
 ///home/runner/work/openai-end-to-end-baseline/openai-end-to-end-baseline/infra/bicep/main-advanced.bicep(315,3) : Error BCP035: The specified "object" 
 //declaration is missing the following required properties: "vm_nic_name", "vm_nsg_name", "vm_os_disk_name", "vm_pip_name". 
 
-param vm_nic_name string
-param vm_pip_name string
-param vm_os_disk_name string
-param vm_nsg_name string
+// VM resource names are now generated automatically from resourceNames.bicep module outputs
 
 // --------------------------------------------------------------------------------------------------------------
 // AI Hub Parameters
@@ -325,11 +322,11 @@ module virtualMachine './modules/virtualMachine/virtualMachine.bicep' = {
     admin_username: admin_username 
     admin_password: admin_password 
     vnet_id: vnet.outputs.vnetResourceId
-    vm_name: vm_name
-    vm_nic_name: vm_nic_name
-    vm_pip_name: vm_pip_name
-    vm_os_disk_name: vm_os_disk_name
-    vm_nsg_name: vm_nsg_name
+    vm_name: !empty(vm_name) ? vm_name : resourceNames.outputs.vm_name
+    vm_nic_name: resourceNames.outputs.vm_nic_name
+    vm_pip_name: resourceNames.outputs.vm_pip_name
+    vm_os_disk_name: resourceNames.outputs.vm_os_disk_name
+    vm_nsg_name: resourceNames.outputs.vm_nsg_name
     
     subnet_name: !empty(subnetJumpboxName) ? subnetJumpboxName : resourceNames.outputs.subnetJumpboxName
     // VM configuration
