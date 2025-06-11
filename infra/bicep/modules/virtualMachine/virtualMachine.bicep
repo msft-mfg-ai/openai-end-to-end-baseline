@@ -196,7 +196,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2023-09-01' = {
       imageReference: os_type == 'Windows' ? {
         publisher: 'MicrosoftWindowsDesktop'
         offer: 'windows-11'
-        sku: 'win11-22h2-pro'
+        sku: 'win11-24h2-ent'
         version: 'latest'
       } : {
         publisher: 'Canonical'
