@@ -35,10 +35,10 @@ param tags object
 //param tags string
 
 
-param vm_nic_name string = ''
-param vm_pip_name string = ''
-param vm_os_disk_name string = ''
-param vm_nsg_name string = ''
+param vm_nic_name string
+param vm_pip_name string
+param vm_os_disk_name string
+param vm_nsg_name string
 
 
 var nic_name = vm_nic_name
