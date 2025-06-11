@@ -37,8 +37,6 @@ on:
         required: true
         type: string
         default: 'DEV'
-
-# ------------------------------------------------------------------------------------------------------------------------
     outputs:
       IMAGE_NAME:
         value: ${{ jobs.build.outputs.IMAGE_NAME  }}
@@ -50,7 +48,7 @@ on:
         value: ${{ inputs.ACR_REPO_NAME  }}
       ACR_APP_NAME:
         value: ${{ inputs.ACR_APP_NAME  }}
-    
+
 # ------------------------------------------------------------------------------------------------------------------------
 jobs:
   build:
