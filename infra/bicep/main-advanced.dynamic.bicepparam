@@ -31,6 +31,14 @@ param admin_username = '#{ADMIN_USERNAME}#' // This is the username for the admi
 param admin_password = '#{ADMIN_PASSWORD}#' // This is the password for the admin user of jumpboxvm
 param deployAIHub = true
 param deployAPIApp = false // Should we deploy the web app?
+
+
+param vm_nic_name string = resourcenames.output.vm_nic_name
+param vm_pip_name string
+param vm_os_disk_name string
+param vm_nsg_name string
+
+
 // param deployUIApp = #{runBuildDeployUI}#  // Should we deploy the web app?
 // param deployBatchApp = #{deployBatchApp}#
 
