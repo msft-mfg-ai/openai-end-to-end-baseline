@@ -172,9 +172,6 @@ resource newVirtualNetwork 'Microsoft.Network/virtualNetworks@2024-01-01' = if (
 
 output vnetResourceId string = useExistingResource ? existingVirtualNetwork.id : newVirtualNetwork.id
 output vnetName string = useExistingResource ? existingVirtualNetwork.name : newVirtualNetwork.name
-output vnetAddressPrefix string = useExistingResource ? existingVirtualNetwork.properties.addressSpace.addressPrefixes[0] :  newVirtualNetwork.properties.addressSpace.addressPrefixes[0]
-//output subnet1ResourceId string = useExistingResource ? existingVirtualNetwork::subnet1.id : newVirtualNetwork::subnetAppGw.id
-//output subnet2ResourceId string = useExistingResource ? existingVirtualNetwork::subnet2.id : newVirtualNetwork::subnet2.id
 output subnetAppGwResourceID string = useExistingResource ? existingVirtualNetwork::subnetAppGw.id : newVirtualNetwork::subnetAppGw.id
 output subnetAppSeResourceID string = useExistingResource ? existingVirtualNetwork::subnetAppSe.id : newVirtualNetwork::subnetAppSe.id  
 output subnetPeResourceID string = useExistingResource ? existingVirtualNetwork::subnetPe.id : newVirtualNetwork::subnetPe.id

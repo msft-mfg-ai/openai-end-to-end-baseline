@@ -673,7 +673,6 @@ module aiProject './modules/ai/ai-hub-project.bicep' = if (deployAIHub) {
   }
 }
 
-
 // --------------------------------------------------------------------------------------------------------------
 // -- DNS ZONES ---------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------------------------------
@@ -805,6 +804,24 @@ module containerAppBatch './modules/app/containerappstub.bicep' = if (deployBatc
     env: batchSettings
   }
   dependsOn: createDnsZones ? [allDnsZones, containerRegistry] : [containerRegistry]
+}
+
+// --------------------------------------------------------------------------------------------------------------
+// -- Bastion Host ----------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------
+// Deploy Bastion Host for secure VM access
+module bastion './modules/networking/bastion.bicep' = {
+  name: 'bastionDeployment'
+  params: {
+    name: resourceNames.outputs.bastion_host_name
+    location: location
+    publicIPName: resourceNames.outputs.bastion_pip_name
+    subnetId: vnet.outputs.subnetBastionResourceID  // Make sure this output exists in your vnet module
+    tags: tags
+    enableTunneling: true
+    enableFileCopy: true
+    skuName: 'Standard'
+  }
 }
 
 // --------------------------------------------------------------------------------------------------------------

@@ -90,8 +90,8 @@ output vm_nic_name string              = toLower('${sanitizedAppName}-${resource
 output vm_pip_name string              = toLower('${sanitizedAppName}-${resourceAbbreviations.networkPublicIPAddresses}${dashInstance}-${sanitizedEnvironment}')
 output vm_os_disk_name string          = toLower('${sanitizedAppName}-${resourceAbbreviations.computeDisks}${dashInstance}-${sanitizedEnvironment}')     
 output vm_nsg_name string              = toLower('${sanitizedAppName}-${resourceAbbreviations.networkNetworkSecurityGroups}${dashInstance}-${sanitizedEnvironment}')
-
-
+output bastion_host_name string        = toLower('${sanitizedAppName}-${resourceAbbreviations.networkBastionHosts}${dashInstance}-${sanitizedEnvironment}')
+output bastion_pip_name string         = toLower('${sanitizedAppName}-${resourceAbbreviations.networkPublicIPAddresses}-bastion${dashInstance}-${sanitizedEnvironment}')
 
 // ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Container Registry, Key Vaults and Storage Account names are only alpha numeric characters limited length
