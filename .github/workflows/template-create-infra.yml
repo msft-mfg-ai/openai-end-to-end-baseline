@@ -83,7 +83,7 @@ jobs:
       # Deployment Stack Environment Variables (hardcoded - no input parameters to avoid 10-param limit)
       stackAction: ${{ inputs.stackAction }}  # Options: deploy, status, rollback, delete (empty = ARM deployment)
       stackName: ${{ format('stack-{0}-{1}-{2}', vars.APP_NAME, inputs.envCode, vars.INSTANCE_NUMBER) }}
-      denySettingsMode: "denyWriteAndDelete"
+      denySettingsMode: "none"  # Options: none, denyDelete, denyWriteAndDelete
       enableDriftDetection: "true"
       rollbackOnFailure: "true"
 
