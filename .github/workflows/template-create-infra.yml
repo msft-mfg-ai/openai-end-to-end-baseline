@@ -9,22 +9,14 @@ on:
       envCode:
         required: true
         type: string
-      templatePath:
+      # Group template-related parameters into a single JSON input to reduce total inputs
+      templateConfig:
+        description: |
+          JSON string with template configuration. Example:
+          '{"templatePath":"infra/bicep/","templateFile":"main-advanced.bicep","parameterFile":"","parameterFileReplaceTokens":"false"}'
         required: false
         type: string
-        default: 'infra/bicep/'
-      templateFile:
-        required: false
-        type: string
-        default: 'main-basic.bicep'
-      parameterFile:
-        required: false
-        type: string
-        default: ''
-      parameterFileReplaceTokens:
-        required: false
-        type: string
-        default: 'false'
+        default: '{"templatePath":"infra/bicep/","templateFile":"main-advanced.bicep","parameterFile":"","parameterFileReplaceTokens":"false"}'
       deploymentMode:
         required: false
         type: string
@@ -37,34 +29,15 @@ on:
         required: false
         default: true
         type: boolean
-      createResourceGroup:
-        description: Create Resource Group?
-        type: boolean
-        default: false
-      publicAccessEnabled:
-        description: Public Access Enabled?
-        type: boolean
-        default: false
-      createDnsZones:
-        description: Create DNS Zones?
-        type: boolean
-        default: false
-      deployAIHub:
-        description: Deploy AI Hub?
-        type: boolean
-        default: false
-      addRoleAssignments:
-        description: Add Role Assignments?
-        type: boolean
-        default: true
-      runBuildDeployAPI:
-        description: Run Build and Deploy API?
-        type: boolean
-        default: false
       loginUsingClientSecret:
         description: Login using Client Secret?
         type: boolean
         default: false
+      # Deployment stack action: 'deploy' (default), 'rollback', 'status'
+      stackAction:
+        description: "Deployment stack action (default: 'deploy'). Allowed values: 'deploy', 'rollback', 'status'"
+        type: string
+        default: 'deploy'
       requestorName:
         description: Requestor Name
         type: string
@@ -92,15 +65,28 @@ jobs:
     # ------------------------------------------------------------------------------------------------------------------------
     env:
       envCode: ${{ inputs.envCode }}
+      # Parse templateConfig JSON for use in steps
+      templatePath: ${{ fromJson(inputs.templateConfig).templatePath }}
+      templateFile: ${{ fromJson(inputs.templateConfig).templateFile }}
+      parameterFile: ${{ fromJson(inputs.templateConfig).parameterFile }}
+      parameterFileReplaceTokens: ${{ fromJson(inputs.templateConfig).parameterFileReplaceTokens }}
       generatedResourceGroupName: ${{ vars.RESOURCEGROUP_PREFIX }}-${{ inputs.envCode }}-${{ vars.GLOBAL_REGION_CODE }}-${{ vars.INSTANCE_NUMBER }}
-      createResourceGroup: ${{ inputs.createResourceGroup }}
-      publicAccessEnabled: ${{ inputs.publicAccessEnabled }}
-      createDnsZones: ${{ inputs.createDnsZones }}
-      deployAIHub: ${{ inputs.deployAIHub }}
-      addRoleAssignments: ${{ inputs.addRoleAssignments }}
-      runBuildDeployAPI: ${{ inputs.runBuildDeployAPI }}
       loginWithFederatedIdentity: ${{ secrets.CICD_CLIENT_SECRET == '' && 'true' || 'false' }}
       loginWithSecret: ${{ secrets.CICD_CLIENT_SECRET != '' && 'true' || 'false' }}
+      # Infrastructure Configuration (hardcoded to avoid 10-parameter limit)
+      createResourceGroup: false
+      publicAccessEnabled: false
+      createDnsZones: false
+      deployAIHub: false
+      addRoleAssignments: true
+      runBuildDeployAPI: false
+      requestorName: ${{ github.actor }}
+      # Deployment Stack Environment Variables (hardcoded - no input parameters to avoid 10-param limit)
+      stackAction: ${{ inputs.stackAction }}  # Options: deploy (default), rollback, status
+      stackName: ${{ format('stack-{0}-{1}-{2}', vars.APP_NAME, inputs.envCode, vars.INSTANCE_NUMBER) }}
+      denySettingsMode: "none"  # Options: none, denyDelete, denyWriteAndDelete
+      enableDriftDetection: "true"
+      rollbackOnFailure: "true"
  
     # ------------------------------------------------------------------------------------------------------------------------
     # Outputs
@@ -125,8 +111,8 @@ jobs:
         run: |-
           echo "inputs.envCode=${{ inputs.envCode }}"
           echo "env.generatedResourceGroupName=${{ env.generatedResourceGroupName }}"
-          echo "templateFilePath=${{ inputs.templatePath }}${{ inputs.templateFile }}"
-          echo "parameterFilePath=${{ inputs.templatePath }}${{ inputs.parameterFile }}"
+          echo "templateFilePath=${{ env.templatePath }}${{ env.templateFile }}"
+          echo "parameterFilePath=${{ env.templatePath }}${{ env.parameterFile }}"
 
           echo "vars.APP_NAME=${{ vars.APP_NAME }}"
           echo "vars.RESOURCEGROUP_PREFIX=${{ vars.RESOURCEGROUP_PREFIX }}"
@@ -165,13 +151,13 @@ jobs:
         if: ${{ inputs.runCreateInfra && inputs.parameterFileReplaceTokens == 'true' }}
         uses: qetza/replacetokens-action@v1
         with:
-          sources: '${{ inputs.templatePath }}${{ inputs.parameterFile }}; !local/ => ${{ inputs.parameterFile }}'
+          sources: '${{ env.templatePath }}${{ env.parameterFile }}; !local/ => ${{ env.parameterFile }}'
           variables: '[${{ toJSON(env) }},${{ toJSON(vars) }},${{ toJSON(secrets) }}]' # use environment & variables & secrets
 
       - name: Display Param File
         run: |-
-          echo "##[group]Contents of ${{ inputs.templatePath }}${{ inputs.parameterFile }}"
-          cat ${{ inputs.templatePath }}${{ inputs.parameterFile }}
+          echo "##[group]Contents of ${{ env.templatePath }}${{ env.parameterFile }}"
+          cat ${{ env.templatePath }}${{ env.parameterFile }}
           echo "##[endgroup]"
         continue-on-error: true
 
@@ -204,8 +190,8 @@ jobs:
           scope: subscription
           region: ${{ vars.RESOURCEGROUP_LOCATION }}
           deploymentName: ${{ inputs.templateFile }}-sub-${{ vars.RESOURCEGROUP_LOCATION }}-${{ steps.get-date.outputs.DATE_TIME_STAMP}}
-          template: ${{ inputs.templatePath }}${{ inputs.templateFile }}
-          parameters: ${{ inputs.templatePath }}${{ inputs.parameterFile }}
+          template: ${{ env.templatePath }}${{ env.templateFile }}
+          parameters: ${{ env.templatePath }}${{ env.parameterFile }}
           deploymentMode: ${{ inputs.deploymentMode }} # Must be: Incremental | Complete | Validation
 
       - name: Deploy Azure Resources (RG)
@@ -217,8 +203,8 @@ jobs:
           region: ${{ vars.RESOURCEGROUP_LOCATION }}
           deploymentName: ${{ inputs.templateFile }}-rg-${{ vars.RESOURCEGROUP_LOCATION }}-${{ steps.get-date.outputs.DATE_TIME_STAMP}}
           resourceGroupName: ${{ env.generatedResourceGroupName }}
-          template: ${{ inputs.templatePath }}${{ inputs.templateFile }}
-          parameters: ${{ inputs.templatePath }}${{ inputs.parameterFile }}
+          template: ${{ env.templatePath }}${{ env.templateFile }}
+          parameters: ${{ env.templatePath }}${{ env.parameterFile }}
           deploymentMode: ${{ inputs.deploymentMode }} # Must be: Incremental | Complete | Validation
 
       - name: Display Output

@@ -150,15 +150,9 @@ jobs:
       pages: write
     with:
       envCode: ${{ inputs.deployEnvironment }}
-      templatePath: './infra/bicep/'
-      templateFile: 'main-basic.bicep'
-      parameterFile: ${{ inputs.parameterFile }}
-      parameterFileReplaceTokens: 'true'
-      createResourceGroup: ${{ inputs.createResourceGroup }}
-      publicAccessEnabled: ${{ inputs.publicAccessEnabled }}
-      createDnsZones: ${{ inputs.createDnsZones }}
-      deployAIHub: ${{ inputs.deployAIHub }}
-      addRoleAssignments: ${{ inputs.addRoleAssignments }}
+      templateConfig: >
+        {"templatePath":"./infra/bicep/","templateFile":"main-basic.bicep","parameterFile":"${{ inputs.parameterFile }}","parameterFileReplaceTokens":"true"}
+      loginUsingClientSecret: ${{ inputs.loginUsingClientSecret }}
 
   # ------------------------------------------------------------------------------------------------------------------------
   build-all:
