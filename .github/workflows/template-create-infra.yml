@@ -209,7 +209,9 @@ jobs:
           if [ -n "${{ inputs.parameterFile }}" ]; then
             DEPLOY_CMD="$DEPLOY_CMD --parameters '${{ inputs.templatePath }}${{ inputs.parameterFile }}'"
           fi
-          
+          # In certain cases, a failure may occur if the cognitiveservices resource needs to be purged, in which case run the following command:
+          # az cognitiveservices account purge --name cog-fr--mfgai-fernando--am-<instance-#> --resource-group rg-ai-mfg-fernando-AM-<instance> --location eastus2 --verbose
+
           # Add runtime parameters
           DEPLOY_CMD="$DEPLOY_CMD --parameters \
             environmentName='${{ inputs.envCode }}' \
