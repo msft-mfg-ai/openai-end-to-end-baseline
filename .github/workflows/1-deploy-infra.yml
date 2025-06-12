@@ -36,31 +36,14 @@ on:
         required: true
         default: 'main-basic.dynamic.bicepparam'
         type: string
-      createResourceGroup:
-        description: Create Resource Group?
-        type: boolean
-        default: true
-      publicAccessEnabled:
-        description: Public Access Enabled?
-        type: boolean
-        default: true
-      createDnsZones:
-        description: Create DNS Zones?
-        type: boolean
-        default: true
-      addRoleAssignments:
-        description: Add Role Assignments?
-        type: boolean
-        default: true
-      deployAIHub:
-        description: Deploy AI Hub?
-        type: boolean
-        default: true
-      runBuildDeployAPI:
-        description: Build and Deploy API
+      # Group deployment configuration settings into a JSON input to reduce inputs
+      deployConfig:
+        description: |
+          JSON string with deployment configuration. Example:
+          '{"createResourceGroup":true,"publicAccessEnabled":true,"createDnsZones":true,"addRoleAssignments":true,"deployAIHub":true,"runBuildDeployAPI":false}'
         required: false
-        default: false
-        type: boolean
+        type: string
+        default: '{"createResourceGroup":true,"publicAccessEnabled":true,"createDnsZones":true,"addRoleAssignments":true,"deployAIHub":true,"runBuildDeployAPI":false}'
       loginUsingClientSecret:
         description: Login using Client Secret?
         required: false
