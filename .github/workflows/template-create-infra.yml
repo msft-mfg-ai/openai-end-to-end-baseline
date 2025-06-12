@@ -154,9 +154,7 @@ jobs:
           echo "Replacing tokens in parameter file: $parameterFile"
           
           # Create a backup of the original file
-          cp "$parameterFile" "${parameterFile}.backup"
-          
-          # Replace tokens with their corresponding values
+          cp "$parameterFile" "${parameterFile}.backup"          # Replace tokens with their corresponding values
           sed -i "s|#{GLOBAL_REGION_CODE}#|${{ vars.GLOBAL_REGION_CODE }}|g" "$parameterFile"
           sed -i "s|#{RESOURCEGROUP_PREFIX}#|${{ vars.RESOURCEGROUP_PREFIX }}|g" "$parameterFile"
           sed -i "s|#{RESOURCEGROUP_LOCATION}#|${{ vars.RESOURCEGROUP_LOCATION }}|g" "$parameterFile"
@@ -164,6 +162,11 @@ jobs:
           sed -i "s|#{INSTANCE_NUMBER}#|${{ vars.INSTANCE_NUMBER }}|g" "$parameterFile"
           sed -i "s|#{APP_NAME}#|${{ vars.APP_NAME }}|g" "$parameterFile"
           sed -i "s|#{OWNER_EMAIL}#|${{ vars.OWNER_EMAIL }}|g" "$parameterFile"
+          sed -i "s|#{envCode}#|${{ inputs.envCode }}|g" "$parameterFile"
+          sed -i "s|#{envcode}#|${{ inputs.envCode }}|g" "$parameterFile"
+          
+          # Replace additional common tokens that may be found in parameters
+          sed -i "s|#{APP_NAME_NO_DASHES}#|${{ vars.APP_NAME }}|g" "$parameterFile"
           
           echo "Token replacement completed. Updated parameter file:"
           cat "$parameterFile"
