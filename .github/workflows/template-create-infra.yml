@@ -42,6 +42,11 @@ on:
         description: Login using Client Secret?
         type: boolean
         default: false
+      stackAction:
+        description: Action for Deployment Stack
+        type: string
+        default: 'deploy'
+          # Options: deploy, status, rollback, delete (empty = ARM deployment)
 
 # ------------------------------------------------------------------------------------------------------------------------
 jobs:
@@ -76,7 +81,7 @@ jobs:
       requestorName: ${{ github.actor }}
       
       # Deployment Stack Environment Variables (hardcoded - no input parameters to avoid 10-param limit)
-      stackAction: ""  # Options: deploy, status, rollback, delete (empty = ARM deployment)
+      stackAction: ${{ inputs.stackAction }}  # Options: deploy, status, rollback, delete (empty = ARM deployment)
       stackName: ${{ format('stack-{0}-{1}-{2}', vars.APP_NAME, inputs.envCode, vars.INSTANCE_NUMBER) }}
       denySettingsMode: "denyWriteAndDelete"
       enableDriftDetection: "true"

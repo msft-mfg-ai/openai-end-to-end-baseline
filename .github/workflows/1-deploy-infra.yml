@@ -41,6 +41,16 @@ on:
         required: false
         default: false
         type: boolean
+      stackAction:
+        description: Stack Action
+        required: false
+        default: 'deploy'
+        type: choice
+        options:
+          - deploy
+          - status
+          - rollback
+          - delete
           
 jobs:
   Deploy_Bicep:
@@ -62,3 +72,4 @@ jobs:
       runCreateInfra: true
       deployInResourceGroup: true
       loginUsingClientSecret: ${{ inputs.loginUsingClientSecret }}
+      stackAction: 'deploy' # Options: deploy, status, rollback, delete (empty = ARM deployment)
