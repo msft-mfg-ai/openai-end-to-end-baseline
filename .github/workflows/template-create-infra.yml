@@ -141,10 +141,10 @@ jobs:
           echo "Inputs:"
           echo '${{ toJSON(inputs) }}'
           echo "##[endgroup]"
-          echo "---------------------------------"
-          echo "##[group]Directory of ${{ github.workspace  }}"
+          echo "---------------------------------"          echo "##[group]Directory of ${{ github.workspace  }}"
           tree -R ${{ github.workspace  }}
-          echo "##[endgroup]"        continue-on-error: true
+          echo "##[endgroup]"
+        continue-on-error: true
 
       - name: Replace Tokens
         if: ${{ inputs.runCreateInfra && env.parameterFileReplaceTokens == 'true' }}
@@ -152,9 +152,16 @@ jobs:
           parameterFile="${{ env.templatePath }}${{ env.parameterFile }}"
           
           echo "Replacing tokens in parameter file: $parameterFile"
+          echo "Environment code from input: ${{ inputs.envCode }}"
+          
+          # Show original content before replacement
+          echo "Original parameter file content:"
+          cat "$parameterFile"
           
           # Create a backup of the original file
-          cp "$parameterFile" "${parameterFile}.backup"          # Replace tokens with their corresponding values
+          cp "$parameterFile" "${parameterFile}.backup"
+          
+          # Replace tokens with their corresponding values
           sed -i "s|#{GLOBAL_REGION_CODE}#|${{ vars.GLOBAL_REGION_CODE }}|g" "$parameterFile"
           sed -i "s|#{RESOURCEGROUP_PREFIX}#|${{ vars.RESOURCEGROUP_PREFIX }}|g" "$parameterFile"
           sed -i "s|#{RESOURCEGROUP_LOCATION}#|${{ vars.RESOURCEGROUP_LOCATION }}|g" "$parameterFile"
@@ -170,6 +177,14 @@ jobs:
           
           echo "Token replacement completed. Updated parameter file:"
           cat "$parameterFile"
+          
+          # Verify that envCode token was replaced
+          if grep -q "#{.*envCode.*}#" "$parameterFile"; then
+            echo "WARNING: envCode tokens still found in parameter file after replacement!"
+            grep "#{.*envCode.*}#" "$parameterFile"
+          else
+            echo "SUCCESS: All envCode tokens appear to have been replaced"
+          fi
 
       - name: Display Param File
         run: |-
