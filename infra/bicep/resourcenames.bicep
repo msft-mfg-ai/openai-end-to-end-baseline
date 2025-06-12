@@ -41,27 +41,27 @@ var resourceAbbreviations = loadJsonContent('./data/abbreviation.json')
 // ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 output webSiteName string                 = toLower('${resourceAbbreviations.webSitesAppService}-${sanitizedAppNameWithDashes}-${sanitizedEnvironment}${resourceTokenWithDash}')
 output webSiteAppServicePlanName string   = toLower('${resourceAbbreviations.webServerFarms}-${sanitizedAppName}-${sanitizedEnvironment}${resourceTokenWithDash}${dashRegionDashInstance}')
-output appInsightsName string             = toLower('${resourceAbbreviations.insightsComponents}${sanitizedAppName}-${sanitizedEnvironment}${resourceTokenWithDash}${dashRegionDashInstance}')
-output logAnalyticsWorkspaceName string   = toLower('${resourceAbbreviations.operationalInsightsWorkspaces}${sanitizedAppName}-${sanitizedEnvironment}${resourceTokenWithDash}${dashRegionDashInstance}')
+output appInsightsName string             = toLower('${resourceAbbreviations.insightsComponents}-${sanitizedAppName}-${sanitizedEnvironment}${resourceTokenWithDash}${dashRegionDashInstance}')
+output logAnalyticsWorkspaceName string   = toLower('${resourceAbbreviations.operationalInsightsWorkspaces}-${sanitizedAppName}-${sanitizedEnvironment}${resourceTokenWithDash}${dashRegionDashInstance}')
 
-output cosmosName string                  = toLower('${resourceAbbreviations.documentDBDatabaseAccounts}${sanitizedAppName}-${sanitizedEnvironment}${resourceTokenWithDash}${dashRegionDashInstance}')
+output cosmosName string                  = toLower('${resourceAbbreviations.documentDBDatabaseAccounts}-${sanitizedAppName}-${sanitizedEnvironment}${resourceTokenWithDash}${dashRegionDashInstance}')
 
-output searchServiceName string           = toLower('${resourceAbbreviations.searchSearchServices}${sanitizedAppName}-${sanitizedEnvironment}${resourceTokenWithDash}${dashRegionDashInstance}')
-output cogServiceName string              = toLower('${resourceAbbreviations.cognitiveServicesAccounts}${sanitizedAppName}-${sanitizedEnvironment}${resourceTokenWithDash}${dashRegionDashInstance}')
-output documentIntelligenceName string    = toLower('${resourceAbbreviations.cognitiveServicesFormRecognizer}${sanitizedAppName}-${sanitizedEnvironment}${resourceTokenWithDash}${dashRegionDashInstance}')
+output searchServiceName string           = toLower('${resourceAbbreviations.searchSearchServices}-${sanitizedAppName}-${sanitizedEnvironment}${resourceTokenWithDash}${dashRegionDashInstance}')
+output cogServiceName string              = toLower('${resourceAbbreviations.cognitiveServicesAccounts}-${sanitizedAppName}-${sanitizedEnvironment}${resourceTokenWithDash}${dashRegionDashInstance}')
+output documentIntelligenceName string    = toLower('${resourceAbbreviations.cognitiveServicesFormRecognizer}-${sanitizedAppName}-${sanitizedEnvironment}-${resourceTokenWithDash}${dashRegionDashInstance}')
 
 output aiHubName string                   = toLower('${resourceAbbreviations.cognitiveServicesHub}-${sanitizedAppName}-${sanitizedEnvironment}${resourceTokenWithDash}${dashRegionDashInstance}')
 // Project name must be alpha numeric characters or '-', length must be <= 32
 output aiHubProjectName string            = take(toLower('${resourceAbbreviations.cognitiveServicesHub}-Project-${sanitizedAppName}-${sanitizedEnvironment}${resourceTokenWithDash}${dashInstance}'), 32)
 
-output caManagedEnvName string            = toLower('${resourceAbbreviations.appManagedEnvironments}${sanitizedAppName}-${sanitizedEnvironment}${resourceToken}${dashRegionDashInstance}')
+output caManagedEnvName string            = toLower('${resourceAbbreviations.appManagedEnvironments}-${sanitizedAppName}-${sanitizedEnvironment}${resourceToken}${dashRegionDashInstance}')
 // CA name must be lower case alpha or '-', must start and end with alpha, cannot have '--', length must be <= 32
-output containerAppAPIName string         = take(toLower('${resourceAbbreviations.appContainerApps}api-${sanitizedAppName}-${sanitizedEnvironment}${resourceTokenWithDash}${dashInstance}'), 32)
-output containerAppUIName string          = take(toLower('${resourceAbbreviations.appContainerApps}ui-${sanitizedAppName}-${sanitizedEnvironment}${resourceTokenWithDash}${dashInstance}'), 32)
-output containerAppBatchName string       = take(toLower('${resourceAbbreviations.appContainerApps}batch-${sanitizedAppName}-${sanitizedEnvironment}${resourceTokenWithDash}${dashInstance}'), 32)
+output containerAppAPIName string         = take(toLower('${resourceAbbreviations.appContainerApps}-api-${sanitizedAppName}-${sanitizedEnvironment}${resourceTokenWithDash}${dashInstance}'), 32)
+output containerAppUIName string          = take(toLower('${resourceAbbreviations.appContainerApps}-ui-${sanitizedAppName}-${sanitizedEnvironment}${resourceTokenWithDash}${dashInstance}'), 32)
+output containerAppBatchName string       = take(toLower('${resourceAbbreviations.appContainerApps}-batch-${sanitizedAppName}-${sanitizedEnvironment}${resourceTokenWithDash}${dashInstance}'), 32)
 
-output caManagedIdentityName string       = toLower('${sanitizedAppName}-${resourceAbbreviations.appManagedEnvironments}${resourceAbbreviations.managedIdentityUserAssignedIdentities}${dashInstance}-${sanitizedEnvironment}')
-output kvManagedIdentityName string       = toLower('${sanitizedAppName}-${resourceAbbreviations.keyVaultVaults}${resourceAbbreviations.managedIdentityUserAssignedIdentities}${dashInstance}-${sanitizedEnvironment}')
+output caManagedIdentityName string       = toLower('${sanitizedAppName}-${resourceAbbreviations.appManagedEnvironments}-${resourceAbbreviations.managedIdentityUserAssignedIdentities}${dashInstance}-${sanitizedEnvironment}')
+output kvManagedIdentityName string       = toLower('${sanitizedAppName}-${resourceAbbreviations.keyVaultVaults}-${resourceAbbreviations.managedIdentityUserAssignedIdentities}${dashInstance}-${sanitizedEnvironment}')
 output userAssignedIdentityName string    = toLower('${sanitizedAppName}-app-${resourceAbbreviations.managedIdentityUserAssignedIdentities}${dashInstance}-${sanitizedEnvironment}')
 
 output vnet_Name string                   = toLower('${sanitizedAppName}-${resourceAbbreviations.networkVirtualNetworks}-${sanitizedEnvironment}${resourceTokenWithDash}${dashRegionDashInstance}')
@@ -86,12 +86,12 @@ output subnetScoringName string       = toLower('snet-scoring')
 
 //06/09/2023 - Added Virtual Machine names by Fernando Ewald
 output vm_name string                  = take(toLower('${sanitizedAppName}-${resourceAbbreviations.computeVirtualMachines}${dashInstance}-${sanitizedEnvironment}'),15)
-output vm_nic_name string              = toLower('${sanitizedAppName}-${resourceAbbreviations.networkNetworkInterfaces}${dashInstance}-${sanitizedEnvironment}')  
-output vm_pip_name string              = toLower('${sanitizedAppName}-${resourceAbbreviations.networkPublicIPAddresses}${dashInstance}-${sanitizedEnvironment}')
+output vm_nic_name string              = toLower('${sanitizedAppName}${resourceAbbreviations.networkNetworkInterfaces}${dashInstance}-${sanitizedEnvironment}')  
+output vm_pip_name string              = toLower('${sanitizedAppName}${resourceAbbreviations.networkPublicIPAddresses}${dashInstance}-${sanitizedEnvironment}')
 output vm_os_disk_name string          = toLower('${sanitizedAppName}-${resourceAbbreviations.computeDisks}${dashInstance}-${sanitizedEnvironment}')     
-output vm_nsg_name string              = toLower('${sanitizedAppName}-${resourceAbbreviations.networkNetworkSecurityGroups}${dashInstance}-${sanitizedEnvironment}')
-output bastion_host_name string        = toLower('${sanitizedAppName}-${resourceAbbreviations.networkBastionHosts}${dashInstance}-${sanitizedEnvironment}')
-output bastion_pip_name string         = toLower('${sanitizedAppName}-${resourceAbbreviations.networkPublicIPAddresses}-bastion${dashInstance}-${sanitizedEnvironment}')
+output vm_nsg_name string              = toLower('${sanitizedAppName}${resourceAbbreviations.networkNetworkSecurityGroups}${dashInstance}-${sanitizedEnvironment}')
+output bastion_host_name string        = toLower('${sanitizedAppName}${resourceAbbreviations.networkBastionHosts}${dashInstance}-${sanitizedEnvironment}')
+output bastion_pip_name string         = toLower('${sanitizedAppName}${resourceAbbreviations.networkPublicIPAddresses}bastion${dashInstance}-${sanitizedEnvironment}')
 
 // ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Container Registry, Key Vaults and Storage Account names are only alpha numeric characters limited length
