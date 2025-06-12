@@ -241,6 +241,7 @@ jobs:
               --template-file ${{ env.templatePath }}${{ env.templateFile }} \
               --parameters ${{ env.templatePath }}${{ env.parameterFile }} \
               --deny-settings-mode none \
+              --action-on-unmanage deleteResources \
               --deployment-mode ${{ inputs.deploymentMode }} \
               --output json > stack_output_rg.json
             
