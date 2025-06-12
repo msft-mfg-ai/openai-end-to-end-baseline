@@ -66,6 +66,15 @@ on:
         required: false
         default: false
         type: boolean
+      stackAction:
+        description: Deployment Stack Action
+        required: false
+        default: 'deploy'
+        type: choice
+        options:
+          - deploy
+          - rollback
+          - status
           
 jobs:
   Deploy_Bicep:
@@ -82,3 +91,4 @@ jobs:
       templateConfig: >
         {"templatePath":"./infra/bicep/","templateFile":"${{ inputs.bicepFile }}","parameterFile":"${{ inputs.parameterFile }}","parameterFileReplaceTokens":"true"}
       loginUsingClientSecret: ${{ inputs.loginUsingClientSecret }}
+      stackAction: ${{ inputs.stackAction }}

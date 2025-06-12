@@ -64,6 +64,15 @@ on:
         required: false
         default: false
         type: boolean
+      stackAction:
+        description: Deployment Stack Action
+        required: false
+        default: 'deploy'
+        type: choice
+        options:
+          - deploy
+          - rollback
+          - status
       # runSmokeTest:
       #   description: 'Run Smoke Tests'
       #   required: false
@@ -153,6 +162,7 @@ jobs:
       templateConfig: >
         {"templatePath":"./infra/bicep/","templateFile":"main-basic.bicep","parameterFile":"${{ inputs.parameterFile }}","parameterFileReplaceTokens":"true"}
       loginUsingClientSecret: ${{ inputs.loginUsingClientSecret }}
+      stackAction: ${{ inputs.stackAction }}
 
   # ------------------------------------------------------------------------------------------------------------------------
   build-all:
