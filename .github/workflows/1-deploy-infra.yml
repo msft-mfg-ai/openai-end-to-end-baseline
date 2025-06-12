@@ -36,31 +36,6 @@ on:
         required: true
         default: 'main-advanced.dynamic.bicepparam'
         type: string
-      createResourceGroup:
-        description: Create Resource Group?
-        type: boolean
-        default: true
-      publicAccessEnabled:
-        description: Public Access Enabled?
-        type: boolean
-        default: true
-      createDnsZones:
-        description: Create DNS Zones?
-        type: boolean
-        default: true
-      addRoleAssignments:
-        description: Add Role Assignments?
-        type: boolean
-        default: true
-      deployAIHub:
-        description: Deploy AI Hub?
-        type: boolean
-        default: true
-      runBuildDeployAPI:
-        description: Build and Deploy API
-        required: false
-        default: false
-        type: boolean
       loginUsingClientSecret:
         description: Login using Client Secret?
         required: false
@@ -83,11 +58,7 @@ jobs:
       templateFile: ${{ inputs.bicepFile }}
       parameterFile: ${{ inputs.parameterFile }}
       parameterFileReplaceTokens: 'true'
-      createResourceGroup: ${{ inputs.createResourceGroup }}
-      publicAccessEnabled: ${{ inputs.publicAccessEnabled }}
-      createDnsZones: ${{ inputs.createDnsZones }}
-      deployAIHub: ${{ inputs.deployAIHub }}
-      addRoleAssignments: ${{ inputs.addRoleAssignments }}
-      runBuildDeployAPI: ${{ inputs.runBuildDeployAPI }}
-      #instance: ${{ vars.INSTANCE_NUMBER }}
+      deploymentMode: 'Incremental'
+      runCreateInfra: true
+      deployInResourceGroup: true
       loginUsingClientSecret: ${{ inputs.loginUsingClientSecret }}
