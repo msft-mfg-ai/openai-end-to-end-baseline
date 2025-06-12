@@ -73,5 +73,6 @@ jobs:
       envCode: ${{ inputs.deployEnvironment }}
       templateConfig: >
         {"templatePath":"./infra/bicep/","templateFile":"${{ inputs.bicepFile }}","parameterFile":"${{ inputs.parameterFile }}","parameterFileReplaceTokens":"true"}
+      deployConfig: ${{ inputs.deployConfig }}
       loginUsingClientSecret: ${{ inputs.loginUsingClientSecret }}
       stackAction: ${{ inputs.stackAction }}

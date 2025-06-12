@@ -161,6 +161,8 @@ jobs:
       envCode: ${{ inputs.deployEnvironment }}
       templateConfig: >
         {"templatePath":"./infra/bicep/","templateFile":"main-basic.bicep","parameterFile":"${{ inputs.parameterFile }}","parameterFileReplaceTokens":"true"}
+      deployConfig: >
+        {"createResourceGroup":${{ inputs.createResourceGroup }},"publicAccessEnabled":${{ inputs.publicAccessEnabled }},"createDnsZones":${{ inputs.createDnsZones }},"addRoleAssignments":${{ inputs.addRoleAssignments }},"deployAIHub":${{ inputs.deployAIHub }},"deployBatchApp":false}
       loginUsingClientSecret: ${{ inputs.loginUsingClientSecret }}
       stackAction: ${{ inputs.stackAction }}
 

@@ -8,8 +8,7 @@ on:
     inputs:
       envCode:
         required: true
-        type: string
-      # Group template-related parameters into a single JSON input to reduce total inputs
+        type: string      # Group template-related parameters into a single JSON input to reduce total inputs
       templateConfig:
         description: |
           JSON string with template configuration. Example:
@@ -17,6 +16,14 @@ on:
         required: false
         type: string
         default: '{"templatePath":"infra/bicep/","templateFile":"main-advanced.bicep","parameterFile":"","parameterFileReplaceTokens":"false"}'
+      # Group deployment configuration settings into a JSON input to reduce inputs
+      deployConfig:
+        description: |
+          JSON string with deployment configuration. Example:
+          '{"createResourceGroup":true,"publicAccessEnabled":true,"createDnsZones":true,"addRoleAssignments":true,"deployAIHub":true,"deployBatchApp":false}'
+        required: false
+        type: string
+        default: '{"createResourceGroup":true,"publicAccessEnabled":true,"createDnsZones":true,"addRoleAssignments":true,"deployAIHub":true,"deployBatchApp":false}'
       deploymentMode:
         required: false
         type: string
@@ -139,9 +146,9 @@ jobs:
           echo "Secrets:"
           echo '${{ toJSON(secrets) }}'
           echo "Inputs:"
-          echo '${{ toJSON(inputs) }}'
-          echo "##[endgroup]"
-          echo "---------------------------------"          echo "##[group]Directory of ${{ github.workspace  }}"
+          echo '${{ toJSON(inputs) }}'          echo "##[endgroup]"
+          echo "---------------------------------"
+          echo "##[group]Directory of ${{ github.workspace  }}"
           tree -R ${{ github.workspace  }}
           echo "##[endgroup]"
         continue-on-error: true
@@ -154,6 +161,22 @@ jobs:
           echo "Replacing tokens in parameter file: $parameterFile"
           echo "Environment code from input: ${{ inputs.envCode }}"
           
+          echo "=================================================="
+          echo "REQUIRED GITHUB SECRETS SETUP INSTRUCTIONS:"
+          echo "=================================================="
+          echo "For the jumpbox VM to deploy successfully, set these environment secrets:"
+          echo "  gh secret set --env dev ADMIN_USERNAME <your-admin-username>"
+          echo "  gh secret set --env dev ADMIN_PASSWORD <secure-password-8-123-chars>"
+          echo ""
+          echo "Optional secrets for admin access (recommended for production):"
+          echo "  gh secret set --env dev USER_PRINCIPAL_ID <your-azure-ad-user-guid>"
+          echo "  gh secret set --env dev ADMIN_IP_ADDRESS <your-public-ip-address>"
+          echo ""
+          echo "Password requirements:"
+          echo "- 8-123 characters long"
+          echo "- Must satisfy at least 3 of: uppercase, lowercase, numeric, special character"
+          echo "=================================================="
+          
           # Show original content before replacement
           echo "Original parameter file content:"
           cat "$parameterFile"
@@ -164,19 +187,134 @@ jobs:
           # Replace tokens with their corresponding values
           sed -i "s|#{GLOBAL_REGION_CODE}#|${{ vars.GLOBAL_REGION_CODE }}|g" "$parameterFile"
           sed -i "s|#{RESOURCEGROUP_PREFIX}#|${{ vars.RESOURCEGROUP_PREFIX }}|g" "$parameterFile"
-          sed -i "s|#{RESOURCEGROUP_LOCATION}#|${{ vars.RESOURCEGROUP_LOCATION }}|g" "$parameterFile"
+          sed -i "s|#{RESOURCEGROUP_LOCATION}#|${{ vars.RESOURCEGROUP_LOCATION }}|g" "$parameterFile"  
           sed -i "s|#{OPENAI_DEPLOY_LOCATION}#|${{ vars.OPENAI_DEPLOY_LOCATION }}|g" "$parameterFile"
           sed -i "s|#{INSTANCE_NUMBER}#|${{ vars.INSTANCE_NUMBER }}|g" "$parameterFile"
           sed -i "s|#{APP_NAME}#|${{ vars.APP_NAME }}|g" "$parameterFile"
-          sed -i "s|#{OWNER_EMAIL}#|${{ vars.OWNER_EMAIL }}|g" "$parameterFile"
+          sed -i "s|#{OWNER_EMAIL}#|${{ vars.OWNER_EMAIL || 'noreply@company.com' }}|g" "$parameterFile"
           sed -i "s|#{envCode}#|${{ inputs.envCode }}|g" "$parameterFile"
           sed -i "s|#{envcode}#|${{ inputs.envCode }}|g" "$parameterFile"
           
           # Replace additional common tokens that may be found in parameters
           sed -i "s|#{APP_NAME_NO_DASHES}#|${{ vars.APP_NAME }}|g" "$parameterFile"
+          sed -i "s|#{APP_ID}#|${{ vars.APP_ID || vars.APP_NAME }}|g" "$parameterFile"
+          sed -i "s|#{requestorName}#|${{ inputs.requestorName }}|g" "$parameterFile"
+            # Replace secret-based tokens (these should come from GitHub environment secrets)
+          # USER_PRINCIPAL_ID is an optional environment secret for admin access
+          if [ -n "${{ secrets.USER_PRINCIPAL_ID }}" ]; then
+            # Validate that it looks like a GUID
+            principal_id="${{ secrets.USER_PRINCIPAL_ID }}"
+            if [[ $principal_id =~ ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$ ]]; then
+              sed -i "s|#{USER_PRINCIPAL_ID}#|${{ secrets.USER_PRINCIPAL_ID }}|g" "$parameterFile"
+              echo "USER_PRINCIPAL_ID secret applied successfully."
+            else
+              echo "Error: USER_PRINCIPAL_ID secret is not a valid GUID format."
+              echo "Using empty string - admin access may be limited."
+              sed -i "s|#{USER_PRINCIPAL_ID}#||g" "$parameterFile"
+            fi
+          else
+            echo "Warning: USER_PRINCIPAL_ID secret not found. This is optional but limits admin access to Key Vault and Container Registry."
+            echo "Using empty string - you can set this later if needed."
+            sed -i "s|#{USER_PRINCIPAL_ID}#||g" "$parameterFile"
+          fi
+            # ADMIN_PRINCIPAL_ID is similar to USER_PRINCIPAL_ID
+          if [ -n "${{ secrets.ADMIN_PRINCIPAL_ID }}" ]; then
+            principal_id="${{ secrets.ADMIN_PRINCIPAL_ID }}"
+            if [[ $principal_id =~ ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$ ]]; then
+              sed -i "s|#{ADMIN_PRINCIPAL_ID}#|${{ secrets.ADMIN_PRINCIPAL_ID }}|g" "$parameterFile"
+              echo "ADMIN_PRINCIPAL_ID secret applied successfully."
+            else
+              echo "Error: ADMIN_PRINCIPAL_ID secret is not a valid GUID format."
+              sed -i "s|#{ADMIN_PRINCIPAL_ID}#||g" "$parameterFile"
+            fi
+          else
+            echo "Warning: ADMIN_PRINCIPAL_ID secret not found. Using empty string."
+            sed -i "s|#{ADMIN_PRINCIPAL_ID}#||g" "$parameterFile"
+          fi
+            # Admin credentials for jumpbox VM
+          if [ -n "${{ secrets.ADMIN_USERNAME }}" ]; then
+            sed -i "s|#{ADMIN_USERNAME}#|${{ secrets.ADMIN_USERNAME }}|g" "$parameterFile"
+          else
+            echo "Warning: ADMIN_USERNAME secret not found. Using default: vmadmin"
+            sed -i "s|#{ADMIN_USERNAME}#|vmadmin|g" "$parameterFile"
+          fi
           
+          if [ -n "${{ secrets.ADMIN_PASSWORD }}" ]; then
+            # Validate password meets Azure requirements (8-123 chars, 3 of 4 complexity requirements)
+            password="${{ secrets.ADMIN_PASSWORD }}"
+            if [[ ${#password} -ge 8 && ${#password} -le 123 ]]; then
+              sed -i "s|#{ADMIN_PASSWORD}#|${{ secrets.ADMIN_PASSWORD }}|g" "$parameterFile"
+              echo "ADMIN_PASSWORD secret applied successfully."
+            else
+              echo "Error: ADMIN_PASSWORD secret does not meet length requirements (8-123 characters)."
+              echo "Generating a secure password automatically..."
+              # Generate a secure password that meets Azure requirements
+              secure_password="AutoGen$(date +%m%d%H%M)!@#"
+              sed -i "s|#{ADMIN_PASSWORD}#|$secure_password|g" "$parameterFile"
+              echo "Generated secure password applied. Please update your secret for future deployments."
+            fi
+          else
+            echo "Warning: ADMIN_PASSWORD secret not found. Generating a secure password..."
+            # Generate a secure password that meets Azure requirements (uppercase, lowercase, number, special char)
+            secure_password="AutoGen$(date +%m%d%H%M)!@#"
+            sed -i "s|#{ADMIN_PASSWORD}#|$secure_password|g" "$parameterFile"
+            echo "Generated secure password applied. Password: $secure_password"
+            echo "Please save this password securely and set the ADMIN_PASSWORD secret for future deployments."
+          fi
+            # Admin IP address for network access
+          if [ -n "${{ secrets.ADMIN_IP_ADDRESS }}" ]; then
+            # Basic validation for IP address format
+            ip_address="${{ secrets.ADMIN_IP_ADDRESS }}"
+            if [[ $ip_address =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
+              sed -i "s|#{ADMIN_IP_ADDRESS}#|${{ secrets.ADMIN_IP_ADDRESS }}|g" "$parameterFile"
+              echo "ADMIN_IP_ADDRESS secret applied successfully."
+            else
+              echo "Warning: ADMIN_IP_ADDRESS secret is not a valid IP address format."
+              echo "Using 0.0.0.0 (allow all) - please update for security."
+              sed -i "s|#{ADMIN_IP_ADDRESS}#|0.0.0.0|g" "$parameterFile"
+            fi
+          else
+            echo "Warning: ADMIN_IP_ADDRESS secret not found. Using 0.0.0.0 (allow all IPs)."
+            echo "For security, consider setting this to your specific IP address."
+            sed -i "s|#{ADMIN_IP_ADDRESS}#|0.0.0.0|g" "$parameterFile"
+          fi
+            # Boolean parameters (these should come from deployConfig JSON input)
+          # Parse deployConfig JSON to extract boolean values with defaults
+          deployConfigJson='${{ inputs.deployConfig }}'
+          echo "Deploy config JSON: $deployConfigJson"
+          
+          # Extract boolean values from JSON using jq, with fallback defaults
+          addRoleAssignments=$(echo "$deployConfigJson" | jq -r '.addRoleAssignments // false')
+          createDnsZones=$(echo "$deployConfigJson" | jq -r '.createDnsZones // false')
+          publicAccessEnabled=$(echo "$deployConfigJson" | jq -r '.publicAccessEnabled // true')
+          deployAIHub=$(echo "$deployConfigJson" | jq -r '.deployAIHub // true')
+          deployBatchApp=$(echo "$deployConfigJson" | jq -r '.deployBatchApp // false')
+          
+          echo "Extracted boolean values:"
+          echo "addRoleAssignments: $addRoleAssignments"
+          echo "createDnsZones: $createDnsZones"
+          echo "publicAccessEnabled: $publicAccessEnabled"
+          echo "deployAIHub: $deployAIHub"
+          echo "deployBatchApp: $deployBatchApp"
+          
+          sed -i "s|#{addRoleAssignments}#|$addRoleAssignments|g" "$parameterFile"
+          sed -i "s|#{createDnsZones}#|$createDnsZones|g" "$parameterFile"
+          sed -i "s|#{publicAccessEnabled}#|$publicAccessEnabled|g" "$parameterFile"
+          sed -i "s|#{deployAIHub}#|$deployAIHub|g" "$parameterFile"
+          sed -i "s|#{deployBatchApp}#|$deployBatchApp|g" "$parameterFile"          
           echo "Token replacement completed. Updated parameter file:"
           cat "$parameterFile"
+          
+          # Check for any remaining tokens and warn if found
+          echo "Checking for any remaining unresolved tokens..."
+          remaining_tokens=$(grep -o '#{[^}]*}#' "$parameterFile" || true)
+          if [ -n "$remaining_tokens" ]; then
+            echo "WARNING: The following tokens were not replaced and may cause deployment issues:"
+            echo "$remaining_tokens"
+            echo "Please ensure all required secrets and variables are properly configured."
+          else
+            echo "All tokens have been successfully replaced."
+          fi
           
           # Verify that envCode token was replaced
           if grep -q "#{.*envCode.*}#" "$parameterFile"; then
