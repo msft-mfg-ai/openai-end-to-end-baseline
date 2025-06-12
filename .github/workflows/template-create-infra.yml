@@ -178,13 +178,6 @@ jobs:
       # DEPLOYMENT STACK OPERATIONS
       # ========================================================================================================
       
-      - name: Install Azure CLI Stack Extension
-        if: ${{ env.stackAction != '' }}
-        run: |
-          echo "Installing Azure CLI stack extension..."
-          az extension add --name stack --only-show-errors
-          echo "Stack extension installed successfully"
-
       - name: Deploy with Deployment Stack
         if: ${{ env.stackAction == 'deploy' }}
         id: deploy-stack
