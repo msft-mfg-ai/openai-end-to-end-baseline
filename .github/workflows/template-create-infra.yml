@@ -242,7 +242,6 @@ jobs:
               --parameters ${{ env.templatePath }}${{ env.parameterFile }} \
               --deny-settings-mode none \
               --action-on-unmanage deleteResources \
-              --deployment-mode ${{ inputs.deploymentMode }} \
               --output json > stack_output_rg.json
             
             # Extract outputs from stack deployment result for use in later steps
