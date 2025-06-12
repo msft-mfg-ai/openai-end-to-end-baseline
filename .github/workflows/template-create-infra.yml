@@ -3,6 +3,7 @@
 # ------------------------------------------------------------------------------------------------------------------------
 name: z_template_deploy_infra
 run-name: Deploy Bicep
+
 on:
   workflow_call:
     inputs:
@@ -16,7 +17,7 @@ on:
       templateFile:
         required: false
         type: string
-        default: 'main-basic.bicep'
+        default: 'main-advanced.bicep'
       parameterFile:
         required: false
         type: string
@@ -37,69 +38,10 @@ on:
         required: false
         default: true
         type: boolean
-      createResourceGroup:
-        description: Create Resource Group?
-        type: boolean
-        default: false
-      publicAccessEnabled:
-        description: Public Access Enabled?
-        type: boolean
-        default: false
-      createDnsZones:
-        description: Create DNS Zones?
-        type: boolean
-        default: false
-      deployAIHub:
-        description: Deploy AI Hub?
-        type: boolean
-        default: false
-      addRoleAssignments:
-        description: Add Role Assignments?
-        type: boolean
-        default: true
-      runBuildDeployAPI:
-        description: Run Build and Deploy API?
-        type: boolean
-        default: false
       loginUsingClientSecret:
         description: Login using Client Secret?
         type: boolean
         default: false
-
-      requestorName:
-        description: Requestor Name
-        type: string
-        default: '${{ github.actor }}'
-      # Deployment Stack Parameters
-      stackAction:
-        description: 'Stack action: deploy, status, rollback, delete, or empty for ARM mode'
-        required: false
-        type: string
-        default: ''
-      stackName:
-        description: 'Custom stack name (optional)'
-        required: false
-        type: string
-        default: ''
-      denySettingsMode:
-        description: 'Deny settings mode: none, denyDelete, denyWriteAndDelete'
-        required: false
-        type: string
-        default: 'denyDelete'
-      enableDriftDetection:
-        description: 'Enable drift detection'
-        required: false
-        type: boolean
-        default: true
-      rollbackOnFailure:
-        description: 'Auto-rollback on deployment failure'
-        required: false
-        type: boolean
-        default: false
-      # instance:
-      #   description: Instance number for resource naming
-      #   type: string
-      #   default: '001'
 
 # ------------------------------------------------------------------------------------------------------------------------
 jobs:
@@ -115,34 +57,36 @@ jobs:
       pages: write    # ------------------------------------------------------------------------------------------------------------------------
     # Variables
     # ------------------------------------------------------------------------------------------------------------------------
-
+    
     env:
       envCode: ${{ inputs.envCode }}
       generatedResourceGroupName: ${{ vars.RESOURCEGROUP_PREFIX }}-${{ inputs.envCode }}-${{ vars.GLOBAL_REGION_CODE }}-${{ vars.INSTANCE_NUMBER }}
-      createResourceGroup: ${{ inputs.createResourceGroup }}
-      publicAccessEnabled: ${{ inputs.publicAccessEnabled }}
-      createDnsZones: ${{ inputs.createDnsZones }}
-      deployAIHub: ${{ inputs.deployAIHub }}
-      addRoleAssignments: ${{ inputs.addRoleAssignments }}
-      runBuildDeployAPI: ${{ inputs.runBuildDeployAPI }}
       loginWithFederatedIdentity: ${{ secrets.CICD_CLIENT_SECRET == '' && 'true' || 'false' }}
       loginWithSecret: ${{ secrets.CICD_CLIENT_SECRET != '' && 'true' || 'false' }}
-      # Deployment Stack Environment Variables
-      stackAction: ${{ inputs.stackAction }}
-      stackName: ${{ inputs.stackName != '' && inputs.stackName || format('stack-{0}-{1}-{2}', vars.APP_NAME, inputs.envCode, vars.INSTANCE_NUMBER) }}
-      denySettingsMode: ${{ inputs.denySettingsMode }}
-      enableDriftDetection: ${{ inputs.enableDriftDetection }}
-      rollbackOnFailure: ${{ inputs.rollbackOnFailure }}
-      isStackDeployment: ${{ inputs.stackAction != '' && 'true' || 'false' }}
-      isArmDeployment: ${{ inputs.stackAction == '' && 'true' || 'false' }}
- 
+      
+      # Infrastructure Configuration (hardcoded to avoid 10-parameter limit)
+      createResourceGroup: false
+      publicAccessEnabled: false
+      createDnsZones: false
+      deployAIHub: false
+      addRoleAssignments: true
+      runBuildDeployAPI: false
+      requestorName: ${{ github.actor }}
+      
+      # Deployment Stack Environment Variables (hardcoded - no input parameters to avoid 10-param limit)
+      stackAction: ""  # Options: deploy, status, rollback, delete (empty = ARM deployment)
+      stackName: ${{ format('stack-{0}-{1}-{2}', vars.APP_NAME, inputs.envCode, vars.INSTANCE_NUMBER) }}
+      denySettingsMode: "denyWriteAndDelete"
+      enableDriftDetection: "true"
+      rollbackOnFailure: "true"
+
     # ------------------------------------------------------------------------------------------------------------------------
     # Outputs
     # ------------------------------------------------------------------------------------------------------------------------
     outputs:
       HUB_ID: ${{ steps.deploy-bicep-rg.outputs.AI_HUB_ID }}
       HUB_NAME: ${{ steps.deploy-bicep-rg.outputs.AI_HUB_NAME }}
-  
+
     # ------------------------------------------------------------------------------------------------------------------------
     # Actions
     # ------------------------------------------------------------------------------------------------------------------------
@@ -161,19 +105,15 @@ jobs:
           echo "env.generatedResourceGroupName=${{ env.generatedResourceGroupName }}"
           echo "templateFilePath=${{ inputs.templatePath }}${{ inputs.templateFile }}"
           echo "parameterFilePath=${{ inputs.templatePath }}${{ inputs.parameterFile }}"
-
           echo "vars.APP_NAME=${{ vars.APP_NAME }}"
           echo "vars.RESOURCEGROUP_PREFIX=${{ vars.RESOURCEGROUP_PREFIX }}"
           echo "vars.RESOURCEGROUP_LOCATION=${{ vars.RESOURCEGROUP_LOCATION }}"
           echo "vars.OPENAI_DEPLOY_LOCATION=${{ vars.OPENAI_DEPLOY_LOCATION }}"
           echo "vars.GLOBAL_REGION_CODE=${{ vars.GLOBAL_REGION_CODE }}"
           echo "vars.INSTANCE_NUMBER=${{ vars.INSTANCE_NUMBER }}"
-          echo "vars.OWNER_EMAIL=${{ vars.OWNER_EMAIL }}"
-
           echo "env.loginWithSecret=${{ env.loginWithSecret }}"
           echo "env.loginWithFederatedIdentity=${{ env.loginWithFederatedIdentity }}"
           echo "inputs.loginUsingClientSecret=${{ inputs.loginUsingClientSecret }}"
-
           echo "templatePath=${{ inputs.templatePath }}"
           echo "templateFile=${{ inputs.templateFile }}"
           echo "parameterFile=${{ inputs.parameterFile }}"
@@ -200,7 +140,7 @@ jobs:
         uses: qetza/replacetokens-action@v1
         with:
           sources: '${{ inputs.templatePath }}${{ inputs.parameterFile }}; !local/ => ${{ inputs.parameterFile }}'
-          variables: '[${{ toJSON(env) }},${{ toJSON(vars) }},${{ toJSON(secrets) }}]' # use environment & variables & secrets
+          variables: '[${{ toJSON(env) }},${{ toJSON(vars) }},${{ toJSON(secrets) }}]'
 
       - name: Display Param File
         run: |-
@@ -209,10 +149,8 @@ jobs:
           echo "##[endgroup]"
         continue-on-error: true
 
-      # https://learn.microsoft.com/en-us/entra/workload-id/workload-identity-federation-create-trust
       - name: OIDC Login to Azure
         if: ${{ !inputs.loginUsingClientSecret }}
-        # if: $ { { env.loginWithFederatedIdentity } }
         uses: azure/login@v2
         with:
           client-id: ${{ secrets.CICD_CLIENT_ID }}
@@ -221,10 +159,11 @@ jobs:
 
       - name: Login to Azure with Secret
         if: ${{ inputs.loginUsingClientSecret }}
-        # if: $ { { env.loginWithSecret } }  // this looks right but it ALWAYS runs then fails if secret is missing...
         uses: azure/login@v2
         with:
-          creds: '{"clientId":"${{ secrets.CICD_CLIENT_ID }}","clientSecret":"${{ secrets.CICD_CLIENT_SECRET }}","tenantId":"${{ secrets.AZURE_TENANT_ID }}","subscriptionId":"${{ secrets.AZURE_SUBSCRIPTION_ID }}"}'      - name: Create Resource Group
+          creds: '{"clientId":"${{ secrets.CICD_CLIENT_ID }}","clientSecret":"${{ secrets.CICD_CLIENT_SECRET }}","tenantId":"${{ secrets.AZURE_TENANT_ID }}","subscriptionId":"${{ secrets.AZURE_SUBSCRIPTION_ID }}"}'
+
+      - name: Create Resource Group
         if: ${{ inputs.runCreateInfra && inputs.deployInResourceGroup }}
         run: az group create --name ${{ env.generatedResourceGroupName }} --location ${{ vars.RESOURCEGROUP_LOCATION }} --tags Environment=${{ inputs.envCode }}
 
@@ -233,14 +172,14 @@ jobs:
       # ========================================================================================================
       
       - name: Install Azure CLI Stack Extension
-        if: ${{ env.isStackDeployment == 'true' }}
+        if: ${{ env.stackAction != '' }}
         run: |
           echo "Installing Azure CLI stack extension..."
           az extension add --name stack --only-show-errors
           echo "Stack extension installed successfully"
 
       - name: Deploy with Deployment Stack
-        if: ${{ env.isStackDeployment == 'true' && inputs.stackAction == 'deploy' }}
+        if: ${{ env.stackAction == 'deploy' }}
         id: deploy-stack
         run: |
           echo "=== Deploying with Azure Deployment Stack ==="
@@ -307,7 +246,7 @@ jobs:
           fi
 
       - name: Get Stack Status
-        if: ${{ env.isStackDeployment == 'true' && inputs.stackAction == 'status' }}
+        if: ${{ env.stackAction == 'status' }}
         run: |
           echo "=== Getting Deployment Stack Status ==="
           echo "Stack: ${{ env.stackName }}"
@@ -330,7 +269,7 @@ jobs:
           fi
 
       - name: Rollback Stack
-        if: ${{ env.isStackDeployment == 'true' && inputs.stackAction == 'rollback' }}
+        if: ${{ env.stackAction == 'rollback' }}
         run: |
           echo "🔄 Starting deployment stack rollback process..."
           echo "Stack: ${{ env.stackName }}"
@@ -363,7 +302,7 @@ jobs:
           az stack group list-deployments --name "${{ env.stackName }}" --resource-group "${{ env.generatedResourceGroupName }}" --query "[?properties.provisioningState=='Succeeded']" --output table
 
       - name: Delete Stack
-        if: ${{ env.isStackDeployment == 'true' && inputs.stackAction == 'delete' }}
+        if: ${{ env.stackAction == 'delete' }}
         run: |
           echo "⚠️ WARNING: Deleting deployment stack '${{ env.stackName }}'"
           echo "This will remove ALL managed resources!"
@@ -387,7 +326,7 @@ jobs:
           fi
 
       - name: Rollback on Failure (Stack)
-        if: ${{ failure() && env.rollbackOnFailure == 'true' && env.isStackDeployment == 'true' }}
+        if: ${{ failure() && env.rollbackOnFailure == 'true' && env.stackAction != '' }}
         run: |
           echo "🚨 Stack deployment failed - attempting cleanup..."
           echo "Stack Name: ${{ env.stackName }}"
@@ -403,9 +342,11 @@ jobs:
 
       # ========================================================================================================
       # TRADITIONAL ARM DEPLOYMENT (Fallback)
-      # ========================================================================================================      - name: Deploy Azure Resources (Sub)
+      # ========================================================================================================
+
+      - name: Deploy Azure Resources (Sub)
         uses: azure/arm-deploy@v2
-        if: ${{ inputs.runCreateInfra && !inputs.deployInResourceGroup && env.isArmDeployment == 'true' }}
+        if: ${{ inputs.runCreateInfra && !inputs.deployInResourceGroup && env.stackAction == '' }}
         id: deploy-bicep-sub
         with:
           scope: subscription
@@ -413,11 +354,11 @@ jobs:
           deploymentName: ${{ inputs.templateFile }}-sub-${{ vars.RESOURCEGROUP_LOCATION }}-${{ steps.get-date.outputs.DATE_TIME_STAMP}}
           template: ${{ inputs.templatePath }}${{ inputs.templateFile }}
           parameters: ${{ inputs.templatePath }}${{ inputs.parameterFile }}
-          deploymentMode: ${{ inputs.deploymentMode }} # Must be: Incremental | Complete | Validation
+          deploymentMode: ${{ inputs.deploymentMode }}
 
       - name: Deploy Azure Resources (RG)
         uses: azure/arm-deploy@v2
-        if: ${{ inputs.runCreateInfra && inputs.deployInResourceGroup && env.isArmDeployment == 'true' }}
+        if: ${{ inputs.runCreateInfra && inputs.deployInResourceGroup && env.stackAction == '' }}
         id: deploy-bicep-rg
         with:
           scope: resourcegroup
@@ -426,7 +367,7 @@ jobs:
           resourceGroupName: ${{ env.generatedResourceGroupName }}
           template: ${{ inputs.templatePath }}${{ inputs.templateFile }}
           parameters: ${{ inputs.templatePath }}${{ inputs.parameterFile }}
-          deploymentMode: ${{ inputs.deploymentMode }} # Must be: Incremental | Complete | Validation
+          deploymentMode: ${{ inputs.deploymentMode }}
 
       - name: Display Output
         if: ${{ inputs.runCreateInfra }}
@@ -460,13 +401,11 @@ jobs:
 
       - name: Write summary
         if: ${{ inputs.runCreateInfra }}
-        env:
-          SUMMARY: |
-            # Deployment summary
-            - Resource Group: ${{ env.generatedResourceGroupName }}
-            - AI Hub Name: ${{ steps.deploy-bicep-rg.outputs.AI_HUB_NAME }}
-            - API URL: [${{ steps.deploy-bicep-rg.outputs.UI_CONTAINER_APP_FQDN }}](${{ steps.deploy-bicep-rg.outputs.UI_CONTAINER_APP_FQDN }})
-
-        run: echo "$SUMMARY" >> $GITHUB_STEP_SUMMARY
+        run: |
+          cat << EOF >> $GITHUB_STEP_SUMMARY
+          # Deployment summary
+          - Resource Group: ${{ env.generatedResourceGroupName }}
+          - AI Hub Name: ${{ steps.deploy-bicep-rg.outputs.AI_HUB_NAME }}
+          - API URL: [${{ steps.deploy-bicep-rg.outputs.UI_CONTAINER_APP_FQDN }}](${{ steps.deploy-bicep-rg.outputs.UI_CONTAINER_APP_FQDN }})
+          EOF
         continue-on-error: true
-        # - Link to App URL: [https://${{ steps.deploy-bicep-rg.outputs.hostName }}](https://${{ steps.deploy-bicep-rg.outputs.hostName }})
