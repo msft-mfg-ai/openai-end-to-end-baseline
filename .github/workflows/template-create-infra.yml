@@ -192,9 +192,7 @@ jobs:
 
       - name: Create Resource Group
         if: ${{ inputs.runCreateInfra && inputs.deployInResourceGroup }}
-        run: az group create --resource-group ${{ env.generatedResourceGroupName }} --location ${{ vars.RESOURCEGROUP_LOCATION }} --tags Environment=${{ inputs.envCode }}
-
-      # Deploy using Azure Stack (Subscription scope)
+        run: az group create --resource-group ${{ env.generatedResourceGroupName }} --location ${{ vars.RESOURCEGROUP_LOCATION }} --tags Environment=${{ inputs.envCode }}      # Deploy using Azure Stack (Subscription scope)
       - name: Deploy Azure Resources using Stack (Sub)
         if: ${{ inputs.runCreateInfra && !inputs.deployInResourceGroup }}
         id: deploy-stack-sub
@@ -203,8 +201,8 @@ jobs:
           
           # Execute stack deployment based on the specified action
           if [[ "${{ inputs.stackAction }}" == "deploy" ]]; then
-            echo "Running deployment stack action: ${{ inputs.stackAction }}"
-            az stack sub ${{ inputs.stackAction }} \
+            echo "Running deployment stack action: create"
+            az stack sub create \
               --name "$deploymentName" \
               --location ${{ vars.RESOURCEGROUP_LOCATION }} \
               --template-file ${{ env.templatePath }}${{ env.templateFile }} \
@@ -218,7 +216,7 @@ jobs:
           
           elif [[ "${{ inputs.stackAction }}" == "rollback" ]]; then
             echo "Running rollback stack action for previous deployment"
-            az stack sub rollback --name "$deploymentName" --location ${{ vars.RESOURCEGROUP_LOCATION }}
+            az stack sub delete --name "$deploymentName" --location ${{ vars.RESOURCEGROUP_LOCATION }} --yes
           
           elif [[ "${{ inputs.stackAction }}" == "status" ]]; then
             echo "Getting deployment stack status"
@@ -227,9 +225,7 @@ jobs:
           else
             echo "Invalid stack action: ${{ inputs.stackAction }}"
             exit 1
-          fi
-
-      # Deploy using Azure Stack (Resource Group scope)
+          fi      # Deploy using Azure Stack (Resource Group scope)
       - name: Deploy Azure Resources using Stack (RG)
         if: ${{ inputs.runCreateInfra && inputs.deployInResourceGroup }}
         id: deploy-stack-rg
@@ -238,8 +234,8 @@ jobs:
           
           # Execute stack deployment based on the specified action
           if [[ "${{ inputs.stackAction }}" == "deploy" ]]; then
-            echo "Running deployment stack action: ${{ inputs.stackAction }}"
-            az stack group ${{ inputs.stackAction }} \
+            echo "Running deployment stack action: create"
+            az stack group create \
               --name "$deploymentName" \
               --resource-group ${{ env.generatedResourceGroupName }} \
               --template-file ${{ env.templatePath }}${{ env.templateFile }} \
@@ -304,10 +300,9 @@ jobs:
             echo "VNET_CORE_ID=${VNET_CORE_ID}" >> $GITHUB_ENV
             echo "VNET_CORE_NAME=${VNET_CORE_NAME}" >> $GITHUB_ENV
             echo "VNET_CORE_PREFIX=${VNET_CORE_PREFIX}" >> $GITHUB_ENV
-          
-          elif [[ "${{ inputs.stackAction }}" == "rollback" ]]; then
+            elif [[ "${{ inputs.stackAction }}" == "rollback" ]]; then
             echo "Running rollback stack action for previous deployment"
-            az stack group rollback --name "$deploymentName" --resource-group ${{ env.generatedResourceGroupName }}
+            az stack group delete --name "$deploymentName" --resource-group ${{ env.generatedResourceGroupName }} --yes
           
           elif [[ "${{ inputs.stackAction }}" == "status" ]]; then
             echo "Getting deployment stack status"
