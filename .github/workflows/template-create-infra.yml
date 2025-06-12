@@ -65,10 +65,37 @@ on:
         description: Login using Client Secret?
         type: boolean
         default: false
+
       requestorName:
         description: Requestor Name
         type: string
         default: '${{ github.actor }}'
+      # Deployment Stack Parameters
+      stackAction:
+        description: 'Stack action: deploy, status, rollback, delete, or empty for ARM mode'
+        required: false
+        type: string
+        default: ''
+      stackName:
+        description: 'Custom stack name (optional)'
+        required: false
+        type: string
+        default: ''
+      denySettingsMode:
+        description: 'Deny settings mode: none, denyDelete, denyWriteAndDelete'
+        required: false
+        type: string
+        default: 'denyDelete'
+      enableDriftDetection:
+        description: 'Enable drift detection'
+        required: false
+        type: boolean
+        default: true
+      rollbackOnFailure:
+        description: 'Auto-rollback on deployment failure'
+        required: false
+        type: boolean
+        default: false
       # instance:
       #   description: Instance number for resource naming
       #   type: string
@@ -85,11 +112,10 @@ jobs:
       id-token: write
       contents: read
       actions: read
-      pages: write
-
-    # ------------------------------------------------------------------------------------------------------------------------
+      pages: write    # ------------------------------------------------------------------------------------------------------------------------
     # Variables
     # ------------------------------------------------------------------------------------------------------------------------
+
     env:
       envCode: ${{ inputs.envCode }}
       generatedResourceGroupName: ${{ vars.RESOURCEGROUP_PREFIX }}-${{ inputs.envCode }}-${{ vars.GLOBAL_REGION_CODE }}-${{ vars.INSTANCE_NUMBER }}
@@ -101,6 +127,14 @@ jobs:
       runBuildDeployAPI: ${{ inputs.runBuildDeployAPI }}
       loginWithFederatedIdentity: ${{ secrets.CICD_CLIENT_SECRET == '' && 'true' || 'false' }}
       loginWithSecret: ${{ secrets.CICD_CLIENT_SECRET != '' && 'true' || 'false' }}
+      # Deployment Stack Environment Variables
+      stackAction: ${{ inputs.stackAction }}
+      stackName: ${{ inputs.stackName != '' && inputs.stackName || format('stack-{0}-{1}-{2}', vars.APP_NAME, inputs.envCode, vars.INSTANCE_NUMBER) }}
+      denySettingsMode: ${{ inputs.denySettingsMode }}
+      enableDriftDetection: ${{ inputs.enableDriftDetection }}
+      rollbackOnFailure: ${{ inputs.rollbackOnFailure }}
+      isStackDeployment: ${{ inputs.stackAction != '' && 'true' || 'false' }}
+      isArmDeployment: ${{ inputs.stackAction == '' && 'true' || 'false' }}
  
     # ------------------------------------------------------------------------------------------------------------------------
     # Outputs
@@ -190,15 +224,188 @@ jobs:
         # if: $ { { env.loginWithSecret } }  // this looks right but it ALWAYS runs then fails if secret is missing...
         uses: azure/login@v2
         with:
-          creds: '{"clientId":"${{ secrets.CICD_CLIENT_ID }}","clientSecret":"${{ secrets.CICD_CLIENT_SECRET }}","tenantId":"${{ secrets.AZURE_TENANT_ID }}","subscriptionId":"${{ secrets.AZURE_SUBSCRIPTION_ID }}"}'
-
-      - name: Create Resource Group
+          creds: '{"clientId":"${{ secrets.CICD_CLIENT_ID }}","clientSecret":"${{ secrets.CICD_CLIENT_SECRET }}","tenantId":"${{ secrets.AZURE_TENANT_ID }}","subscriptionId":"${{ secrets.AZURE_SUBSCRIPTION_ID }}"}'      - name: Create Resource Group
         if: ${{ inputs.runCreateInfra && inputs.deployInResourceGroup }}
         run: az group create --name ${{ env.generatedResourceGroupName }} --location ${{ vars.RESOURCEGROUP_LOCATION }} --tags Environment=${{ inputs.envCode }}
 
-      - name: Deploy Azure Resources (Sub)
+      # ========================================================================================================
+      # DEPLOYMENT STACK OPERATIONS
+      # ========================================================================================================
+      
+      - name: Install Azure CLI Stack Extension
+        if: ${{ env.isStackDeployment == 'true' }}
+        run: |
+          echo "Installing Azure CLI stack extension..."
+          az extension add --name stack --only-show-errors
+          echo "Stack extension installed successfully"
+
+      - name: Deploy with Deployment Stack
+        if: ${{ env.isStackDeployment == 'true' && inputs.stackAction == 'deploy' }}
+        id: deploy-stack
+        run: |
+          echo "=== Deploying with Azure Deployment Stack ==="
+          echo "Stack Name: ${{ env.stackName }}"
+          echo "Resource Group: ${{ env.generatedResourceGroupName }}"
+          echo "Template: ${{ inputs.templatePath }}${{ inputs.templateFile }}"
+          
+          # Check if stack already exists
+          if az stack group show --name "${{ env.stackName }}" --resource-group "${{ env.generatedResourceGroupName }}" >/dev/null 2>&1; then
+            echo "Stack exists - performing update"
+            STACK_EXISTS=true
+          else
+            echo "Creating new stack"
+            STACK_EXISTS=false
+          fi
+          
+          # Build deployment command
+          DEPLOY_CMD="az stack group create \
+            --name '${{ env.stackName }}' \
+            --resource-group '${{ env.generatedResourceGroupName }}' \
+            --template-file '${{ inputs.templatePath }}${{ inputs.templateFile }}' \
+            --deny-settings-mode '${{ env.denySettingsMode }}' \
+            --deny-settings-excluded-principals '${{ secrets.CICD_CLIENT_ID }}' \
+            --action-on-unmanage deleteAll"
+          
+          # Add parameters if provided
+          if [ -n "${{ inputs.parameterFile }}" ]; then
+            DEPLOY_CMD="$DEPLOY_CMD --parameters '${{ inputs.templatePath }}${{ inputs.parameterFile }}'"
+          fi
+          
+          # Add runtime parameters
+          DEPLOY_CMD="$DEPLOY_CMD --parameters \
+            environmentName='${{ inputs.envCode }}' \
+            regionCode='${{ vars.GLOBAL_REGION_CODE }}' \
+            instanceNumber='${{ vars.INSTANCE_NUMBER }}' \
+            createDnsZones=${{ env.createDnsZones }} \
+            publicAccessEnabled=${{ env.publicAccessEnabled }} \
+            deployAIHub=${{ env.deployAIHub }} \
+            addRoleAssignments=${{ env.addRoleAssignments }}"
+          
+          echo "Executing: $DEPLOY_CMD"
+          
+          # Execute deployment with error handling
+          if DEPLOYMENT_OUTPUT=$(eval $DEPLOY_CMD --output json); then
+            echo "Stack deployment completed successfully"
+            
+            # Extract key outputs
+            STACK_ID=$(echo $DEPLOYMENT_OUTPUT | jq -r '.id // empty')
+            echo "stack_id=$STACK_ID" >> $GITHUB_OUTPUT
+            echo "stack_exists=$STACK_EXISTS" >> $GITHUB_OUTPUT
+            
+            # Extract Bicep outputs if available
+            if echo $DEPLOYMENT_OUTPUT | jq -e '.properties.outputs' > /dev/null 2>&1; then
+              echo "AI_HUB_ID=$(echo $DEPLOYMENT_OUTPUT | jq -r '.properties.outputs.AI_HUB_ID.value // empty')" >> $GITHUB_OUTPUT
+              echo "AI_HUB_NAME=$(echo $DEPLOYMENT_OUTPUT | jq -r '.properties.outputs.AI_HUB_NAME.value // empty')" >> $GITHUB_OUTPUT
+              echo "ACR_NAME=$(echo $DEPLOYMENT_OUTPUT | jq -r '.properties.outputs.ACR_NAME.value // empty')" >> $GITHUB_OUTPUT
+              echo "VNET_CORE_ID=$(echo $DEPLOYMENT_OUTPUT | jq -r '.properties.outputs.VNET_CORE_ID.value // empty')" >> $GITHUB_OUTPUT
+            fi
+            
+            echo "✅ Stack deployment completed successfully"
+          else
+            echo "❌ Stack deployment failed"
+            exit 1
+          fi
+
+      - name: Get Stack Status
+        if: ${{ env.isStackDeployment == 'true' && inputs.stackAction == 'status' }}
+        run: |
+          echo "=== Getting Deployment Stack Status ==="
+          echo "Stack: ${{ env.stackName }}"
+          echo "Resource Group: ${{ env.generatedResourceGroupName }}"
+          
+          if az stack group show --name "${{ env.stackName }}" --resource-group "${{ env.generatedResourceGroupName }}" >/dev/null 2>&1; then
+            echo "=== Stack Information ==="
+            az stack group show --name "${{ env.stackName }}" --resource-group "${{ env.generatedResourceGroupName }}" --output table
+            
+            echo ""
+            echo "=== Recent Deployments ==="
+            az stack group list-deployments --name "${{ env.stackName }}" --resource-group "${{ env.generatedResourceGroupName }}" --output table
+            
+            echo ""
+            echo "=== Managed Resources ==="
+            az stack group show --name "${{ env.stackName }}" --resource-group "${{ env.generatedResourceGroupName }}" --query "properties.resources[].id" --output table
+          else
+            echo "❌ Stack '${{ env.stackName }}' not found"
+            exit 1
+          fi
+
+      - name: Rollback Stack
+        if: ${{ env.isStackDeployment == 'true' && inputs.stackAction == 'rollback' }}
+        run: |
+          echo "🔄 Starting deployment stack rollback process..."
+          echo "Stack: ${{ env.stackName }}"
+          echo "Resource Group: ${{ env.generatedResourceGroupName }}"
+          
+          # Check if stack exists
+          if ! az stack group show --name "${{ env.stackName }}" --resource-group "${{ env.generatedResourceGroupName }}" >/dev/null 2>&1; then
+            echo "❌ Stack '${{ env.stackName }}' not found - cannot rollback"
+            exit 1
+          fi
+          
+          # Get deployment history
+          echo "=== Getting deployment history ==="
+          DEPLOYMENTS=$(az stack group list-deployments \
+            --name "${{ env.stackName }}" \
+            --resource-group "${{ env.generatedResourceGroupName }}" \
+            --query "[?properties.provisioningState=='Succeeded'] | sort_by(@, &properties.timestamp)" \
+            --output json)
+          
+          DEPLOYMENT_COUNT=$(echo $DEPLOYMENTS | jq length)
+          echo "Found $DEPLOYMENT_COUNT successful deployments"
+          
+          if [ "$DEPLOYMENT_COUNT" -lt 2 ]; then
+            echo "❌ No previous successful deployment found for rollback"
+            exit 1
+          fi
+          
+          echo "⚠️ ROLLBACK SIMULATION - Template versioning required for true rollback"
+          echo "Previous deployments available for reference:"
+          az stack group list-deployments --name "${{ env.stackName }}" --resource-group "${{ env.generatedResourceGroupName }}" --query "[?properties.provisioningState=='Succeeded']" --output table
+
+      - name: Delete Stack
+        if: ${{ env.isStackDeployment == 'true' && inputs.stackAction == 'delete' }}
+        run: |
+          echo "⚠️ WARNING: Deleting deployment stack '${{ env.stackName }}'"
+          echo "This will remove ALL managed resources!"
+          
+          if az stack group show --name "${{ env.stackName }}" --resource-group "${{ env.generatedResourceGroupName }}" >/dev/null 2>&1; then
+            # Show what will be deleted
+            echo "=== Resources to be deleted ==="
+            az stack group show --name "${{ env.stackName }}" --resource-group "${{ env.generatedResourceGroupName }}" --query "properties.resources[].id" --output table
+            
+            # Perform deletion
+            az stack group delete \
+              --name "${{ env.stackName }}" \
+              --resource-group "${{ env.generatedResourceGroupName }}" \
+              --action-on-unmanage deleteAll \
+              --yes
+            
+            echo "✅ Stack deleted successfully"
+          else
+            echo "❌ Stack not found"
+            exit 1
+          fi
+
+      - name: Rollback on Failure (Stack)
+        if: ${{ failure() && env.rollbackOnFailure == 'true' && env.isStackDeployment == 'true' }}
+        run: |
+          echo "🚨 Stack deployment failed - attempting cleanup..."
+          echo "Stack Name: ${{ env.stackName }}"
+          echo "Resource Group: ${{ env.generatedResourceGroupName }}"
+          
+          if [ "${{ steps.deploy-stack.outputs.stack_exists }}" != "true" ]; then
+            echo "No previous version - cleaning up failed resources"
+            az stack group delete --name "${{ env.stackName }}" --resource-group "${{ env.generatedResourceGroupName }}" --action-on-unmanage deleteAll --yes || true
+            echo "Failed stack resources cleaned up"
+          else
+            echo "Previous stack exists - manual intervention required for rollback"
+          fi
+
+      # ========================================================================================================
+      # TRADITIONAL ARM DEPLOYMENT (Fallback)
+      # ========================================================================================================      - name: Deploy Azure Resources (Sub)
         uses: azure/arm-deploy@v2
-        if: ${{ inputs.runCreateInfra && !inputs.deployInResourceGroup }}
+        if: ${{ inputs.runCreateInfra && !inputs.deployInResourceGroup && env.isArmDeployment == 'true' }}
         id: deploy-bicep-sub
         with:
           scope: subscription
@@ -210,7 +417,7 @@ jobs:
 
       - name: Deploy Azure Resources (RG)
         uses: azure/arm-deploy@v2
-        if: ${{ inputs.runCreateInfra && inputs.deployInResourceGroup }}
+        if: ${{ inputs.runCreateInfra && inputs.deployInResourceGroup && env.isArmDeployment == 'true' }}
         id: deploy-bicep-rg
         with:
           scope: resourcegroup

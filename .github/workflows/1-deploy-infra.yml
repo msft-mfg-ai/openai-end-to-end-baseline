@@ -26,7 +26,7 @@ on:
       bicepFile:
         description: Main Bicep File
         required: true
-        default: 'main-basic.bicep'
+        default: 'main-advanced.bicep'
         type: choice
         options:
           - main-basic.bicep
@@ -34,7 +34,7 @@ on:
       parameterFile:
         description: Parameter File
         required: true
-        default: 'main-basic.dynamic.bicepparam'
+        default: 'main-advanced.dynamic.bicepparam'
         type: string
       createResourceGroup:
         description: Create Resource Group?
