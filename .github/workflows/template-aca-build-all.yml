@@ -42,17 +42,17 @@ on:
         required: true
         type: string
         default: 'DEV'
-    outputs:
-      IMAGE_VERSION:
-        value: ${{ jobs.build.outputs.IMAGE_VERSION  }}
-      ACR_REPO_NAME:
-        value: ${{ inputs.ACR_REPO_NAME  }}
-      UI_IMAGE_NAME:
-        value: ${{ jobs.build.outputs.UI_IMAGE_NAME  }}
-      UI_APP_PATH:
-        value: ${{ inputs.UI_APP_PATH  }}
-      UI_ACR_APP_NAME:
-        value: ${{ inputs.UI_ACR_APP_NAME  }}
+  outputs:
+    IMAGE_VERSION:
+      value: ${{ jobs.build.outputs.IMAGE_VERSION  }}
+    ACR_REPO_NAME:
+      value: ${{ inputs.ACR_REPO_NAME  }}
+    UI_IMAGE_NAME:
+      value: ${{ jobs.build.outputs.UI_IMAGE_NAME  }}
+    UI_APP_PATH:
+      value: ${{ inputs.UI_APP_PATH  }}
+    UI_ACR_APP_NAME:
+      value: ${{ inputs.UI_ACR_APP_NAME  }}
 
 # ------------------------------------------------------------------------------------------------------------------------
 jobs:

@@ -37,17 +37,17 @@ on:
         required: true
         type: string
         default: 'DEV'
-    outputs:
-      IMAGE_NAME:
-        value: ${{ jobs.build.outputs.IMAGE_NAME  }}
-      IMAGE_VERSION:
-        value: ${{ jobs.build.outputs.IMAGE_VERSION  }}
-      APP_PATH:
-        value: ${{ inputs.APP_PATH  }}
-      ACR_REPO_NAME:
-        value: ${{ inputs.ACR_REPO_NAME  }}
-      ACR_APP_NAME:
-        value: ${{ inputs.ACR_APP_NAME  }}
+  outputs:
+    IMAGE_NAME:
+      value: ${{ jobs.build.outputs.IMAGE_NAME  }}
+    IMAGE_VERSION:
+      value: ${{ jobs.build.outputs.IMAGE_VERSION  }}
+    APP_PATH:
+      value: ${{ inputs.APP_PATH  }}
+    ACR_REPO_NAME:
+      value: ${{ inputs.ACR_REPO_NAME  }}
+    ACR_APP_NAME:
+      value: ${{ inputs.ACR_APP_NAME  }}
 
 # ------------------------------------------------------------------------------------------------------------------------
 jobs:
