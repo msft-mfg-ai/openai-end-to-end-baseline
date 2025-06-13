@@ -47,9 +47,9 @@ param openAI_deploy_location string = location
 // Personal info
 // --------------------------------------------------------------------------------------------------------------
 @description('My IP address for network access')
-param myIpAddress string = ''
+param myIpAddress string
 @description('Id of the user executing the deployment')
-param principalId string = ''
+param principalId string
 
 // --------------------------------------------------------------------------------------------------------------
 // Existing networks?
