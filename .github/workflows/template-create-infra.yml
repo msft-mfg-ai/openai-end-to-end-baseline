@@ -81,10 +81,6 @@ jobs:
       generatedResourceGroupName: ${{ vars.RESOURCEGROUP_PREFIX }}-${{ inputs.envCode }}-${{ vars.GLOBAL_REGION_CODE }}-${{ vars.INSTANCE_NUMBER }}
       stackName: ${{ format('stack-{0}-{1}-{2}', vars.APP_NAME, inputs.envCode, vars.INSTANCE_NUMBER) }}
 
-    outputs:
-      whatif-status: ${{ steps.whatif-analysis.outputs.status }}
-      whatif-changes: ${{ steps.whatif-analysis.outputs.changes }}
-    
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -288,7 +284,7 @@ jobs:
     name: Deploy Infrastructure (After Plan)
     runs-on: ubuntu-latest
     needs: whatif
-    if: ${{ inputs.workflowMode == 'plan-and-deploy' && needs.whatif.outputs.whatif-status == 'success' }}
+    if: ${{ inputs.workflowMode == 'plan-and-deploy' && needs.whatif.result == 'success' }}
     environment:
       name: ${{ inputs.envCode }}
     permissions:
