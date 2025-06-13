@@ -255,59 +255,9 @@ jobs:
  
     # ------------------------------------------------------------------------------------------------------------------------
     # Outputs
-    # ------------------------------------------------------------------------------------------------------------------------
-    outputs:
-      HUB_ID: ${{ steps.job-outputs.outputs.HUB_ID }}
-      HUB_NAME: ${{ steps.job-outputs.outputs.HUB_NAME }}
-      deploy_status: "completed"
-
-  # Job 2b: Deploy operation (for plan-and-deploy mode, depends on whatif)
-  deploy-after-plan:
-    name: Deploy Infrastructure (After Plan)
-    runs-on: ubuntu-latest
-    needs: whatif
-    if: ${{ inputs.workflowMode == 'plan-and-deploy' && needs.whatif.outputs.whatif-status == 'success' }}
-    environment:
-      name: ${{ inputs.envCode }}
-    permissions:
-      id-token: write
-      contents: read
-      actions: read
-      pages: write
-
-    # ------------------------------------------------------------------------------------------------------------------------
-    # Variables
-    # ------------------------------------------------------------------------------------------------------------------------
-    env:
-      envCode: ${{ inputs.envCode }}
-      # Parse templateConfig JSON for use in steps
-      templatePath: ${{ fromJson(inputs.templateConfig).templatePath }}
-      templateFile: ${{ fromJson(inputs.templateConfig).templateFile }}
-      parameterFile: ${{ fromJson(inputs.templateConfig).parameterFile }}
-      parameterFileReplaceTokens: ${{ fromJson(inputs.templateConfig).parameterFileReplaceTokens }}
-      generatedResourceGroupName: ${{ vars.RESOURCEGROUP_PREFIX }}-${{ inputs.envCode }}-${{ vars.GLOBAL_REGION_CODE }}-${{ vars.INSTANCE_NUMBER }}
-      loginWithFederatedIdentity: ${{ secrets.CICD_CLIENT_SECRET == '' && 'true' || 'false' }}
-      loginWithSecret: ${{ secrets.CICD_CLIENT_SECRET != '' && 'true' || 'false' }}
-      # Infrastructure Configuration (hardcoded to avoid 10-parameter limit)
-      createResourceGroup: false
-      publicAccessEnabled: false
-      createDnsZones: false
-      deployAIHub: false
-      addRoleAssignments: true
-      runBuildDeployAPI: false
-      requestorName: ${{ github.actor }}
-      # Deployment Stack Environment Variables      stackAction: ${{ inputs.stackAction }}  # Options: deploy (default), rollback, status
-      stackName: ${{ format('stack-{0}-{1}-{2}', vars.APP_NAME, inputs.envCode, vars.INSTANCE_NUMBER) }}
-      denySettingsMode: "none"  # Options: none, denyDelete, denyWriteAndDelete
-      enableDriftDetection: "true"
-      rollbackOnFailure: "true"
- 
-    # ------------------------------------------------------------------------------------------------------------------------
-    # Outputs
-    # ------------------------------------------------------------------------------------------------------------------------
-    outputs:
-      HUB_ID: ${{ steps.job-outputs.outputs.HUB_ID }}
-      HUB_NAME: ${{ steps.job-outputs.outputs.HUB_NAME }}
+    # ------------------------------------------------------------------------------------------------------------------------    outputs:
+      HUB_ID: ${{ steps.job-outputs-standalone.outputs.HUB_ID }}
+      HUB_NAME: ${{ steps.job-outputs-standalone.outputs.HUB_NAME }}
       deploy_status: "completed"
   
     # ------------------------------------------------------------------------------------------------------------------------
@@ -346,9 +296,6 @@ jobs:
           echo "env.parameterFile=${{ env.parameterFile }}"
           echo "env.parameterFileReplaceTokens=${{ env.parameterFileReplaceTokens }}"
         continue-on-error: true
-
-      # Note: Token replacement and additional deployment steps follow
-      # (Copied from deploy_after_whatif job for consistency)
 
       - name: Replace Tokens
         if: ${{ inputs.runCreateInfra && env.parameterFileReplaceTokens == 'true' }}
@@ -413,7 +360,7 @@ jobs:
 
       - name: Deploy Azure Resources using Stack (RG)
         if: ${{ inputs.runCreateInfra && inputs.deployInResourceGroup }}
-        id: deploy-stack-rg-2
+        id: deploy-stack-rg
         run: |
           deploymentName="${{ env.templateFile }}-rg-${{ vars.RESOURCEGROUP_LOCATION }}-${{ steps.get-date.outputs.DATE_TIME_STAMP}}"
           
@@ -491,7 +438,8 @@ jobs:
           
           echo "templatePath=${templatePath}" >> $GITHUB_ENV
           echo "templateFile=${templateFile}" >> $GITHUB_ENV
-          echo "parameterFile=${parameterFile}" >> $GITHUB_ENV          echo "parameterFileReplaceTokens=${parameterFileReplaceTokens}" >> $GITHUB_ENV
+          echo "parameterFile=${parameterFile}" >> $GITHUB_ENV
+          echo "parameterFileReplaceTokens=${parameterFileReplaceTokens}" >> $GITHUB_ENV
 
       - name: Checkout Code
         if: ${{ inputs.runCreateInfra }}
