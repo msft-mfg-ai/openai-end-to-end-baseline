@@ -48,13 +48,13 @@ output cosmosName string                  = toLower('${resourceAbbreviations.doc
 
 output searchServiceName string           = toLower('${resourceAbbreviations.searchSearchServices}-${sanitizedAppName}-${sanitizedEnvironment}${resourceTokenWithDash}${dashRegionDashInstance}')
 output cogServiceName string              = toLower('${resourceAbbreviations.cognitiveServicesAccounts}-${sanitizedAppName}-${sanitizedEnvironment}${resourceTokenWithDash}${dashRegionDashInstance}')
-output documentIntelligenceName string    = toLower('${resourceAbbreviations.cognitiveServicesFormRecognizer}-${sanitizedAppName}-${sanitizedEnvironment}-${resourceTokenWithDash}${dashRegionDashInstance}')
+output documentIntelligenceName string    = toLower('${resourceAbbreviations.cognitiveServicesFormRecognizer}-${sanitizedAppName}-${sanitizedEnvironment}${resourceTokenWithDash}${dashRegionDashInstance}')
 
 output aiHubName string                   = toLower('${resourceAbbreviations.cognitiveServicesHub}-${sanitizedAppName}-${sanitizedEnvironment}${resourceTokenWithDash}${dashRegionDashInstance}')
 // Project name must be alpha numeric characters or '-', length must be <= 32
 output aiHubProjectName string            = take(toLower('${resourceAbbreviations.cognitiveServicesHub}-Project-${sanitizedAppName}-${sanitizedEnvironment}${resourceTokenWithDash}${dashInstance}'), 32)
 
-output caManagedEnvName string            = toLower('${resourceAbbreviations.appManagedEnvironments}-${sanitizedAppName}-${sanitizedEnvironment}${resourceToken}${dashRegionDashInstance}')
+output caManagedEnvName string            = toLower('${resourceAbbreviations.appManagedEnvironments}-${sanitizedAppName}-${sanitizedEnvironment}${resourceTokenWithDash}${dashRegionDashInstance}')
 // CA name must be lower case alpha or '-', must start and end with alpha, cannot have '--', length must be <= 32
 output containerAppAPIName string         = take(toLower('${resourceAbbreviations.appContainerApps}-api-${sanitizedAppName}-${sanitizedEnvironment}${resourceTokenWithDash}${dashInstance}'), 32)
 output containerAppUIName string          = take(toLower('${resourceAbbreviations.appContainerApps}-ui-${sanitizedAppName}-${sanitizedEnvironment}${resourceTokenWithDash}${dashInstance}'), 32)
