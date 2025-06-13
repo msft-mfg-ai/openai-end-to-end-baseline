@@ -150,33 +150,13 @@ jobs:
         id: whatif-analysis-rg
         run: |
           echo "Running what-if analysis for Resource Group deployment..."
-          
-          whatifOutput=$(az deployment group what-if \
+          az deployment group what-if \
             --name "${{ env.stackName }}" \
             --resource-group "${{ env.generatedResourceGroupName }}" \
             --template-file "${{ env.templatePath }}${{ env.templateFile }}" \
             --parameters "${{ env.templatePath }}${{ env.parameterFile }}" \
-            --no-prompt true) || whatifExitCode=$?
+            --no-prompt true          
           
-          if [ ${whatifExitCode:-0} -ne 0 ]; then
-            echo "What-if analysis failed:"
-            echo "$whatifOutput"
-            echo "status=failed" >> $GITHUB_OUTPUT
-            exit 1
-          fi
-          
-          echo "What-if analysis completed successfully"
-          echo "$whatifOutput" | jq .
-          
-          # Parse results
-          changeCount=$(echo "$whatifOutput" | jq -r '.changes | length // 0')
-          echo "changes=$changeCount" >> $GITHUB_OUTPUT
-          echo "status=success" >> $GITHUB_OUTPUT
-          
-          # Create summary          echo "## What-If Analysis Results" >> $GITHUB_STEP_SUMMARY
-          echo "- **Status**: ✅ Success" >> $GITHUB_STEP_SUMMARY
-          echo "- **Changes detected**: $changeCount" >> $GITHUB_STEP_SUMMARY
-          echo "- **Resource Group**: ${{ env.generatedResourceGroupName }}" >> $GITHUB_STEP_SUMMARY
 
       - name: What-If Analysis (Subscription)
         if: ${{ !inputs.deployInResourceGroup }}
@@ -184,33 +164,12 @@ jobs:
         run: |
           echo "Running what-if analysis for Subscription deployment..."
           
-          whatifOutput=$(az deployment sub what-if \
+          az deployment sub what-if \
             --name "${{ env.stackName }}" \
             --location "${{ vars.RESOURCEGROUP_LOCATION }}" \
             --template-file "${{ env.templatePath }}${{ env.templateFile }}" \
             --parameters "${{ env.templatePath }}${{ env.parameterFile }}" \
-            --no-prompt true) || whatifExitCode=$?
-
-          if [ ${whatifExitCode:-0} -ne 0 ]; then
-            echo "What-if analysis failed:"
-            echo "$whatifOutput"
-            echo "status=failed" >> $GITHUB_OUTPUT
-            exit 1
-          fi
-            echo "What-if analysis completed successfully"
-          echo "$whatifOutput" | jq .
-          echo "status=success" >> $GITHUB_OUTPUT
-
-      - name: Set Job Outputs
-        id: whatif-analysis
-        run: |
-          # Combine outputs from RG or Sub what-if
-          if [ "${{ inputs.deployInResourceGroup }}" == "true" ]; then
-            echo "status=${{ steps.whatif-analysis-rg.outputs.status }}" >> $GITHUB_OUTPUT
-            echo "changes=${{ steps.whatif-analysis-rg.outputs.changes }}" >> $GITHUB_OUTPUT          else
-            echo "status=${{ steps.whatif-analysis-sub.outputs.status }}" >> $GITHUB_OUTPUT
-            echo "changes=0" >> $GITHUB_OUTPUT
-          fi
+            --no-prompt true)
 
   # Job 2a: Deploy operation (for deploy-only mode)
   deploy-standalone:
