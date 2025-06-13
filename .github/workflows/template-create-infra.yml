@@ -144,15 +144,13 @@ jobs:
           if ! az group show --name ${{ env.generatedResourceGroupName }} --output none 2>/dev/null; then
             echo "Creating resource group for what-if analysis..."
             az group create --resource-group ${{ env.generatedResourceGroupName }} --location ${{ vars.RESOURCEGROUP_LOCATION }} --tags Environment=${{ inputs.envCode }}
-          fi
-
-      - name: What-If Analysis (Resource Group)
+          fi      - name: What-If Analysis (Resource Group)
         if: ${{ inputs.deployInResourceGroup }}
         id: whatif-analysis-rg
         run: |
           echo "Running what-if analysis for Resource Group deployment..."
           
-          whatifOutput=$(az stack group what-if \
+          whatifOutput=$(az stack group whatif \
             --name "${{ env.stackName }}" \
             --resource-group "${{ env.generatedResourceGroupName }}" \
             --template-file "${{ env.templatePath }}${{ env.templateFile }}" \
@@ -178,15 +176,13 @@ jobs:
           echo "## What-If Analysis Results" >> $GITHUB_STEP_SUMMARY
           echo "- **Status**: ✅ Success" >> $GITHUB_STEP_SUMMARY
           echo "- **Changes detected**: $changeCount" >> $GITHUB_STEP_SUMMARY
-          echo "- **Resource Group**: ${{ env.generatedResourceGroupName }}" >> $GITHUB_STEP_SUMMARY
-
-      - name: What-If Analysis (Subscription)
+          echo "- **Resource Group**: ${{ env.generatedResourceGroupName }}" >> $GITHUB_STEP_SUMMARY      - name: What-If Analysis (Subscription)
         if: ${{ !inputs.deployInResourceGroup }}
         id: whatif-analysis-sub
         run: |
           echo "Running what-if analysis for Subscription deployment..."
           
-          whatifOutput=$(az stack sub what-if \
+          whatifOutput=$(az stack sub whatif \
             --name "${{ env.stackName }}" \
             --location "${{ vars.RESOURCEGROUP_LOCATION }}" \
             --template-file "${{ env.templatePath }}${{ env.templateFile }}" \
