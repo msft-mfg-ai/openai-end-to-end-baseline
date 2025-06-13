@@ -45,7 +45,7 @@ on:
         type: string
         default: 'deploy'
       workflowMode:
-        description: "Workflow execution mode (plan-only, plan-and-deploy, deploy-only)"
+        description: "Workflow execution mode (plan-only, plan-and-deploy, deploy-only, deploy-after-plan)"
         type: string
         default: 'plan-and-deploy'
       requestorName:
@@ -413,7 +413,7 @@ jobs:
 
       - name: Deploy Azure Resources using Stack (RG)
         if: ${{ inputs.runCreateInfra && inputs.deployInResourceGroup }}
-        id: deploy-stack-rg
+        id: deploy-stack-rg-2
         run: |
           deploymentName="${{ env.templateFile }}-rg-${{ vars.RESOURCEGROUP_LOCATION }}-${{ steps.get-date.outputs.DATE_TIME_STAMP}}"
           

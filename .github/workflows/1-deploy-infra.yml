@@ -67,6 +67,7 @@ on:
           - plan-only
           - plan-and-deploy          
           - deploy-only
+          - deploy-after-plan
           
 jobs:
   Deploy_Bicep:
@@ -85,4 +86,4 @@ jobs:
       deployConfig: ${{ inputs.deployConfig }}
       loginUsingClientSecret: ${{ inputs.loginUsingClientSecret }}
       stackAction: ${{ inputs.stackAction }}
-      workflowMode: ${{ inputs.workflowMode || 'plan-and-deploy' }}
+      workflowMode: ${{ inputs.workflowMode }}
