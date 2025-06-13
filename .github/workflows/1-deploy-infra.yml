@@ -41,7 +41,7 @@ on:
         description: |
           JSON string with deployment configuration. Example:
           '{"createResourceGroup":true,"publicAccessEnabled":true,"createDnsZones":true,"addRoleAssignments":true,"deployAIHub":true,"runBuildDeployAPI":false}'
-        required: false
+        required: false        
         type: string
         default: '{"createResourceGroup":true,"publicAccessEnabled":true,"createDnsZones":true,"addRoleAssignments":true,"deployAIHub":true,"runBuildDeployAPI":false}'
       loginUsingClientSecret:
@@ -58,6 +58,15 @@ on:
           - deploy
           - rollback
           - status
+      workflowMode:
+        description: 'Workflow Mode'
+        required: false
+        default: 'plan-and-deploy'
+        type: choice
+        options:
+          - plan-only
+          - plan-and-deploy          
+          - deploy-only
           
 jobs:
   Deploy_Bicep:
@@ -76,3 +85,4 @@ jobs:
       deployConfig: ${{ inputs.deployConfig }}
       loginUsingClientSecret: ${{ inputs.loginUsingClientSecret }}
       stackAction: ${{ inputs.stackAction }}
+      workflowMode: ${{ inputs.workflowMode || 'plan-and-deploy' }}

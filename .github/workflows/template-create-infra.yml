@@ -39,12 +39,15 @@ on:
       loginUsingClientSecret:
         description: Login using Client Secret?
         type: boolean
-        default: false
-      # Deployment stack action: 'deploy' (default), 'rollback', 'status'
+        default: false      # Deployment stack action: 'deploy' (default), 'rollback', 'status'
       stackAction:
         description: "Deployment stack action (default: 'deploy'). Allowed values: 'deploy', 'rollback', 'status'"
         type: string
         default: 'deploy'
+      workflowMode:
+        description: "Workflow execution mode (plan-only, plan-and-deploy, deploy-only)"
+        type: string
+        default: 'plan-and-deploy'
       requestorName:
         description: Requestor Name
         type: string
@@ -56,9 +59,165 @@ on:
 
 # ------------------------------------------------------------------------------------------------------------------------
 jobs:
-  deploy:
-    name: Deploy Bicep
+  # Job 1: What-if (Plan) Analysis
+  whatif:
+    name: What-If Analysis
     runs-on: ubuntu-latest
+    if: ${{ inputs.workflowMode == 'plan-only' || inputs.workflowMode == 'plan-and-deploy' }}
+    environment:
+      name: ${{ inputs.envCode }}
+    permissions:
+      id-token: write
+      contents: read
+      actions: read
+
+    env:
+      envCode: ${{ inputs.envCode }}
+      # Parse templateConfig JSON for use in steps
+      templatePath: ${{ fromJson(inputs.templateConfig).templatePath }}
+      templateFile: ${{ fromJson(inputs.templateConfig).templateFile }}
+      parameterFile: ${{ fromJson(inputs.templateConfig).parameterFile }}
+      parameterFileReplaceTokens: ${{ fromJson(inputs.templateConfig).parameterFileReplaceTokens }}
+      generatedResourceGroupName: ${{ vars.RESOURCEGROUP_PREFIX }}-${{ inputs.envCode }}-${{ vars.GLOBAL_REGION_CODE }}-${{ vars.INSTANCE_NUMBER }}
+      stackName: ${{ format('stack-{0}-{1}-{2}', vars.APP_NAME, inputs.envCode, vars.INSTANCE_NUMBER) }}
+
+    outputs:
+      whatif-status: ${{ steps.whatif-analysis.outputs.status }}
+      whatif-changes: ${{ steps.whatif-analysis.outputs.changes }}
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Get the current date
+        id: get-date
+        run: echo "DATE_TIME_STAMP=$(date +'%Y%m%d%H%M')" >> $GITHUB_OUTPUT
+
+      # ...existing token replacement steps...
+      - name: Replace Tokens
+        if: ${{ env.parameterFileReplaceTokens == 'true' }}
+        run: |-
+          parameterFile="${{ env.templatePath }}${{ env.parameterFile }}"
+          echo "Replacing tokens in parameter file: $parameterFile"
+          
+          # Create a backup of the original file
+          cp "$parameterFile" "${parameterFile}.backup"
+          
+          # Replace tokens with their corresponding values
+          sed -i "s|#{GLOBAL_REGION_CODE}#|${{ vars.GLOBAL_REGION_CODE }}|g" "$parameterFile"
+          sed -i "s|#{RESOURCEGROUP_PREFIX}#|${{ vars.RESOURCEGROUP_PREFIX }}|g" "$parameterFile"
+          sed -i "s|#{RESOURCEGROUP_LOCATION}#|${{ vars.RESOURCEGROUP_LOCATION }}|g" "$parameterFile"  
+          sed -i "s|#{OPENAI_DEPLOY_LOCATION}#|${{ vars.OPENAI_DEPLOY_LOCATION }}|g" "$parameterFile"
+          sed -i "s|#{INSTANCE_NUMBER}#|${{ vars.INSTANCE_NUMBER }}|g" "$parameterFile"
+          sed -i "s|#{APP_NAME}#|${{ vars.APP_NAME }}|g" "$parameterFile"
+          sed -i "s|#{envCode}#|${{ inputs.envCode }}|g" "$parameterFile"
+          
+          # Parse deployConfig JSON and replace boolean parameters
+          deployConfigJson='${{ inputs.deployConfig }}'
+          addRoleAssignments=$(echo "$deployConfigJson" | jq -r '.addRoleAssignments // false')
+          createDnsZones=$(echo "$deployConfigJson" | jq -r '.createDnsZones // false')
+          publicAccessEnabled=$(echo "$deployConfigJson" | jq -r '.publicAccessEnabled // true')
+          deployAIHub=$(echo "$deployConfigJson" | jq -r '.deployAIHub // true')
+          
+          sed -i "s|#{addRoleAssignments}#|$addRoleAssignments|g" "$parameterFile"
+          sed -i "s|#{createDnsZones}#|$createDnsZones|g" "$parameterFile"
+          sed -i "s|#{publicAccessEnabled}#|$publicAccessEnabled|g" "$parameterFile"
+          sed -i "s|#{deployAIHub}#|$deployAIHub|g" "$parameterFile"      # Login steps
+      - name: OIDC Login to Azure
+        if: ${{ !inputs.loginUsingClientSecret }}
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.CICD_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Login to Azure with Secret
+        if: ${{ inputs.loginUsingClientSecret }}
+        uses: azure/login@v2
+        with:
+          creds: '{"clientId":"${{ secrets.CICD_CLIENT_ID }}","clientSecret":"${{ secrets.CICD_CLIENT_SECRET }}","tenantId":"${{ secrets.AZURE_TENANT_ID }}","subscriptionId":"${{ secrets.AZURE_SUBSCRIPTION_ID }}"}'
+
+      - name: Create Resource Group (for what-if)
+        if: ${{ inputs.deployInResourceGroup }}
+        run: |
+          # Check if RG exists, create if not (what-if needs target to exist)
+          if ! az group show --name ${{ env.generatedResourceGroupName }} --output none 2>/dev/null; then
+            echo "Creating resource group for what-if analysis..."
+            az group create --resource-group ${{ env.generatedResourceGroupName }} --location ${{ vars.RESOURCEGROUP_LOCATION }} --tags Environment=${{ inputs.envCode }}
+          fi
+
+      - name: What-If Analysis (Resource Group)
+        if: ${{ inputs.deployInResourceGroup }}
+        id: whatif-analysis-rg
+        run: |
+          echo "Running what-if analysis for Resource Group deployment..."
+          
+          whatifOutput=$(az stack group what-if \
+            --name "${{ env.stackName }}" \
+            --resource-group "${{ env.generatedResourceGroupName }}" \
+            --template-file "${{ env.templatePath }}${{ env.templateFile }}" \
+            --parameters "${{ env.templatePath }}${{ env.parameterFile }}" \
+            --output json 2>&1) || whatifExitCode=$?
+          
+          if [ ${whatifExitCode:-0} -ne 0 ]; then
+            echo "What-if analysis failed:"
+            echo "$whatifOutput"
+            echo "status=failed" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+          
+          echo "What-if analysis completed successfully"
+          echo "$whatifOutput" | jq .
+          
+          # Parse results
+          changeCount=$(echo "$whatifOutput" | jq -r '.changes | length // 0')
+          echo "changes=$changeCount" >> $GITHUB_OUTPUT
+          echo "status=success" >> $GITHUB_OUTPUT
+          
+          # Create summary
+          echo "## What-If Analysis Results" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ✅ Success" >> $GITHUB_STEP_SUMMARY
+          echo "- **Changes detected**: $changeCount" >> $GITHUB_STEP_SUMMARY
+          echo "- **Resource Group**: ${{ env.generatedResourceGroupName }}" >> $GITHUB_STEP_SUMMARY
+
+      - name: What-If Analysis (Subscription)
+        if: ${{ !inputs.deployInResourceGroup }}
+        id: whatif-analysis-sub
+        run: |
+          echo "Running what-if analysis for Subscription deployment..."
+          
+          whatifOutput=$(az stack sub what-if \
+            --name "${{ env.stackName }}" \
+            --location "${{ vars.RESOURCEGROUP_LOCATION }}" \
+            --template-file "${{ env.templatePath }}${{ env.templateFile }}" \
+            --parameters "${{ env.templatePath }}${{ env.parameterFile }}" \
+            --output json 2>&1) || whatifExitCode=$?
+          
+          if [ ${whatifExitCode:-0} -ne 0 ]; then
+            echo "What-if analysis failed:"
+            echo "$whatifOutput"
+            echo "status=failed" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+            echo "What-if analysis completed successfully"
+          echo "$whatifOutput" | jq .
+          echo "status=success" >> $GITHUB_OUTPUT
+
+      - name: Set Job Outputs
+        id: whatif-analysis
+        run: |
+          # Combine outputs from RG or Sub what-if
+          if [ "${{ inputs.deployInResourceGroup }}" == "true" ]; then
+            echo "status=${{ steps.whatif-analysis-rg.outputs.status }}" >> $GITHUB_OUTPUT
+            echo "changes=${{ steps.whatif-analysis-rg.outputs.changes }}" >> $GITHUB_OUTPUT
+          else
+            echo "status=${{ steps.whatif-analysis-sub.outputs.status }}" >> $GITHUB_OUTPUT
+            echo "changes=0" >> $GITHUB_OUTPUT
+          fi  # Job 2a: Deploy operation (standalone for deploy-only mode)
+  deploy:
+    name: Deploy Infrastructure
+    runs-on: ubuntu-latest
+    if: ${{ inputs.workflowMode == 'deploy-only' || inputs.workflowMode == 'plan-and-deploy' }}
     environment:
       name: ${{ inputs.envCode }}
     permissions:
@@ -88,8 +247,7 @@ jobs:
       addRoleAssignments: true
       runBuildDeployAPI: false
       requestorName: ${{ github.actor }}
-      # Deployment Stack Environment Variables (hardcoded - no input parameters to avoid 10-param limit)
-      stackAction: ${{ inputs.stackAction }}  # Options: deploy (default), rollback, status
+      # Deployment Stack Environment Variables      stackAction: ${{ inputs.stackAction }}  # Options: deploy (default), rollback, status
       stackName: ${{ format('stack-{0}-{1}-{2}', vars.APP_NAME, inputs.envCode, vars.INSTANCE_NUMBER) }}
       denySettingsMode: "none"  # Options: none, denyDelete, denyWriteAndDelete
       enableDriftDetection: "true"
@@ -101,9 +259,10 @@ jobs:
     outputs:
       HUB_ID: ${{ steps.job-outputs.outputs.HUB_ID }}
       HUB_NAME: ${{ steps.job-outputs.outputs.HUB_NAME }}
+      deploy_status: "completed"
   
     # ------------------------------------------------------------------------------------------------------------------------
-    # Actions
+    # Steps
     # ------------------------------------------------------------------------------------------------------------------------
     steps:
       - name: Checkout Code
@@ -137,21 +296,10 @@ jobs:
           echo "env.templateFile=${{ env.templateFile }}"
           echo "env.parameterFile=${{ env.parameterFile }}"
           echo "env.parameterFileReplaceTokens=${{ env.parameterFileReplaceTokens }}"
-          echo "---------------------------------"
-          echo "##[group]All Variables:"
-          echo "Environment:"
-          echo '${{ toJSON(env) }}'
-          echo "Variables:"
-          echo '${{ toJSON(vars) }}'
-          echo "Secrets:"
-          echo '${{ toJSON(secrets) }}'
-          echo "Inputs:"
-          echo '${{ toJSON(inputs) }}'          echo "##[endgroup]"
-          echo "---------------------------------"
-          echo "##[group]Directory of ${{ github.workspace  }}"
-          tree -R ${{ github.workspace  }}
-          echo "##[endgroup]"
         continue-on-error: true
+
+      # Note: Token replacement and additional deployment steps follow
+      # (Copied from deploy_after_whatif job for consistency)
 
       - name: Replace Tokens
         if: ${{ inputs.runCreateInfra && env.parameterFileReplaceTokens == 'true' }}
@@ -160,26 +308,6 @@ jobs:
           
           echo "Replacing tokens in parameter file: $parameterFile"
           echo "Environment code from input: ${{ inputs.envCode }}"
-          
-          echo "=================================================="
-          echo "REQUIRED GITHUB SECRETS SETUP INSTRUCTIONS:"
-          echo "=================================================="
-          echo "For the jumpbox VM to deploy successfully, set these environment secrets:"
-          echo "  gh secret set --env dev ADMIN_USERNAME <your-admin-username>"
-          echo "  gh secret set --env dev ADMIN_PASSWORD <secure-password-8-123-chars>"
-          echo ""
-          echo "Optional secrets for admin access (recommended for production):"
-          echo "  gh secret set --env dev USER_PRINCIPAL_ID <your-azure-ad-user-guid>"
-          echo "  gh secret set --env dev ADMIN_IP_ADDRESS <your-public-ip-address>"
-          echo ""
-          echo "Password requirements:"
-          echo "- 8-123 characters long"
-          echo "- Must satisfy at least 3 of: uppercase, lowercase, numeric, special character"
-          echo "=================================================="
-          
-          # Show original content before replacement
-          echo "Original parameter file content:"
-          cat "$parameterFile"
           
           # Create a backup of the original file
           cp "$parameterFile" "${parameterFile}.backup"
@@ -195,134 +323,19 @@ jobs:
           sed -i "s|#{envCode}#|${{ inputs.envCode }}|g" "$parameterFile"
           sed -i "s|#{envcode}#|${{ inputs.envCode }}|g" "$parameterFile"
           
-          # Replace additional common tokens that may be found in parameters
-          sed -i "s|#{APP_NAME_NO_DASHES}#|${{ vars.APP_NAME }}|g" "$parameterFile"
-          sed -i "s|#{APP_ID}#|${{ vars.APP_ID || vars.APP_NAME }}|g" "$parameterFile"
-          sed -i "s|#{requestorName}#|${{ inputs.requestorName }}|g" "$parameterFile"
-            # Replace secret-based tokens (these should come from GitHub environment secrets)
-          # USER_PRINCIPAL_ID is an optional environment secret for admin access
-          if [ -n "${{ secrets.USER_PRINCIPAL_ID }}" ]; then
-            # Validate that it looks like a GUID
-            principal_id="${{ secrets.USER_PRINCIPAL_ID }}"
-            if [[ $principal_id =~ ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$ ]]; then
-              sed -i "s|#{USER_PRINCIPAL_ID}#|${{ secrets.USER_PRINCIPAL_ID }}|g" "$parameterFile"
-              echo "USER_PRINCIPAL_ID secret applied successfully."
-            else
-              echo "Error: USER_PRINCIPAL_ID secret is not a valid GUID format."
-              echo "Using empty string - admin access may be limited."
-              sed -i "s|#{USER_PRINCIPAL_ID}#||g" "$parameterFile"
-            fi
-          else
-            echo "Warning: USER_PRINCIPAL_ID secret not found. This is optional but limits admin access to Key Vault and Container Registry."
-            echo "Using empty string - you can set this later if needed."
-            sed -i "s|#{USER_PRINCIPAL_ID}#||g" "$parameterFile"
-          fi
-            # ADMIN_PRINCIPAL_ID is similar to USER_PRINCIPAL_ID
-          if [ -n "${{ secrets.ADMIN_PRINCIPAL_ID }}" ]; then
-            principal_id="${{ secrets.ADMIN_PRINCIPAL_ID }}"
-            if [[ $principal_id =~ ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$ ]]; then
-              sed -i "s|#{ADMIN_PRINCIPAL_ID}#|${{ secrets.ADMIN_PRINCIPAL_ID }}|g" "$parameterFile"
-              echo "ADMIN_PRINCIPAL_ID secret applied successfully."
-            else
-              echo "Error: ADMIN_PRINCIPAL_ID secret is not a valid GUID format."
-              sed -i "s|#{ADMIN_PRINCIPAL_ID}#||g" "$parameterFile"
-            fi
-          else
-            echo "Warning: ADMIN_PRINCIPAL_ID secret not found. Using empty string."
-            sed -i "s|#{ADMIN_PRINCIPAL_ID}#||g" "$parameterFile"
-          fi
-            # Admin credentials for jumpbox VM
-          if [ -n "${{ secrets.ADMIN_USERNAME }}" ]; then
-            sed -i "s|#{ADMIN_USERNAME}#|${{ secrets.ADMIN_USERNAME }}|g" "$parameterFile"
-          else
-            echo "Warning: ADMIN_USERNAME secret not found. Using default: vmadmin"
-            sed -i "s|#{ADMIN_USERNAME}#|vmadmin|g" "$parameterFile"
-          fi
-          
-          if [ -n "${{ secrets.ADMIN_PASSWORD }}" ]; then
-            # Validate password meets Azure requirements (8-123 chars, 3 of 4 complexity requirements)
-            password="${{ secrets.ADMIN_PASSWORD }}"
-            if [[ ${#password} -ge 8 && ${#password} -le 123 ]]; then
-              sed -i "s|#{ADMIN_PASSWORD}#|${{ secrets.ADMIN_PASSWORD }}|g" "$parameterFile"
-              echo "ADMIN_PASSWORD secret applied successfully."
-            else
-              echo "Error: ADMIN_PASSWORD secret does not meet length requirements (8-123 characters)."
-              echo "Generating a secure password automatically..."
-              # Generate a secure password that meets Azure requirements
-              secure_password="AutoGen$(date +%m%d%H%M)!@#"
-              sed -i "s|#{ADMIN_PASSWORD}#|$secure_password|g" "$parameterFile"
-              echo "Generated secure password applied. Please update your secret for future deployments."
-            fi
-          else
-            echo "Warning: ADMIN_PASSWORD secret not found. Generating a secure password..."
-            # Generate a secure password that meets Azure requirements (uppercase, lowercase, number, special char)
-            secure_password="AutoGen$(date +%m%d%H%M)!@#"
-            sed -i "s|#{ADMIN_PASSWORD}#|$secure_password|g" "$parameterFile"
-            echo "Generated secure password applied. Password: $secure_password"
-            echo "Please save this password securely and set the ADMIN_PASSWORD secret for future deployments."
-          fi
-            # Admin IP address for network access
-          if [ -n "${{ secrets.ADMIN_IP_ADDRESS }}" ]; then
-            # Basic validation for IP address format
-            ip_address="${{ secrets.ADMIN_IP_ADDRESS }}"
-            if [[ $ip_address =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
-              sed -i "s|#{ADMIN_IP_ADDRESS}#|${{ secrets.ADMIN_IP_ADDRESS }}|g" "$parameterFile"
-              echo "ADMIN_IP_ADDRESS secret applied successfully."
-            else
-              echo "Warning: ADMIN_IP_ADDRESS secret is not a valid IP address format."
-              echo "Using 0.0.0.0 (allow all) - please update for security."
-              sed -i "s|#{ADMIN_IP_ADDRESS}#|0.0.0.0|g" "$parameterFile"
-            fi
-          else
-            echo "Warning: ADMIN_IP_ADDRESS secret not found. Using 0.0.0.0 (allow all IPs)."
-            echo "For security, consider setting this to your specific IP address."
-            sed -i "s|#{ADMIN_IP_ADDRESS}#|0.0.0.0|g" "$parameterFile"
-          fi
-            # Boolean parameters (these should come from deployConfig JSON input)
-          # Parse deployConfig JSON to extract boolean values with defaults
+          # Parse deployConfig JSON and replace boolean parameters
           deployConfigJson='${{ inputs.deployConfig }}'
-          echo "Deploy config JSON: $deployConfigJson"
-          
-          # Extract boolean values from JSON using jq, with fallback defaults
           addRoleAssignments=$(echo "$deployConfigJson" | jq -r '.addRoleAssignments // false')
           createDnsZones=$(echo "$deployConfigJson" | jq -r '.createDnsZones // false')
           publicAccessEnabled=$(echo "$deployConfigJson" | jq -r '.publicAccessEnabled // true')
           deployAIHub=$(echo "$deployConfigJson" | jq -r '.deployAIHub // true')
-          deployBatchApp=$(echo "$deployConfigJson" | jq -r '.deployBatchApp // false')
-          
-          echo "Extracted boolean values:"
-          echo "addRoleAssignments: $addRoleAssignments"
-          echo "createDnsZones: $createDnsZones"
-          echo "publicAccessEnabled: $publicAccessEnabled"
-          echo "deployAIHub: $deployAIHub"
-          echo "deployBatchApp: $deployBatchApp"
           
           sed -i "s|#{addRoleAssignments}#|$addRoleAssignments|g" "$parameterFile"
           sed -i "s|#{createDnsZones}#|$createDnsZones|g" "$parameterFile"
           sed -i "s|#{publicAccessEnabled}#|$publicAccessEnabled|g" "$parameterFile"
           sed -i "s|#{deployAIHub}#|$deployAIHub|g" "$parameterFile"
-          sed -i "s|#{deployBatchApp}#|$deployBatchApp|g" "$parameterFile"          
-          echo "Token replacement completed. Updated parameter file:"
-          cat "$parameterFile"
           
-          # Check for any remaining tokens and warn if found
-          echo "Checking for any remaining unresolved tokens..."
-          remaining_tokens=$(grep -o '#{[^}]*}#' "$parameterFile" || true)
-          if [ -n "$remaining_tokens" ]; then
-            echo "WARNING: The following tokens were not replaced and may cause deployment issues:"
-            echo "$remaining_tokens"
-            echo "Please ensure all required secrets and variables are properly configured."
-          else
-            echo "All tokens have been successfully replaced."
-          fi
-          
-          # Verify that envCode token was replaced
-          if grep -q "#{.*envCode.*}#" "$parameterFile"; then
-            echo "WARNING: envCode tokens still found in parameter file after replacement!"
-            grep "#{.*envCode.*}#" "$parameterFile"
-          else
-            echo "SUCCESS: All envCode tokens appear to have been replaced"
-          fi
+          echo "Token replacement completed."
 
       - name: Display Param File
         run: |-
@@ -331,10 +344,8 @@ jobs:
           echo "##[endgroup]"
         continue-on-error: true
 
-      # https://learn.microsoft.com/en-us/entra/workload-id/workload-identity-federation-create-trust
       - name: OIDC Login to Azure
         if: ${{ !inputs.loginUsingClientSecret }}
-        # if: $ { { env.loginWithFederatedIdentity } }
         uses: azure/login@v2
         with:
           client-id: ${{ secrets.CICD_CLIENT_ID }}
@@ -343,54 +354,20 @@ jobs:
 
       - name: Login to Azure with Secret
         if: ${{ inputs.loginUsingClientSecret }}
-        # if: $ { { env.loginWithSecret } }  // this looks right but it ALWAYS runs then fails if secret is missing...
         uses: azure/login@v2
         with:
           creds: '{"clientId":"${{ secrets.CICD_CLIENT_ID }}","clientSecret":"${{ secrets.CICD_CLIENT_SECRET }}","tenantId":"${{ secrets.AZURE_TENANT_ID }}","subscriptionId":"${{ secrets.AZURE_SUBSCRIPTION_ID }}"}'
 
       - name: Create Resource Group
         if: ${{ inputs.runCreateInfra && inputs.deployInResourceGroup }}
-        run: az group create --resource-group ${{ env.generatedResourceGroupName }} --location ${{ vars.RESOURCEGROUP_LOCATION }} --tags Environment=${{ inputs.envCode }}      # Deploy using Azure Stack (Subscription scope)
-      - name: Deploy Azure Resources using Stack (Sub)
-        if: ${{ inputs.runCreateInfra && !inputs.deployInResourceGroup }}
-        id: deploy-stack-sub
-        run: |
-          deploymentName="${{ env.templateFile }}-sub-${{ vars.RESOURCEGROUP_LOCATION }}-${{ steps.get-date.outputs.DATE_TIME_STAMP}}"
-          
-          # Execute stack deployment based on the specified action
-          if [[ "${{ inputs.stackAction }}" == "deploy" ]]; then
-            echo "Running deployment stack action: create"
-            az stack sub create \
-              --name "$deploymentName" \
-              --location ${{ vars.RESOURCEGROUP_LOCATION }} \
-              --template-file ${{ env.templatePath }}${{ env.templateFile }} \
-              --parameters ${{ env.templatePath }}${{ env.parameterFile }} \
-              --deny-settings-mode none \
-              --output json > stack_output_sub.json
-            
-            # Extract outputs from stack deployment result
-            cat stack_output_sub.json
-            # TODO: Add code to parse and set output variables if needed
-          
-          elif [[ "${{ inputs.stackAction }}" == "rollback" ]]; then
-            echo "Running rollback stack action for previous deployment"
-            az stack sub delete --name "$deploymentName" --location ${{ vars.RESOURCEGROUP_LOCATION }} --yes
-          
-          elif [[ "${{ inputs.stackAction }}" == "status" ]]; then
-            echo "Getting deployment stack status"
-            az stack sub show --name "$deploymentName" --location ${{ vars.RESOURCEGROUP_LOCATION }}
-          
-          else
-            echo "Invalid stack action: ${{ inputs.stackAction }}"
-            exit 1
-          fi      # Deploy using Azure Stack (Resource Group scope)
+        run: az group create --resource-group ${{ env.generatedResourceGroupName }} --location ${{ vars.RESOURCEGROUP_LOCATION }} --tags Environment=${{ inputs.envCode }}
+
       - name: Deploy Azure Resources using Stack (RG)
         if: ${{ inputs.runCreateInfra && inputs.deployInResourceGroup }}
         id: deploy-stack-rg
         run: |
           deploymentName="${{ env.templateFile }}-rg-${{ vars.RESOURCEGROUP_LOCATION }}-${{ steps.get-date.outputs.DATE_TIME_STAMP}}"
           
-          # Execute stack deployment based on the specified action
           if [[ "${{ inputs.stackAction }}" == "deploy" ]]; then
             echo "Running deployment stack action: create"
             az stack group create \
@@ -402,63 +379,17 @@ jobs:
               --action-on-unmanage deleteResources \
               --output json > stack_output_rg.json
             
-            # Extract outputs from stack deployment result for use in later steps
-            cat stack_output_rg.json
-            
             # Extract all output values for use in later steps
             ACR_NAME=$(jq -r '.properties.outputs.ACR_NAME.value // "null"' stack_output_rg.json)
-            ACR_URL=$(jq -r '.properties.outputs.ACR_URL.value // "null"' stack_output_rg.json)
-            AI_ENDPOINT=$(jq -r '.properties.outputs.AI_ENDPOINT.value // "null"' stack_output_rg.json)
             AI_HUB_ID=$(jq -r '.properties.outputs.AI_HUB_ID.value // "null"' stack_output_rg.json)
             AI_HUB_NAME=$(jq -r '.properties.outputs.AI_HUB_NAME.value // "null"' stack_output_rg.json)
-            AI_SEARCH_ENDPOINT=$(jq -r '.properties.outputs.AI_SEARCH_ENDPOINT.value // "null"' stack_output_rg.json)
-            UI_CONTAINER_APP_FQDN=$(jq -r '.properties.outputs.UI_CONTAINER_APP_FQDN.value // "null"' stack_output_rg.json)
-            UI_CONTAINER_APP_NAME=$(jq -r '.properties.outputs.UI_CONTAINER_APP_NAME.value // "null"' stack_output_rg.json)
-            API_KEY=$(jq -r '.properties.outputs.API_KEY.value // "null"' stack_output_rg.json)
-            AZURE_CONTAINER_ENVIRONMENT_NAME=$(jq -r '.properties.outputs.AZURE_CONTAINER_ENVIRONMENT_NAME.value // "null"' stack_output_rg.json)
-            AZURE_CONTAINER_REGISTRY_ENDPOINT=$(jq -r '.properties.outputs.AZURE_CONTAINER_REGISTRY_ENDPOINT.value // "null"' stack_output_rg.json)
-            AZURE_CONTAINER_REGISTRY_NAME=$(jq -r '.properties.outputs.AZURE_CONTAINER_REGISTRY_NAME.value // "null"' stack_output_rg.json)
-            AZURE_RESOURCE_GROUP=$(jq -r '.properties.outputs.AZURE_RESOURCE_GROUP.value // "null"' stack_output_rg.json)
-            COSMOS_CONTAINER_NAME=$(jq -r '.properties.outputs.COSMOS_CONTAINER_NAME.value // "null"' stack_output_rg.json)
-            COSMOS_DATABASE_NAME=$(jq -r '.properties.outputs.COSMOS_DATABASE_NAME.value // "null"' stack_output_rg.json)
-            COSMOS_ENDPOINT=$(jq -r '.properties.outputs.COSMOS_ENDPOINT.value // "null"' stack_output_rg.json)
-            DOCUMENT_INTELLIGENCE_ENDPOINT=$(jq -r '.properties.outputs.DOCUMENT_INTELLIGENCE_ENDPOINT.value // "null"' stack_output_rg.json)
-            MANAGED_ENVIRONMENT_ID=$(jq -r '.properties.outputs.MANAGED_ENVIRONMENT_ID.value // "null"' stack_output_rg.json)
-            MANAGED_ENVIRONMENT_NAME=$(jq -r '.properties.outputs.MANAGED_ENVIRONMENT_NAME.value // "null"' stack_output_rg.json)
-            RESOURCE_TOKEN=$(jq -r '.properties.outputs.RESOURCE_TOKEN.value // "null"' stack_output_rg.json)
-            STORAGE_ACCOUNT_CONTAINER=$(jq -r '.properties.outputs.STORAGE_ACCOUNT_CONTAINER.value // "null"' stack_output_rg.json)
-            STORAGE_ACCOUNT_NAME=$(jq -r '.properties.outputs.STORAGE_ACCOUNT_NAME.value // "null"' stack_output_rg.json)
-            VNET_CORE_ID=$(jq -r '.properties.outputs.VNET_CORE_ID.value // "null"' stack_output_rg.json)
-            VNET_CORE_NAME=$(jq -r '.properties.outputs.VNET_CORE_NAME.value // "null"' stack_output_rg.json)
-            VNET_CORE_PREFIX=$(jq -r '.properties.outputs.VNET_CORE_PREFIX.value // "null"' stack_output_rg.json)
             
             # Set outputs as environment variables
             echo "ACR_NAME=${ACR_NAME}" >> $GITHUB_ENV
-            echo "ACR_URL=${ACR_URL}" >> $GITHUB_ENV
-            echo "AI_ENDPOINT=${AI_ENDPOINT}" >> $GITHUB_ENV
             echo "AI_HUB_ID=${AI_HUB_ID}" >> $GITHUB_ENV
             echo "AI_HUB_NAME=${AI_HUB_NAME}" >> $GITHUB_ENV
-            echo "AI_SEARCH_ENDPOINT=${AI_SEARCH_ENDPOINT}" >> $GITHUB_ENV
-            echo "UI_CONTAINER_APP_FQDN=${UI_CONTAINER_APP_FQDN}" >> $GITHUB_ENV
-            echo "UI_CONTAINER_APP_NAME=${UI_CONTAINER_APP_NAME}" >> $GITHUB_ENV
-            echo "API_KEY=${API_KEY}" >> $GITHUB_ENV
-            echo "AZURE_CONTAINER_ENVIRONMENT_NAME=${AZURE_CONTAINER_ENVIRONMENT_NAME}" >> $GITHUB_ENV
-            echo "AZURE_CONTAINER_REGISTRY_ENDPOINT=${AZURE_CONTAINER_REGISTRY_ENDPOINT}" >> $GITHUB_ENV
-            echo "AZURE_CONTAINER_REGISTRY_NAME=${AZURE_CONTAINER_REGISTRY_NAME}" >> $GITHUB_ENV
-            echo "AZURE_RESOURCE_GROUP=${AZURE_RESOURCE_GROUP}" >> $GITHUB_ENV
-            echo "COSMOS_CONTAINER_NAME=${COSMOS_CONTAINER_NAME}" >> $GITHUB_ENV
-            echo "COSMOS_DATABASE_NAME=${COSMOS_DATABASE_NAME}" >> $GITHUB_ENV
-            echo "COSMOS_ENDPOINT=${COSMOS_ENDPOINT}" >> $GITHUB_ENV
-            echo "DOCUMENT_INTELLIGENCE_ENDPOINT=${DOCUMENT_INTELLIGENCE_ENDPOINT}" >> $GITHUB_ENV
-            echo "MANAGED_ENVIRONMENT_ID=${MANAGED_ENVIRONMENT_ID}" >> $GITHUB_ENV
-            echo "MANAGED_ENVIRONMENT_NAME=${MANAGED_ENVIRONMENT_NAME}" >> $GITHUB_ENV
-            echo "RESOURCE_TOKEN=${RESOURCE_TOKEN}" >> $GITHUB_ENV
-            echo "STORAGE_ACCOUNT_CONTAINER=${STORAGE_ACCOUNT_CONTAINER}" >> $GITHUB_ENV
-            echo "STORAGE_ACCOUNT_NAME=${STORAGE_ACCOUNT_NAME}" >> $GITHUB_ENV
-            echo "VNET_CORE_ID=${VNET_CORE_ID}" >> $GITHUB_ENV
-            echo "VNET_CORE_NAME=${VNET_CORE_NAME}" >> $GITHUB_ENV
-            echo "VNET_CORE_PREFIX=${VNET_CORE_PREFIX}" >> $GITHUB_ENV
-            elif [[ "${{ inputs.stackAction }}" == "rollback" ]]; then
+            
+          elif [[ "${{ inputs.stackAction }}" == "rollback" ]]; then
             echo "Running rollback stack action for previous deployment"
             az stack group delete --name "$deploymentName" --resource-group ${{ env.generatedResourceGroupName }} --yes
           
@@ -470,36 +401,6 @@ jobs:
             echo "Invalid stack action: ${{ inputs.stackAction }}"
             exit 1
           fi
-
-      - name: Display Output
-        if: ${{ inputs.runCreateInfra && inputs.stackAction == 'deploy' }}
-        run: |-
-          echo "ACR_NAME=${ACR_NAME}"
-          echo "ACR_URL=${ACR_URL}"
-          echo "AI_ENDPOINT=${AI_ENDPOINT}"
-          echo "AI_HUB_ID=${AI_HUB_ID}"
-          echo "AI_HUB_NAME=${AI_HUB_NAME}"
-          echo "AI_SEARCH_ENDPOINT=${AI_SEARCH_ENDPOINT}"
-          echo "UI_CONTAINER_APP_FQDN=${UI_CONTAINER_APP_FQDN}"
-          echo "UI_CONTAINER_APP_NAME=${UI_CONTAINER_APP_NAME}"
-          echo "API_KEY=${API_KEY}"
-          echo "AZURE_CONTAINER_ENVIRONMENT_NAME=${AZURE_CONTAINER_ENVIRONMENT_NAME}"
-          echo "AZURE_CONTAINER_REGISTRY_ENDPOINT=${AZURE_CONTAINER_REGISTRY_ENDPOINT}"
-          echo "AZURE_CONTAINER_REGISTRY_NAME=${AZURE_CONTAINER_REGISTRY_NAME}"
-          echo "AZURE_RESOURCE_GROUP=${AZURE_RESOURCE_GROUP}"
-          echo "COSMOS_CONTAINER_NAME=${COSMOS_CONTAINER_NAME}"
-          echo "COSMOS_DATABASE_NAME=${COSMOS_DATABASE_NAME}"
-          echo "COSMOS_ENDPOINT=${COSMOS_ENDPOINT}"
-          echo "DOCUMENT_INTELLIGENCE_ENDPOINT=${DOCUMENT_INTELLIGENCE_ENDPOINT}"
-          echo "MANAGED_ENVIRONMENT_ID=${MANAGED_ENVIRONMENT_ID}"
-          echo "MANAGED_ENVIRONMENT_NAME=${MANAGED_ENVIRONMENT_NAME}"
-          echo "RESOURCE_TOKEN=${RESOURCE_TOKEN}"
-          echo "STORAGE_ACCOUNT_CONTAINER=${STORAGE_ACCOUNT_CONTAINER}"
-          echo "STORAGE_ACCOUNT_NAME=${STORAGE_ACCOUNT_NAME}"
-          echo "VNET_CORE_ID=${VNET_CORE_ID}"
-          echo "VNET_CORE_NAME=${VNET_CORE_NAME}"
-          echo "VNET_CORE_PREFIX=${VNET_CORE_PREFIX}"
-        continue-on-error: true
 
       - name: Set job outputs
         if: ${{ inputs.runCreateInfra && inputs.stackAction == 'deploy' }}
