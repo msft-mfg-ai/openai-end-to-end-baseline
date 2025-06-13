@@ -67,7 +67,6 @@ on:
           - plan-only
           - plan-and-deploy          
           - deploy-only
-          - deploy-after-plan
           
 jobs:
   Deploy_Bicep:

@@ -45,7 +45,7 @@ on:
         type: string
         default: 'deploy'
       workflowMode:
-        description: "Workflow execution mode (plan-only, plan-and-deploy, deploy-only, deploy-after-plan)"
+        description: "Workflow execution mode (plan-only, plan-and-deploy, deploy-only)"
         type: string
         default: 'plan-and-deploy'
       requestorName:
@@ -151,12 +151,12 @@ jobs:
         run: |
           echo "Running what-if analysis for Resource Group deployment..."
           
-          whatifOutput=$(az stack group whatif \
+          whatifOutput=$(az deployment group what-if \
             --name "${{ env.stackName }}" \
             --resource-group "${{ env.generatedResourceGroupName }}" \
             --template-file "${{ env.templatePath }}${{ env.templateFile }}" \
             --parameters "${{ env.templatePath }}${{ env.parameterFile }}" \
-            --output json 2>&1) || whatifExitCode=$?
+            --no-prompt true) || whatifExitCode=$?
           
           if [ ${whatifExitCode:-0} -ne 0 ]; then
             echo "What-if analysis failed:"
@@ -184,13 +184,13 @@ jobs:
         run: |
           echo "Running what-if analysis for Subscription deployment..."
           
-          whatifOutput=$(az stack sub whatif \
+          whatifOutput=$(az deployment sub what-if \
             --name "${{ env.stackName }}" \
             --location "${{ vars.RESOURCEGROUP_LOCATION }}" \
             --template-file "${{ env.templatePath }}${{ env.templateFile }}" \
             --parameters "${{ env.templatePath }}${{ env.parameterFile }}" \
-            --output json 2>&1) || whatifExitCode=$?
-          
+            --no-prompt true) || whatifExitCode=$?
+
           if [ ${whatifExitCode:-0} -ne 0 ]; then
             echo "What-if analysis failed:"
             echo "$whatifOutput"
@@ -486,8 +486,7 @@ jobs:
               --template-file ${{ env.templatePath }}${{ env.templateFile }} \
               --parameters ${{ env.templatePath }}${{ env.parameterFile }} \
               --deny-settings-mode none \
-              --action-on-unmanage deleteResources \
-              --output json > stack_output_rg.json
+              --action-on-unmanage deleteAll > stack_output_rg.json
             
             # Extract all output values for use in later steps
             ACR_NAME=$(jq -r '.properties.outputs.ACR_NAME.value // "null"' stack_output_rg.json)

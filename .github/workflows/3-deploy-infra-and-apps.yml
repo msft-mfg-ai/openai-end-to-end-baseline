@@ -165,7 +165,6 @@ jobs:
         {"createResourceGroup":${{ inputs.createResourceGroup }},"publicAccessEnabled":${{ inputs.publicAccessEnabled }},"createDnsZones":${{ inputs.createDnsZones }},"addRoleAssignments":${{ inputs.addRoleAssignments }},"deployAIHub":${{ inputs.deployAIHub }},"deployBatchApp":false}
       loginUsingClientSecret: ${{ inputs.loginUsingClientSecret }}
       stackAction: ${{ inputs.stackAction }}
-
   # ------------------------------------------------------------------------------------------------------------------------
   build-all:
     name: Build All Apps
@@ -180,9 +179,9 @@ jobs:
       RESOURCE_GROUP: ${{ needs.template-env.outputs.RESOURCE_GROUP_NAME }}
       ACR_REPO_NAME: ${{ needs.template-env.outputs.ACR_REPO_NAME }}
 
-      BUILD_DEPLOY_API: ${{ inputs.runBuildDeployAPI }}
-      API_APP_PATH: ${{ needs.template-env.outputs.API_APP_PATH }}
-      API_ACR_APP_NAME: ${{ needs.template-env.outputs.API_ACR_APP_NAME }}
+      BUILD_DEPLOY_UI: ${{ inputs.runBuildDeployAPI }}
+      UI_APP_PATH: ${{ needs.template-env.outputs.API_APP_PATH }}
+      UI_ACR_APP_NAME: ${{ needs.template-env.outputs.API_ACR_APP_NAME }}
 
   # ------------------------------------------------------------------------------------------------------------------------
   deploy-api:
