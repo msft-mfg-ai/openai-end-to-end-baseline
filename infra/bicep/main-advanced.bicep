@@ -93,12 +93,12 @@ param subnetScoringPrefix string = '10.183.7.128/25'
 
 //06/09/2025 parameters for virtualmachine jumpbox
 @description('Admin username for the VM (optional - only deploy VM if provided)')
-param admin_username string = ''
+param admin_username string
 @secure()
 @description('Admin password for the VM (optional - only deploy VM if provided)')
-param admin_password string = ''
+param admin_password string
 @description('VM name (optional - only deploy VM if provided)')
-param vm_name string = ''
+param vm_name string
 
 // --------------------------------------------------------------------------------------------------------------
 // Existing container registry?
