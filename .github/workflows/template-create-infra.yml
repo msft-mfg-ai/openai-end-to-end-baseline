@@ -238,15 +238,44 @@ jobs:
         id: get-date
         run: echo "DATE_TIME_STAMP=$(date +'%Y%m%d%H%M')" >> $GITHUB_OUTPUT
 
-      # ...existing code...
-
       - name: Deploy Azure Resources using Stack (RG)
         if: ${{ inputs.runCreateInfra && inputs.deployInResourceGroup }}
         id: deploy-stack-rg-standalone
         run: |
           deploymentName="${{ env.templateFile }}-rg-${{ vars.RESOURCEGROUP_LOCATION }}-${{ steps.get-date.outputs.DATE_TIME_STAMP}}"
           
-          # ...existing code...
+          if [[ "${{ inputs.stackAction }}" == "deploy" ]]; then
+            echo "Running deployment stack action: create"
+            az stack group create \
+              --name "$deploymentName" \
+              --resource-group ${{ env.generatedResourceGroupName }} \
+              --template-file ${{ env.templatePath }}${{ env.templateFile }} \
+              --parameters ${{ env.templatePath }}${{ env.parameterFile }} \
+              --deny-settings-mode none \
+              --action-on-unmanage deleteAll > stack_output_rg.json
+            
+            # Extract all output values for use in later steps
+            ACR_NAME=$(jq -r '.properties.outputs.ACR_NAME.value // "null"' stack_output_rg.json)
+            AI_HUB_ID=$(jq -r '.properties.outputs.AI_HUB_ID.value // "null"' stack_output_rg.json)
+            AI_HUB_NAME=$(jq -r '.properties.outputs.AI_HUB_NAME.value // "null"' stack_output_rg.json)
+            
+            # Set outputs as environment variables
+            echo "ACR_NAME=${ACR_NAME}" >> $GITHUB_ENV
+            echo "AI_HUB_ID=${AI_HUB_ID}" >> $GITHUB_ENV
+            echo "AI_HUB_NAME=${AI_HUB_NAME}" >> $GITHUB_ENV
+            
+          elif [[ "${{ inputs.stackAction }}" == "rollback" ]]; then
+            echo "Running rollback stack action for previous deployment"
+            az stack group delete --name "$deploymentName" --resource-group ${{ env.generatedResourceGroupName }} --yes
+          
+          elif [[ "${{ inputs.stackAction }}" == "status" ]]; then
+            echo "Getting deployment stack status"
+            az stack group show --name "$deploymentName" --resource-group ${{ env.generatedResourceGroupName }}
+          
+          else
+            echo "Invalid stack action: ${{ inputs.stackAction }}"
+            exit 1
+          fi
 
       - name: Set job outputs
         if: ${{ inputs.runCreateInfra && inputs.stackAction == 'deploy' }}
@@ -416,8 +445,7 @@ jobs:
           sed -i "s|#{deployAIHub}#|$deployAIHub|g" "$parameterFile"
           
           # Replace VM admin credentials
-          sed -i "s|#{ADMIN_USERNAME}#|${{ secrets.ADMIN_USERNAME || 'azureuser' }}|g" "$parameterFile"
-          sed -i "s|#{ADMIN_PASSWORD}#|${{ secrets.ADMIN_PASSWORD }}|g" "$parameterFile"
+          sed -i "s|#{ADMIN_USERNAME}#|${{ secrets.ADMIN_USERNAME || 'azureuser' }}|g" "$parameterFile"          sed -i "s|#{ADMIN_PASSWORD}#|${{ secrets.ADMIN_PASSWORD }}|g" "$parameterFile"
           
           echo "Token replacement completed."
 
