@@ -73,6 +73,12 @@ on:
           - deploy
           - rollback
           - status
+      loginUsingClientSecret:
+        description: Login using Client Secret?
+        required: false
+        default: false
+        type: boolean
+  
       # runSmokeTest:
       #   description: 'Run Smoke Tests'
       #   required: false
