@@ -96,15 +96,22 @@ jobs:
           parameterFile="${{ env.templatePath }}${{ env.parameterFile }}"
           echo "Replacing tokens in parameter file: $parameterFile"
           
+          # Check if parameter file exists
+          if [ ! -f "$parameterFile" ]; then
+            echo "Error: Parameter file does not exist: $parameterFile"
+            exit 1
+          fi
+          
           # Create a backup of the original file
           cp "$parameterFile" "${parameterFile}.backup"
           
-          # Replace tokens with their corresponding values
+          # Replace tokens with their corresponding values (using quotes around the file parameter)
           sed -i "s|#{GLOBAL_REGION_CODE}#|${{ vars.GLOBAL_REGION_CODE }}|g" "$parameterFile"
           sed -i "s|#{RESOURCEGROUP_PREFIX}#|${{ vars.RESOURCEGROUP_PREFIX }}|g" "$parameterFile"
-          sed -i "s|#{RESOURCEGROUP_LOCATION}#|${{ vars.RESOURCEGROUP_LOCATION }}|g" "$parameterFile"  
+          sed -i "s|#{RESOURCEGROUP_LOCATION}#|${{ vars.RESOURCEGROUP_LOCATION }}|g" "$parameterFile"
           sed -i "s|#{OPENAI_DEPLOY_LOCATION}#|${{ vars.OPENAI_DEPLOY_LOCATION }}|g" "$parameterFile"
-          sed -i "s|#{INSTANCE_NUMBER}#|${{ vars.INSTANCE_NUMBER }}|g" "$parameterFile"          sed -i "s|#{APP_NAME}#|${{ vars.APP_NAME }}|g" "$parameterFile"
+          sed -i "s|#{INSTANCE_NUMBER}#|${{ vars.INSTANCE_NUMBER }}|g" "$parameterFile"
+          sed -i "s|#{APP_NAME}#|${{ vars.APP_NAME }}|g" "$parameterFile"
           sed -i "s|#{envCode}#|${{ inputs.envCode }}|g" "$parameterFile"
           sed -i "s|#{USER_PRINCIPAL_ID}#|${{ secrets.USER_PRINCIPAL_ID }}|g" "$parameterFile"
           sed -i "s|#{requestorName}#|${{ github.actor }}|g" "$parameterFile"
