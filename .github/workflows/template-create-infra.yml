@@ -161,17 +161,6 @@ jobs:
         with:
           creds: '{"clientId":"${{ secrets.CICD_CLIENT_ID }}","clientSecret":"${{ secrets.CICD_CLIENT_SECRET }}","tenantId":"${{ secrets.AZURE_TENANT_ID }}","subscriptionId":"${{ secrets.AZURE_SUBSCRIPTION_ID }}"}'
 
-      - name: Retreive last successful deployment name
-        if: ${{ env.generatedResourceGroupName }}
-        id: get-last-deployment
-        run: |
-          echo "Retrieving the last successful deployment name..."
-          deploymentName=$(az deployment group list \
-            --resource-group "${{ env.generatedResourceGroupName }}" \
-            --query "[?provisioningState=='Succeeded'].name | [0]" -o tsv)
-          echo "Last successful deployment name: $deploymentName"
-          echo "deploymentName=$deploymentName" >> $GITHUB_OUTPUT
-
       - name: Create Resource Group (for what-if)
         if: ${{ inputs.deployInResourceGroup }}
         run: |
@@ -563,6 +552,12 @@ jobs:
             echo "AI_HUB_NAME=${AI_HUB_NAME}" >> $GITHUB_ENV
             
           elif [[ "${{ inputs.stackAction }}" == "rollback" ]]; then
+            echo "Retrieving the last successful deployment name..."
+            deploymentName=$(az deployment group list \
+              --resource-group "${{ env.generatedResourceGroupName }}" \
+              --query "[?provisioningState=='Succeeded'].name | [0]" -o tsv)
+            echo "Last successful deployment name: $deploymentName"
+            echo "deploymentName=$deploymentName" >> $GITHUB_OUTPUT
             echo "Running rollback stack action for previous deployment"
             az stack group delete --name "$deploymentName" --resource-group ${{ env.generatedResourceGroupName }} --action-on-unmanage deleteAll --yes
           
