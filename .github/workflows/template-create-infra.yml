@@ -104,9 +104,10 @@ jobs:
           sed -i "s|#{RESOURCEGROUP_PREFIX}#|${{ vars.RESOURCEGROUP_PREFIX }}|g" "$parameterFile"
           sed -i "s|#{RESOURCEGROUP_LOCATION}#|${{ vars.RESOURCEGROUP_LOCATION }}|g" "$parameterFile"  
           sed -i "s|#{OPENAI_DEPLOY_LOCATION}#|${{ vars.OPENAI_DEPLOY_LOCATION }}|g" "$parameterFile"
-          sed -i "s|#{INSTANCE_NUMBER}#|${{ vars.INSTANCE_NUMBER }}|g" "$parameterFile"
-          sed -i "s|#{APP_NAME}#|${{ vars.APP_NAME }}|g" "$parameterFile"
+          sed -i "s|#{INSTANCE_NUMBER}#|${{ vars.INSTANCE_NUMBER }}|g" "$parameterFile"          sed -i "s|#{APP_NAME}#|${{ vars.APP_NAME }}|g" "$parameterFile"
           sed -i "s|#{envCode}#|${{ inputs.envCode }}|g" "$parameterFile"
+          sed -i "s|#{USER_PRINCIPAL_ID}#|${{ secrets.USER_PRINCIPAL_ID }}|g" "$parameterFile"
+          sed -i "s|#{requestorName}#|${{ github.actor }}|g" "$parameterFile"
           
           # Parse deployConfig JSON and replace boolean parameters
           deployConfigJson='${{ inputs.deployConfig }}'
@@ -114,11 +115,16 @@ jobs:
           createDnsZones=$(echo "$deployConfigJson" | jq -r '.createDnsZones // false')
           publicAccessEnabled=$(echo "$deployConfigJson" | jq -r '.publicAccessEnabled // true')
           deployAIHub=$(echo "$deployConfigJson" | jq -r '.deployAIHub // true')
-          
-          sed -i "s|#{addRoleAssignments}#|$addRoleAssignments|g" "$parameterFile"
+            sed -i "s|#{addRoleAssignments}#|$addRoleAssignments|g" "$parameterFile"
           sed -i "s|#{createDnsZones}#|$createDnsZones|g" "$parameterFile"
           sed -i "s|#{publicAccessEnabled}#|$publicAccessEnabled|g" "$parameterFile"
-          sed -i "s|#{deployAIHub}#|$deployAIHub|g" "$parameterFile"      # Login steps
+          sed -i "s|#{deployAIHub}#|$deployAIHub|g" "$parameterFile"
+          
+          # Replace VM admin credentials
+          sed -i "s|#{ADMIN_USERNAME}#|${{ secrets.ADMIN_USERNAME || 'azureuser' }}|g" "$parameterFile"
+          sed -i "s|#{ADMIN_PASSWORD}#|${{ secrets.ADMIN_PASSWORD }}|g" "$parameterFile"
+
+      # Login steps
       - name: OIDC Login to Azure
         if: ${{ !inputs.loginUsingClientSecret }}
         uses: azure/login@v2
@@ -387,6 +393,8 @@ jobs:
           sed -i "s|#{OWNER_EMAIL}#|${{ vars.OWNER_EMAIL || 'noreply@company.com' }}|g" "$parameterFile"
           sed -i "s|#{envCode}#|${{ inputs.envCode }}|g" "$parameterFile"
           sed -i "s|#{envcode}#|${{ inputs.envCode }}|g" "$parameterFile"
+          sed -i "s|#{USER_PRINCIPAL_ID}#|${{ secrets.USER_PRINCIPAL_ID }}|g" "$parameterFile"
+          sed -i "s|#{requestorName}#|${{ github.actor }}|g" "$parameterFile"
           
           # Parse deployConfig JSON and replace boolean parameters
           deployConfigJson='${{ inputs.deployConfig }}'
