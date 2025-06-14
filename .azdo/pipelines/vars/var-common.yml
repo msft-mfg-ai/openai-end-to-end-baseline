@@ -1,0 +1,71 @@
+# ------------------------------------------------------------------------------------------------------------------------
+# Common Variables - Shared across all environments
+# ------------------------------------------------------------------------------------------------------------------------
+# These variables are used across all environments and provide common configuration values.
+# Environment-specific overrides should be placed in the respective var-{env}.yml files.
+# ------------------------------------------------------------------------------------------------------------------------
+
+variables:
+  # Project Configuration
+  - name: projectName
+    value: 'OpenAI-End-to-End-Baseline'
+  
+  # Resource Naming
+  - name: resourceGroupPrefix
+    value: 'rg-openai-baseline'
+  - name: globalRegionCode
+    value: 'eus'  # East US
+  - name: instanceNumber
+    value: '001'
+  
+  # Location Configuration
+  - name: resourceGroupLocation
+    value: 'East US'
+  - name: openAIDeployLocation
+    value: 'East US'
+  
+  # Template Configuration
+  - name: templatePath
+    value: 'infra/bicep/'
+  - name: defaultTemplateFile
+    value: 'main-basic.bicep'
+  - name: defaultParameterFile
+    value: 'main-basic.parameters.json'
+  
+  # Deployment Configuration
+  - name: defaultDeploymentMode
+    value: 'Incremental'
+  - name: createResourceGroupDefault
+    value: false
+  - name: deployInResourceGroupDefault
+    value: true
+  
+  # Container Configuration
+  - name: containerRegistryPrefix
+    value: 'acr'
+  - name: containerAppPrefix
+    value: 'ca'
+  - name: containerEnvironmentPrefix
+    value: 'cae'
+  
+  # Networking Configuration
+  - name: publicAccessEnabledDefault
+    value: false
+  - name: createDnsZonesDefault
+    value: false
+  
+  # Security Configuration
+  - name: addRoleAssignmentsDefault
+    value: true
+  - name: deduplicateKeyVaultSecretsDefault
+    value: false
+  
+  # Build Configuration
+  - name: buildConfiguration
+    value: 'Release'
+  - name: dotnetVersion
+    value: '8.0.x'
+  
+  # Common Tags
+  - name: commonTags
+    value: 'Project=OpenAI-Baseline,Environment=Common'

@@ -1,0 +1,69 @@
+# ------------------------------------------------------------------------------------------------------------------------
+# Production Environment Variables
+# ------------------------------------------------------------------------------------------------------------------------
+# Environment-specific variables for PROD environment.
+# These variables override or extend the common variables defined in var-common.yml.
+# ------------------------------------------------------------------------------------------------------------------------
+
+variables:
+  # Environment Identification
+  - name: environmentCode
+    value: 'PROD'
+  - name: environmentDisplayName
+    value: 'Production'
+  
+  # Resource Configuration - PROD specific
+  - name: publicAccessEnabled
+    value: false  # Secure configuration for production
+  - name: createDnsZones
+    value: true
+  - name: deployAIHub
+    value: true
+  - name: addRoleAssignments
+    value: true
+  
+  # Application Configuration
+  - name: deployAPIApp
+    value: true
+  - name: deployBatchApp
+    value: true
+  
+  # SKU Configuration (production-grade)
+  - name: acrSku
+    value: 'Premium'
+  - name: appServicePlanSku
+    value: 'P1V2'
+  - name: cosmosDbOfferType
+    value: 'Standard'
+  - name: searchServiceSku
+    value: 'standard'
+  
+  # Testing Configuration
+  - name: runUnitTests
+    value: true
+  - name: runIntegrationTests
+    value: true
+  - name: runUITests
+    value: false  # UI tests run separately in PROD
+  
+  # Security Configuration
+  - name: enableSoftDelete
+    value: true
+  - name: keyVaultSku
+    value: 'premium'
+  
+  # Monitoring Configuration
+  - name: enableDetailedMonitoring
+    value: true
+  - name: logRetentionDays
+    value: 365
+  
+  # Deployment Configuration
+  - name: requireApproval
+    value: true
+  - name: enableRollbackByDefault
+    value: true  # Critical rollback capability in PROD
+  
+  # Environment Tags
+  - name: environmentTags
+    value: 'Environment=PROD,CostCenter=Production,Owner=OpsTeam,Criticality=High'

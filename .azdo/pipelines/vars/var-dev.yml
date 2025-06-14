@@ -1,0 +1,69 @@
+# ------------------------------------------------------------------------------------------------------------------------
+# Development Environment Variables
+# ------------------------------------------------------------------------------------------------------------------------
+# Environment-specific variables for DEV environment.
+# These variables override or extend the common variables defined in var-common.yml.
+# ------------------------------------------------------------------------------------------------------------------------
+
+variables:
+  # Environment Identification
+  - name: environmentCode
+    value: 'DEV'
+  - name: environmentDisplayName
+    value: 'Development'
+  
+  # Resource Configuration - DEV specific
+  - name: publicAccessEnabled
+    value: true  # Allow public access in DEV for easier testing
+  - name: createDnsZones
+    value: false  # No custom DNS zones needed in DEV
+  - name: deployAIHub
+    value: true
+  - name: addRoleAssignments
+    value: true
+  
+  # Application Configuration
+  - name: deployAPIApp
+    value: true
+  - name: deployBatchApp
+    value: false  # No batch processing in DEV
+  
+  # SKU Configuration (smaller/cheaper for DEV)
+  - name: acrSku
+    value: 'Basic'
+  - name: appServicePlanSku
+    value: 'B1'
+  - name: cosmosDbOfferType
+    value: 'Standard'
+  - name: searchServiceSku
+    value: 'basic'
+  
+  # Testing Configuration
+  - name: runUnitTests
+    value: true
+  - name: runIntegrationTests
+    value: false
+  - name: runUITests
+    value: false
+  
+  # Security Configuration
+  - name: enableSoftDelete
+    value: false  # Easier resource cleanup in DEV
+  - name: keyVaultSku
+    value: 'standard'
+  
+  # Monitoring Configuration
+  - name: enableDetailedMonitoring
+    value: false
+  - name: logRetentionDays
+    value: 30
+  
+  # Deployment Configuration
+  - name: requireApproval
+    value: false
+  - name: enableRollbackByDefault
+    value: false
+  
+  # Environment Tags
+  - name: environmentTags
+    value: 'Environment=DEV,CostCenter=Development,Owner=DevTeam'

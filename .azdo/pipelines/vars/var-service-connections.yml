@@ -1,0 +1,55 @@
+# ------------------------------------------------------------------------------------------------------------------------
+# Service Connection Variables
+# ------------------------------------------------------------------------------------------------------------------------
+# Azure DevOps service connection configurations for different environments.
+# These service connections should be configured in Azure DevOps project settings.
+# ------------------------------------------------------------------------------------------------------------------------
+
+variables:
+  # Service Connection Naming Convention
+  # Format: sc-{environment} (e.g., sc-DEV, sc-QA, sc-PROD)
+  
+  # Development Environment Service Connection
+  - name: serviceConnectionDev
+    value: 'sc-DEV'
+  
+  # QA Environment Service Connection
+  - name: serviceConnectionQA
+    value: 'sc-QA'
+  
+  # Production Environment Service Connection
+  - name: serviceConnectionProd
+    value: 'sc-PROD'
+  
+  # Service Connection Configuration Notes:
+  # 1. Each service connection should have appropriate RBAC permissions for the target environment
+  # 2. Service connections should use Managed Identity or Service Principal authentication
+  # 3. Follow principle of least privilege - only grant necessary permissions
+  # 4. Service connections should be configured with approval gates for production environments
+  
+  # Subscription Configuration
+  - name: subscriptionId
+    value: '$(AZURE_SUBSCRIPTION_ID)'  # Reference to variable group or pipeline variable
+  
+  # Tenant Configuration
+  - name: tenantId
+    value: '$(AZURE_TENANT_ID)'  # Reference to variable group or pipeline variable
+  
+  # Service Principal Configuration (if using Service Principal authentication)
+  - name: servicePrincipalId
+    value: '$(AZURE_CLIENT_ID)'  # Reference to variable group or pipeline variable
+  
+  # Resource Group Permissions
+  # Each service connection should have the following minimum permissions:
+  # - Contributor role on the target resource group
+  # - Reader role on the subscription (for resource group operations)
+  # - Key Vault Secrets Officer role (if accessing Key Vault)
+  # - Storage Blob Data Contributor role (if accessing storage)
+  
+  # Additional Service Connection Configuration
+  - name: serviceConnectionTimeout
+    value: 60  # Connection timeout in seconds
+  
+  # Service Connection Validation
+  - name: validateServiceConnection
+    value: true  # Validate service connection before deployment

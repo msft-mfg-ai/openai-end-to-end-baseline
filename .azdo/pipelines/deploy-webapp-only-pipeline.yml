@@ -1,0 +1,79 @@
+# ------------------------------------------------------------------------------------------------------------------------
+# Azure DevOps YAML Pipeline: Deploy-Only with Rollback Support
+# ------------------------------------------------------------------------------------------------------------------------
+# This pipeline performs deployment-only operations with optional rollback functionality.
+# Use this pipeline when you need to deploy resources without building applications,
+# or when you need to rollback to a previous deployment state.
+# ------------------------------------------------------------------------------------------------------------------------
+
+trigger: none  # Manual trigger only for deploy-only operations
+
+parameters:
+  - name: deployToEnvironment
+    displayName: 'Deploy To Environment'
+    type: string
+    values:
+      - DEV
+      - QA
+      - PROD
+    default: DEV
+  
+  - name: enableRollback
+    displayName: 'Enable Rollback Mode'
+    type: boolean
+    default: false
+  
+  - name: rollbackToDeployment
+    displayName: 'Rollback to Specific Deployment (optional)'
+    type: string
+    default: ''
+  
+  - name: templateFile
+    displayName: 'Bicep Template File'
+    type: string
+    default: 'main-basic.bicep'
+    values:
+      - main-basic.bicep
+      - main-advanced.bicep
+  
+  - name: parameterFile
+    displayName: 'Parameter File (optional)'
+    type: string
+    default: ''
+  
+  - name: deploymentMode
+    displayName: 'Deployment Mode'
+    type: string
+    default: 'Incremental'
+    values:
+      - Incremental
+      - Complete
+      - Validation
+  
+  - name: createResourceGroup
+    displayName: 'Create Resource Group if it does not exist'
+    type: boolean
+    default: false
+
+# ------------------------------------------------------------------------------------------------------------------------
+# Variables
+# ------------------------------------------------------------------------------------------------------------------------
+variables:
+  - group: Application.Web  # Variable group containing environment-specific secrets
+  - template: vars/var-service-connections.yml
+
+# ------------------------------------------------------------------------------------------------------------------------
+# Stages
+# ------------------------------------------------------------------------------------------------------------------------
+stages:
+  - template: pipes/deploy-only-pipe.yml
+    parameters:
+      environments: 
+        - ${{ parameters.deployToEnvironment }}
+      enableRollback: ${{ parameters.enableRollback }}
+      rollbackToDeployment: ${{ parameters.rollbackToDeployment }}
+      templateFile: ${{ parameters.templateFile }}
+      parameterFile: ${{ parameters.parameterFile }}
+      deploymentMode: ${{ parameters.deploymentMode }}
+      createResourceGroup: ${{ parameters.createResourceGroup }}
+      serviceConnectionPrefix: 'sc-'
