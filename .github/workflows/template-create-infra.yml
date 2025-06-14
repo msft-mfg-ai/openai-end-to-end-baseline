@@ -121,7 +121,8 @@ jobs:
           # Parse deployConfig JSON and replace boolean parameters
           deployConfigJson='${{ inputs.deployConfig }}'
           addRoleAssignments=$(echo "$deployConfigJson" | jq -r '.addRoleAssignments // false')
-          createDnsZones=$(echo "$deployConfigJson" | jq -r '.createDnsZones // false')          publicAccessEnabled=$(echo "$deployConfigJson" | jq -r '.publicAccessEnabled // true')
+          createDnsZones=$(echo "$deployConfigJson" | jq -r '.createDnsZones // false')          
+          publicAccessEnabled=$(echo "$deployConfigJson" | jq -r '.publicAccessEnabled // true')
           deployAIHub=$(echo "$deployConfigJson" | jq -r '.deployAIHub // true')
           
           sed -i "s|#{addRoleAssignments}#|$addRoleAssignments|g" "$parameterFile"
@@ -151,7 +152,8 @@ jobs:
           elif [[ -n "${{ secrets.CICD_CLIENT_SECRET }}" ]]; then
             echo "auth-method=client-secret" >> $GITHUB_OUTPUT
             echo "Using Client Secret authentication (secret available)"
-          else            echo "auth-method=oidc" >> $GITHUB_OUTPUT            echo "Using OIDC authentication"
+          else            echo "auth-method=oidc" >> $GITHUB_OUTPUT            
+          echo "Using OIDC authentication"
           fi
 
       - name: OIDC Login to Azure
@@ -538,7 +540,7 @@ jobs:
           sed -i "s|#{createDnsZones}#|$createDnsZones|g" "$parameterFile"
           sed -i "s|#{publicAccessEnabled}#|$publicAccessEnabled|g" "$parameterFile"
           sed -i "s|#{deployAIHub}#|$deployAIHub|g" "$parameterFile"
-            # Replace VM admin credentials
+          # Replace VM admin credentials
           sed -i "s|#{ADMIN_USERNAME}#|${{ secrets.ADMIN_USERNAME || 'azureuser' }}|g" "$parameterFile"
           sed -i "s|#{ADMIN_PASSWORD}#|${{ secrets.ADMIN_PASSWORD }}|g" "$parameterFile"
           
