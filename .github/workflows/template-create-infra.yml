@@ -347,8 +347,7 @@ jobs:
               # example for resource groups: az group list --query "[].name" -o tsv | grep 'rg-ai-mfg-fernando-AM-23_eastus2'
               PATTERN=${{ env.generatedResourceGroupName }}
               QUERY="[?contains(name, '$PATTERN')].name"
-              az group list --query "$QUERY" --output tsv | \
-              xargs -I {} az group delete --name {} --yes --no-wait
+              az group list --query "$QUERY" --output tsv | xargs -I {} az group delete --name {} --yes --no-wait
             else
               echo "❌ No successful deployment stacks found"
               echo "No previous deployment found to rollback"
