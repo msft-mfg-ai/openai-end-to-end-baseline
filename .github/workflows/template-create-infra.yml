@@ -345,6 +345,10 @@ jobs:
               az cognitiveservices account purge -g ${{ env.generatedResourceGroupName }} -l ${{ vars.RESOURCEGROUP_LOCATION }} -name $cognitiveServicesFrName --verbose
               # example: # az cognitiveservices account purge -g rg-ai-mfg-fernando-AM-23 -l eastus2 --name cog-mfgai-fermando-am-23 --verbose
               # example for resource groups: az group list --query "[].name" -o tsv | grep 'rg-ai-mfg-fernando-AM-23_eastus2'
+              PATTERN=${{ env.generatedResourceGroupName }}
+              QUERY="[?contains(name, '$PATTERN')].name"
+              az group list --query "$QUERY" --output tsv | \
+              xargs -I {} az group delete --name {} --yes --no-wait
             else
               echo "❌ No successful deployment stacks found"
               echo "No previous deployment found to rollback"
