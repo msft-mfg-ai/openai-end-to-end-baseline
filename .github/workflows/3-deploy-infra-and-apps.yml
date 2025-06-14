@@ -75,7 +75,7 @@ on:
           - status
       loginUsingClientSecret:
         description: Login using Client Secret?
-        required: false
+        required: true
         default: false
         type: boolean
   
