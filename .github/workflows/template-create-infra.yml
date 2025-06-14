@@ -139,17 +139,18 @@ jobs:
           # Check if we have OIDC secrets or should fall back to client secret
           if [[ "${{ inputs.loginUsingClientSecret }}" == "true" ]]; then
             echo "auth-method=client-secret" >> $GITHUB_OUTPUT
-            echo "Using Client Secret authentication (explicitly requested)"
+            echo "Using Client Secret authentication (explicitly requested)"          
           elif [[ -n "${{ secrets.CICD_CLIENT_SECRET }}" ]]; then
             echo "auth-method=client-secret" >> $GITHUB_OUTPUT
-            echo "Using Client Secret authentication (secret available)"          else
+            echo "Using Client Secret authentication (secret available)"          
+          else            
             echo "auth-method=oidc" >> $GITHUB_OUTPUT
             echo "Using OIDC authentication"
           fi
 
       - name: OIDC Login to Azure
         if: ${{ steps.auth-check.outputs.auth-method == 'oidc' }}
-        uses: azure/login@v1.4.7
+        uses: azure/login@v1.4.4
         with:
           client-id: ${{ secrets.CICD_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
@@ -157,9 +158,13 @@ jobs:
 
       - name: Login to Azure with Secret
         if: ${{ steps.auth-check.outputs.auth-method == 'client-secret' }}
-        uses: azure/login@v1.4.7
+        uses: azure/login@v1.4.4
         with:
-          creds: '{"clientId":"${{ secrets.CICD_CLIENT_ID }}","clientSecret":"${{ secrets.CICD_CLIENT_SECRET }}","tenantId":"${{ secrets.AZURE_TENANT_ID }}","subscriptionId":"${{ secrets.AZURE_SUBSCRIPTION_ID }}"}'
+          creds: '{"clientId":"${{ secrets.CICD_CLIENT_ID }}","clientSecret":"${{ secrets.CICD_CLIENT_SECRET }}","tenantId":"${{ secrets.AZURE_TENANT_ID }}","subscriptionId":"${{ secrets.AZURE_SUBSCRIPTION_ID }}"}'      # Simple Azure login as backup to ensure authentication works
+      - name: Azure Login (Simple)
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Create Resource Group (for what-if)
         if: ${{ inputs.deployInResourceGroup }}
