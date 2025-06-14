@@ -268,7 +268,7 @@ jobs:
             
           elif [[ "${{ inputs.stackAction }}" == "rollback" ]]; then
             echo "Running rollback stack action for previous deployment"
-            az stack group delete --name "$deploymentName" --resource-group ${{ env.generatedResourceGroupName }} --yes
+            az stack group delete --name "$deploymentName" --resource-group ${{ env.generatedResourceGroupName }} --action-on-unmanage deleteAll --yes
           
           elif [[ "${{ inputs.stackAction }}" == "status" ]]; then
             echo "Getting deployment stack status"
