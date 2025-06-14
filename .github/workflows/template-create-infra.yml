@@ -94,6 +94,7 @@ jobs:
       - name: Replace Tokens
         if: ${{ env.parameterFileReplaceTokens == 'true' }}
         run: |-
+          deploymentName="${{ env.templateFile }}-rg-${{ vars.RESOURCEGROUP_LOCATION }}-${{ steps.get-date.outputs.DATE_TIME_STAMP}}"
           parameterFile="${{ env.templatePath }}${{ env.parameterFile }}"
           echo "Replacing tokens in parameter file: $parameterFile"
           
@@ -175,12 +176,11 @@ jobs:
         run: |
           echo "Running what-if analysis for Resource Group deployment..."
           az deployment group what-if \
-            --name "${{ env.stackName }}" \
+            --name $deploymentName \
             --resource-group "${{ env.generatedResourceGroupName }}" \
             --template-file "${{ env.templatePath }}${{ env.templateFile }}" \
             --parameters "${{ env.templatePath }}${{ env.parameterFile }}" \
-            --no-prompt true          
-          
+            --no-prompt true
 
       - name: What-If Analysis (Subscription)
         if: ${{ !inputs.deployInResourceGroup }}
@@ -189,9 +189,10 @@ jobs:
           echo "Running what-if analysis for Subscription deployment..."
           
           az deployment sub what-if \
-            --name "${{ env.stackName }}" \
+            --name "$deploymentName" \
             --location "${{ vars.RESOURCEGROUP_LOCATION }}" \
-            --template-file "${{ env.templatePath }}${{ env.templateFile }}" \            --parameters "${{ env.templatePath }}${{ env.parameterFile }}" \
+            --template-file "${{ env.templatePath }}${{ env.templateFile }}" \
+            --parameters "${{ env.templatePath }}${{ env.parameterFile }}" \
             --no-prompt true
 
   # Job 2a: Deploy operation (for deploy-only mode)
@@ -313,15 +314,15 @@ jobs:
             echo "ACR_NAME=${ACR_NAME}" >> $GITHUB_ENV
             echo "AI_HUB_ID=${AI_HUB_ID}" >> $GITHUB_ENV
             echo "AI_HUB_NAME=${AI_HUB_NAME}" >> $GITHUB_ENV
-            
+            echo "DEPLOYMENT_NAME=${deploymentName}" >> $GITHUB_ENV 
           elif [[ "${{ inputs.stackAction }}" == "rollback" ]]; then
             echo "Running rollback stack action for previous deployment"
-            az stack group delete --name "${{ env.stackName }}" --resource-group ${{ env.generatedResourceGroupName }} --action-on-unmanage deleteAll --yes
+            az stack group delete --name $deploymentName --resource-group ${{ env.generatedResourceGroupName }} --action-on-unmanage deleteAll --yes
           
           elif [[ "${{ inputs.stackAction }}" == "status" ]]; then
             echo "Getting deployment stack status"
-            az stack group show --name "${{ env.stackName }}" --resource-group ${{ env.generatedResourceGroupName }}
-          
+            az stack group show --name $deploymentName --resource-group ${{ env.generatedResourceGroupName }}
+
           else
             echo "Invalid stack action: ${{ inputs.stackAction }}"
             exit 1
