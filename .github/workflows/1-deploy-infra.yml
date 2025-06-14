@@ -41,7 +41,7 @@ on:
         description: |
           JSON string with deployment configuration. Example:
           '{"createResourceGroup":true,"publicAccessEnabled":true,"createDnsZones":true,"addRoleAssignments":true,"deployAIHub":true,"runBuildDeployAPI":false}'
-        required: false        
+        required: false
         type: string
         default: '{"createResourceGroup":true,"publicAccessEnabled":true,"createDnsZones":true,"addRoleAssignments":true,"deployAIHub":true,"runBuildDeployAPI":false}'
       loginUsingClientSecret:
@@ -65,9 +65,8 @@ on:
         type: choice
         options:
           - plan-only
-          - plan-and-deploy          
-          - deploy-only
-          
+          - plan-and-deploy          - deploy-only
+
 jobs:
   Deploy_Bicep:
     name: Deploy ${{ inputs.deployEnvironment }} Bicep

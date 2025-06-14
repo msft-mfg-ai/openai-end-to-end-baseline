@@ -151,13 +151,12 @@ jobs:
           elif [[ -n "${{ secrets.CICD_CLIENT_SECRET }}" ]]; then
             echo "auth-method=client-secret" >> $GITHUB_OUTPUT
             echo "Using Client Secret authentication (secret available)"
-          else            echo "auth-method=oidc" >> $GITHUB_OUTPUT
-            echo "Using OIDC authentication"
+          else            echo "auth-method=oidc" >> $GITHUB_OUTPUT            echo "Using OIDC authentication"
           fi
 
       - name: OIDC Login to Azure
         if: ${{ steps.auth-check.outputs.auth-method == 'oidc' }}
-        uses: azure/login@v1.6.0
+        uses: azure/login@v1
         with:
           client-id: ${{ secrets.CICD_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
@@ -165,13 +164,13 @@ jobs:
 
       - name: Login to Azure with Secret
         if: ${{ steps.auth-check.outputs.auth-method == 'client-secret' }}
-        uses: azure/login@v1.6.0
+        uses: azure/login@v1
         with:
           creds: '{"clientId":"${{ secrets.CICD_CLIENT_ID }}","clientSecret":"${{ secrets.CICD_CLIENT_SECRET }}","tenantId":"${{ secrets.AZURE_TENANT_ID }}","subscriptionId":"${{ secrets.AZURE_SUBSCRIPTION_ID }}"}'
 
       # Simple Azure login as backup to ensure authentication works
       - name: Azure Login (Simple)
-        uses: azure/login@v1.6.0
+        uses: azure/login@v1
         with:
           client-id: ${{ secrets.CICD_CLIENT_ID }}
           client-secret: ${{ secrets.CICD_CLIENT_SECRET }}
@@ -281,19 +280,20 @@ jobs:
           elif [[ -n "${{ secrets.CICD_CLIENT_SECRET }}" ]]; then
             echo "auth-method=client-secret" >> $GITHUB_OUTPUT
             echo "Using Client Secret authentication (secret available)"
-          else
-            echo "auth-method=oidc" >> $GITHUB_OUTPUT
-            echo "Using OIDC authentication"
-          fi      - name: OIDC Login to Azure
+          else            echo "auth-method=oidc" >> $GITHUB_OUTPUT
+            echo "Using OIDC authentication"          fi
+
+      - name: OIDC Login to Azure
         if: ${{ steps.auth-check-standalone.outputs.auth-method == 'oidc' }}
-        uses: azure/login@v1.6.0
+        uses: azure/login@v1
         with:
           client-id: ${{ secrets.CICD_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}      
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
       - name: Login to Azure with Secret
         if: ${{ steps.auth-check-standalone.outputs.auth-method == 'client-secret' }}
-        uses: azure/login@v1.6.0
+        uses: azure/login@v1
         with:
           creds: '{"clientId":"${{ secrets.CICD_CLIENT_ID }}","clientSecret":"${{ secrets.CICD_CLIENT_SECRET }}","tenantId":"${{ secrets.AZURE_TENANT_ID }}","subscriptionId":"${{ secrets.AZURE_SUBSCRIPTION_ID }}"}'
 
@@ -546,13 +546,12 @@ jobs:
 
       - name: Display Param File
         run: |
-          echo "##[group]Contents of ${{ env.templatePath }}${{ env.parameterFile }}"          cat ${{ env.templatePath }}${{ env.parameterFile }}
-          echo "##[endgroup]"
+          echo "##[group]Contents of ${{ env.templatePath }}${{ env.parameterFile }}"          cat ${{ env.templatePath }}${{ env.parameterFile }}          echo "##[endgroup]"
         continue-on-error: true
 
       - name: OIDC Login to Azure
         if: ${{ !inputs.loginUsingClientSecret }}
-        uses: azure/login@v1.6.0
+        uses: azure/login@v1
         with:
           client-id: ${{ secrets.CICD_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
@@ -560,7 +559,7 @@ jobs:
 
       - name: Login to Azure with Secret
         if: ${{ inputs.loginUsingClientSecret }}
-        uses: azure/login@v1.6.0
+        uses: azure/login@v1
         with:
           creds: '{"clientId":"${{ secrets.CICD_CLIENT_ID }}","clientSecret":"${{ secrets.CICD_CLIENT_SECRET }}","tenantId":"${{ secrets.AZURE_TENANT_ID }}","subscriptionId":"${{ secrets.AZURE_SUBSCRIPTION_ID }}"}'
 
