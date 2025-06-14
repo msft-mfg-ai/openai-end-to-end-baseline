@@ -586,6 +586,7 @@ module openAI './modules/ai/cognitive-services.bicep' = {
     pe_location: location
     appInsightsName: logAnalytics.outputs.applicationInsightsName
     tags: tags
+    /*
     textEmbeddings: [{
       name: 'text-embedding'
       model: {
@@ -594,7 +595,13 @@ module openAI './modules/ai/cognitive-services.bicep' = {
         version: '2'
         DeploymentCapacity: 1
       }
-    }]
+    */ //temporarily bypass to avoid deployment error: 
+    /*
+    InsufficientQuota - This operation require 20 new capacity in quota Tokens Per Minute (thousands) 
+    - Text-Embedding-Ada-002, which is bigger than the current available capacity 0. 
+    The current quota usage is 240 and the quota limit is 240 for quota Tokens Per Minute (thousands) 
+    - Text-Embedding-Ada-002.
+    */
     chatGpt_Standard: {
       DeploymentName: 'gpt-35-turbo'
       ModelName: 'gpt-35-turbo'
