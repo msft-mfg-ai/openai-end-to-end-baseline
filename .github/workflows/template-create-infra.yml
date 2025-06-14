@@ -317,7 +317,15 @@ jobs:
             echo "DEPLOYMENT_NAME=${deploymentName}" >> $GITHUB_ENV 
           elif [[ "${{ inputs.stackAction }}" == "rollback" ]]; then
             echo "Running rollback stack action for previous deployment"
-            az stack group delete --name $deploymentName --resource-group ${{ env.generatedResourceGroupName }} --action-on-unmanage deleteAll --yes
+            # Retrieve the last deployment name
+            $deploymentName=$(az stack group list --resource-group ${{ env.generatedResourceGroupName }} --query "[?contains(name, '${{ env.templateFile }}')].name | [0]" -o tsv)
+            if [[ -z "$deploymentName" ]]; then
+              echo "No previous deployment found to rollback"
+              exit 1
+            else
+              az stack group delete --name "$deploymentName" --resource-group ${{ env.generatedResourceGroupName }} --action-on-unmanage deleteAll --yes
+              echo "Rollback initiated for deployment: $deploymentName"
+            fi
           
           elif [[ "${{ inputs.stackAction }}" == "status" ]]; then
             echo "Getting deployment stack status"
