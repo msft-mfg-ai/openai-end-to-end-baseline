@@ -321,7 +321,7 @@ jobs:
             # Get the last successful deployment stack name
             deploymentName=$(az stack group list \
               --resource-group "${{ env.generatedResourceGroupName }}" \
-              --query "[?provisioningState=='Succeeded'] | sort_by(@, &systemData.createdAt) | [-1].name" \
+              --query "[?provisioningState=='succeeded'] | sort_by(@, &systemData.createdAt) | [-1].name" \
               --output tsv)
             echo "deploymentName: $deploymentName"
             # Check if we found a successful deployment
