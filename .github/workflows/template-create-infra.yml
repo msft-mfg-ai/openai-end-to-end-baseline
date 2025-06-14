@@ -220,7 +220,9 @@ jobs:
       stackName: ${{ format('stack-{0}-{1}-{2}', vars.APP_NAME, inputs.envCode, vars.INSTANCE_NUMBER) }}
       denySettingsMode: "none"  # Options: none, denyDelete, denyWriteAndDelete
       enableDriftDetection: "true"
-      rollbackOnFailure: "true"    # ------------------------------------------------------------------------------------------------------------------------
+      rollbackOnFailure: "true"
+    
+    # ------------------------------------------------------------------------------------------------------------------------
     # Outputs
     # ------------------------------------------------------------------------------------------------------------------------
     outputs:
@@ -238,7 +240,24 @@ jobs:
 
       - name: Get the current date
         id: get-date
-        run: echo "DATE_TIME_STAMP=$(date +'%Y%m%d%H%M')" >> $GITHUB_OUTPUT
+        run: echo "DATE_TIME_STAMP=$(date +'%Y%m%d%H%M')" >> $GITHUB_OUTPUT      # Login steps - required before deployment
+      - name: OIDC Login to Azure
+        if: ${{ !inputs.loginUsingClientSecret }}
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.CICD_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Login to Azure with Secret
+        if: ${{ inputs.loginUsingClientSecret }}
+        uses: azure/login@v2
+        with:
+          creds: '{"clientId":"${{ secrets.CICD_CLIENT_ID }}","clientSecret":"${{ secrets.CICD_CLIENT_SECRET }}","tenantId":"${{ secrets.AZURE_TENANT_ID }}","subscriptionId":"${{ secrets.AZURE_SUBSCRIPTION_ID }}"}'
+
+      - name: Create Resource Group
+        if: ${{ inputs.runCreateInfra && inputs.deployInResourceGroup }}
+        run: az group create --resource-group ${{ env.generatedResourceGroupName }} --location ${{ vars.RESOURCEGROUP_LOCATION }} --tags Environment=${{ inputs.envCode }}
 
       - name: Deploy Azure Resources using Stack (RG)
         if: ${{ inputs.runCreateInfra && inputs.deployInResourceGroup }}
@@ -268,7 +287,7 @@ jobs:
             
           elif [[ "${{ inputs.stackAction }}" == "rollback" ]]; then
             echo "Running rollback stack action for previous deployment"
-            az stack group delete --name "$deploymentName" --resource-group ${{ env.generatedResourceGroupName }} --action-on-unmanage deleteAll --yes
+            az stack group delete --name "$deploymentName" --resource-group ${{ env.generatedResourceGroupName }} --yes
           
           elif [[ "${{ inputs.stackAction }}" == "status" ]]; then
             echo "Getting deployment stack status"
