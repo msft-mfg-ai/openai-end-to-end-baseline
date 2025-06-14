@@ -323,10 +323,11 @@ jobs:
               --resource-group "${{ env.generatedResourceGroupName }}" \
               --query "[?provisioningState=='Succeeded'] | sort_by(@, &systemData.createdAt) | [-1].name" \
               --output tsv)
+            echo "deploymentName: $deploymentName"
             # Check if we found a successful deployment
             if [ -n "$deploymentName" ]; then
               echo "✅ Found last successful deployment stack: $deploymentName"
-              az stack group delete --name "$deploymentName" --resource-group ${{ env.generatedResourceGroupName }} --action-on-unmanage deleteAll --yes
+              az stack group delete --name $deploymentName --resource-group ${{ env.generatedResourceGroupName }} --action-on-unmanage deleteAll --yes
               echo "Rollback initiated for deployment: $deploymentName"
             else
               echo "❌ No successful deployment stacks found"
