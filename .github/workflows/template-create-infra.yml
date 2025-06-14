@@ -317,20 +317,26 @@ jobs:
             echo "DEPLOYMENT_NAME=${deploymentName}" >> $GITHUB_ENV 
           elif [[ "${{ inputs.stackAction }}" == "rollback" ]]; then
             echo "Running rollback stack action for previous deployment"
-            # Retrieve the last deployment name
-            $deploymentName=$(az stack group list --resource-group ${{ env.generatedResourceGroupName }} --query "[?contains(name, '${{ env.templateFile }}')].name | [0]" -o tsv)
-            if [[ -z "$deploymentName" ]]; then
-              echo "No previous deployment found to rollback"
-              exit 1
-            else
+            # Retrieve the last deployment name where the provisioningState is Succeeded
+            # Get the last successful deployment stack name
+            deploymentName=$(az stack group list \
+              --resource-group "${{ env.generatedResourceGroupName }}" \
+              --query "[?provisioningState=='Succeeded'] | sort_by(@, &systemData.createdAt) | [-1].name" \
+              --output tsv)
+            # Check if we found a successful deployment
+            if [ -n "$deploymentName" ]; then
+              echo "✅ Found last successful deployment stack: $deploymentName"
               az stack group delete --name "$deploymentName" --resource-group ${{ env.generatedResourceGroupName }} --action-on-unmanage deleteAll --yes
               echo "Rollback initiated for deployment: $deploymentName"
+            else
+              echo "❌ No successful deployment stacks found"
+              echo "No previous deployment found to rollback"
+              exit 1
             fi
           
           elif [[ "${{ inputs.stackAction }}" == "status" ]]; then
             echo "Getting deployment stack status"
             az stack group show --name $deploymentName --resource-group ${{ env.generatedResourceGroupName }}
-
           else
             echo "Invalid stack action: ${{ inputs.stackAction }}"
             exit 1
