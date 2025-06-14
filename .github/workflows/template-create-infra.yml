@@ -8,15 +8,15 @@ on:
     inputs:
       envCode:
         required: true
-        type: string      # Group template-related parameters into a single JSON input to reduce total inputs
+        type: string
+      # Group template-related parameters into a single JSON input to reduce total inputs
       templateConfig:
         description: |
           JSON string with template configuration. Example:
           '{"templatePath":"infra/bicep/","templateFile":"main-advanced.bicep","parameterFile":"","parameterFileReplaceTokens":"false"}'
         required: false
         type: string
-        default: '{"templatePath":"infra/bicep/","templateFile":"main-advanced.bicep","parameterFile":"","parameterFileReplaceTokens":"false"}'
-      # Group deployment configuration settings into a JSON input to reduce inputs
+        default: '{"templatePath":"infra/bicep/","templateFile":"main-advanced.bicep","parameterFile":"","parameterFileReplaceTokens":"false"}'      # Group deployment configuration settings into a JSON input to reduce inputs
       deployConfig:
         description: |
           JSON string with deployment configuration. Example:
@@ -39,7 +39,8 @@ on:
       loginUsingClientSecret:
         description: Login using Client Secret?
         type: boolean
-        default: false      # Deployment stack action: 'deploy' (default), 'rollback', 'status'"
+        default: false
+      # Deployment stack action: 'deploy' (default), 'rollback', 'status'
       stackAction:
         description: "Deployment stack action (default: 'deploy'). Allowed values: 'deploy', 'rollback', 'status'"
         type: string
@@ -214,7 +215,8 @@ jobs:
       addRoleAssignments: true
       runBuildDeployAPI: false
       requestorName: ${{ github.actor }}
-      # Deployment Stack Environment Variables      stackAction: ${{ inputs.stackAction }}  # Options: deploy (default), rollback, status
+      # Deployment Stack Environment Variables
+      stackAction: ${{ inputs.stackAction }}  # Options: deploy (default), rollback, status
       stackName: ${{ format('stack-{0}-{1}-{2}', vars.APP_NAME, inputs.envCode, vars.INSTANCE_NUMBER) }}
       denySettingsMode: "none"  # Options: none, denyDelete, denyWriteAndDelete
       enableDriftDetection: "true"
