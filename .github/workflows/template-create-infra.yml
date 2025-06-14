@@ -141,15 +141,14 @@ jobs:
             echo "Using Client Secret authentication (explicitly requested)"
           elif [[ -n "${{ secrets.CICD_CLIENT_SECRET }}" ]]; then
             echo "auth-method=client-secret" >> $GITHUB_OUTPUT
-            echo "Using Client Secret authentication (secret available)"
-          else
+            echo "Using Client Secret authentication (secret available)"          else
             echo "auth-method=oidc" >> $GITHUB_OUTPUT
             echo "Using OIDC authentication"
           fi
 
       - name: OIDC Login to Azure
         if: ${{ steps.auth-check.outputs.auth-method == 'oidc' }}
-        uses: azure/login@v1.4.6
+        uses: azure/login@v1.4.7
         with:
           client-id: ${{ secrets.CICD_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
@@ -157,7 +156,7 @@ jobs:
 
       - name: Login to Azure with Secret
         if: ${{ steps.auth-check.outputs.auth-method == 'client-secret' }}
-        uses: azure/login@v1.4.6
+        uses: azure/login@v1.4.7
         with:
           creds: '{"clientId":"${{ secrets.CICD_CLIENT_ID }}","clientSecret":"${{ secrets.CICD_CLIENT_SECRET }}","tenantId":"${{ secrets.AZURE_TENANT_ID }}","subscriptionId":"${{ secrets.AZURE_SUBSCRIPTION_ID }}"}'
 
@@ -165,7 +164,8 @@ jobs:
         if: ${{ inputs.deployInResourceGroup }}
         run: |
           # Check if RG exists, create if not (what-if needs target to exist)
-          if ! az group show --name ${{ env.generatedResourceGroupName }} --output none 2>/dev/null; then            echo "Creating resource group for what-if analysis..."
+          if ! az group show --name ${{ env.generatedResourceGroupName }} --output none 2>/dev/null; then
+            echo "Creating resource group for what-if analysis..."
             az group create --resource-group ${{ env.generatedResourceGroupName }} --location ${{ vars.RESOURCEGROUP_LOCATION }} --tags Environment=${{ inputs.envCode }}
           fi
 
@@ -191,9 +191,8 @@ jobs:
           az deployment sub what-if \
             --name "${{ env.stackName }}" \
             --location "${{ vars.RESOURCEGROUP_LOCATION }}" \
-            --template-file "${{ env.templatePath }}${{ env.templateFile }}" \
-            --parameters "${{ env.templatePath }}${{ env.parameterFile }}" \
-            --no-prompt true)
+            --template-file "${{ env.templatePath }}${{ env.templateFile }}" \            --parameters "${{ env.templatePath }}${{ env.parameterFile }}" \
+            --no-prompt true
 
   # Job 2a: Deploy operation (for deploy-only mode)
   deploy-standalone:
