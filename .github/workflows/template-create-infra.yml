@@ -341,8 +341,12 @@ jobs:
               echo "Rollback initiated for deployment: $deploymentName"
               # Post rollback cleanup
               echo "Cleaning up resources after rollback..."
-              az keyvault purge -n $keyVaultName -l ${{ vars.RESOURCEGROUP_LOCATION }} --no-wait --verbose
+              az keyvault purge -n $keyVaultName -l ${{ vars.RESOURCEGROUP_LOCATION }} --verbose
               az cognitiveservices account purge -g ${{ env.generatedResourceGroupName }} -l ${{ vars.RESOURCEGROUP_LOCATION }} -name $cognitiveServicesFrName --verbose
+              # example: # az cognitiveservices account purge -g rg-ai-mfg-fernando-AM-23 -l eastus2 --name cog-mfgai-fermando-am-23 --verbose
+              # delete the resource group to completely remove any remaining resources
+              echo "Deleting resource group: ${{ env.generatedResourceGroupName }}"
+              az group delete --name ${{ env.generatedResourceGroupName }} --yes --no-wait
             else
               echo "❌ No successful deployment stacks found"
               echo "No previous deployment found to rollback"
