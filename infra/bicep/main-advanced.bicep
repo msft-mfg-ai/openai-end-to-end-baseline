@@ -592,6 +592,7 @@ module openAI './modules/ai/cognitive-services.bicep' = {
         format: 'OpenAI'
         name: 'text-embedding-ada-002'
         version: '2'
+        DeploymentCapacity: 1
       }
     }]
     chatGpt_Standard: {
