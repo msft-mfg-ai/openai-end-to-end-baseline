@@ -121,16 +121,24 @@ jobs:
           # Parse deployConfig JSON and replace boolean parameters
           deployConfigJson='${{ inputs.deployConfig }}'
           addRoleAssignments=$(echo "$deployConfigJson" | jq -r '.addRoleAssignments // false')
-          createDnsZones=$(echo "$deployConfigJson" | jq -r '.createDnsZones // false')
-          publicAccessEnabled=$(echo "$deployConfigJson" | jq -r '.publicAccessEnabled // true')
+          createDnsZones=$(echo "$deployConfigJson" | jq -r '.createDnsZones // false')          publicAccessEnabled=$(echo "$deployConfigJson" | jq -r '.publicAccessEnabled // true')
           deployAIHub=$(echo "$deployConfigJson" | jq -r '.deployAIHub // true')
-            sed -i "s|#{addRoleAssignments}#|$addRoleAssignments|g" "$parameterFile"
+          
+          sed -i "s|#{addRoleAssignments}#|$addRoleAssignments|g" "$parameterFile"
           sed -i "s|#{createDnsZones}#|$createDnsZones|g" "$parameterFile"
           sed -i "s|#{publicAccessEnabled}#|$publicAccessEnabled|g" "$parameterFile"
-          sed -i "s|#{deployAIHub}#|$deployAIHub|g" "$parameterFile"          
-          # Replace VM admin credentials
+          sed -i "s|#{deployAIHub}#|$deployAIHub|g" "$parameterFile"
+            # Replace VM admin credentials
           sed -i "s|#{ADMIN_USERNAME}#|${{ secrets.ADMIN_USERNAME || 'azureuser' }}|g" "$parameterFile"
           sed -i "s|#{ADMIN_PASSWORD}#|${{ secrets.ADMIN_PASSWORD }}|g" "$parameterFile"
+
+      # Generate deployment name for what-if analysis
+      - name: Generate Deployment Name
+        id: generate-deployment-name
+        run: |
+          deploymentName="${{ env.templateFile }}-whatif-${{ vars.RESOURCEGROUP_LOCATION }}-${{ steps.get-date.outputs.DATE_TIME_STAMP}}"
+          echo "deploymentName=$deploymentName" >> $GITHUB_OUTPUT
+          echo "Generated deployment name: $deploymentName"
 
       # Login steps - Check for available authentication method
       - name: Check Azure Authentication Method
@@ -139,18 +147,17 @@ jobs:
           # Check if we have OIDC secrets or should fall back to client secret
           if [[ "${{ inputs.loginUsingClientSecret }}" == "true" ]]; then
             echo "auth-method=client-secret" >> $GITHUB_OUTPUT
-            echo "Using Client Secret authentication (explicitly requested)"          
+            echo "Using Client Secret authentication (explicitly requested)"
           elif [[ -n "${{ secrets.CICD_CLIENT_SECRET }}" ]]; then
             echo "auth-method=client-secret" >> $GITHUB_OUTPUT
-            echo "Using Client Secret authentication (secret available)"          
-          else            
-            echo "auth-method=oidc" >> $GITHUB_OUTPUT
+            echo "Using Client Secret authentication (secret available)"
+          else            echo "auth-method=oidc" >> $GITHUB_OUTPUT
             echo "Using OIDC authentication"
           fi
 
       - name: OIDC Login to Azure
         if: ${{ steps.auth-check.outputs.auth-method == 'oidc' }}
-        uses: azure/login@v1.4.4
+        uses: azure/login@v1.6.0
         with:
           client-id: ${{ secrets.CICD_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
@@ -158,13 +165,18 @@ jobs:
 
       - name: Login to Azure with Secret
         if: ${{ steps.auth-check.outputs.auth-method == 'client-secret' }}
-        uses: azure/login@v1.4.4
+        uses: azure/login@v1.6.0
         with:
-          creds: '{"clientId":"${{ secrets.CICD_CLIENT_ID }}","clientSecret":"${{ secrets.CICD_CLIENT_SECRET }}","tenantId":"${{ secrets.AZURE_TENANT_ID }}","subscriptionId":"${{ secrets.AZURE_SUBSCRIPTION_ID }}"}'      # Simple Azure login as backup to ensure authentication works
+          creds: '{"clientId":"${{ secrets.CICD_CLIENT_ID }}","clientSecret":"${{ secrets.CICD_CLIENT_SECRET }}","tenantId":"${{ secrets.AZURE_TENANT_ID }}","subscriptionId":"${{ secrets.AZURE_SUBSCRIPTION_ID }}"}'
+
+      # Simple Azure login as backup to ensure authentication works
       - name: Azure Login (Simple)
-        uses: azure/login@v1
+        uses: azure/login@v1.6.0
         with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          client-id: ${{ secrets.CICD_CLIENT_ID }}
+          client-secret: ${{ secrets.CICD_CLIENT_SECRET }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Create Resource Group (for what-if)
         if: ${{ inputs.deployInResourceGroup }}
@@ -179,9 +191,8 @@ jobs:
         if: ${{ inputs.deployInResourceGroup }}
         id: whatif-analysis-rg
         run: |
-          echo "Running what-if analysis for Resource Group deployment..."
-          az deployment group what-if \
-            --name ${{ steps.get-last-deployment.outputs.deploymentName }} \
+          echo "Running what-if analysis for Resource Group deployment..."          az deployment group what-if \
+            --name ${{ steps.generate-deployment-name.outputs.deploymentName }} \
             --resource-group "${{ env.generatedResourceGroupName }}" \
             --template-file "${{ env.templatePath }}${{ env.templateFile }}" \
             --parameters "${{ env.templatePath }}${{ env.parameterFile }}" \
@@ -192,9 +203,8 @@ jobs:
         id: whatif-analysis-sub
         run: |
           echo "Running what-if analysis for Subscription deployment..."
-          
-          az deployment sub what-if \
-            --name "${{ steps.get-last-deployment.outputs.deploymentName }}" \
+            az deployment sub what-if \
+            --name "${{ steps.generate-deployment-name.outputs.deploymentName }}" \
             --location "${{ vars.RESOURCEGROUP_LOCATION }}" \
             --template-file "${{ env.templatePath }}${{ env.templateFile }}" \
             --parameters "${{ env.templatePath }}${{ env.parameterFile }}" \
@@ -274,19 +284,16 @@ jobs:
           else
             echo "auth-method=oidc" >> $GITHUB_OUTPUT
             echo "Using OIDC authentication"
-          fi
-
-      - name: OIDC Login to Azure
+          fi      - name: OIDC Login to Azure
         if: ${{ steps.auth-check-standalone.outputs.auth-method == 'oidc' }}
-        uses: azure/login@v1
+        uses: azure/login@v1.6.0
         with:
           client-id: ${{ secrets.CICD_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}      
       - name: Login to Azure with Secret
         if: ${{ steps.auth-check-standalone.outputs.auth-method == 'client-secret' }}
-        uses: azure/login@v1
+        uses: azure/login@v1.6.0
         with:
           creds: '{"clientId":"${{ secrets.CICD_CLIENT_ID }}","clientSecret":"${{ secrets.CICD_CLIENT_SECRET }}","tenantId":"${{ secrets.AZURE_TENANT_ID }}","subscriptionId":"${{ secrets.AZURE_SUBSCRIPTION_ID }}"}'
 
@@ -319,7 +326,7 @@ jobs:
             echo "ACR_NAME=${ACR_NAME}" >> $GITHUB_ENV
             echo "AI_HUB_ID=${AI_HUB_ID}" >> $GITHUB_ENV
             echo "AI_HUB_NAME=${AI_HUB_NAME}" >> $GITHUB_ENV
-            echo "DEPLOYMENT_NAME=${deploymentName}" >> $GITHUB_ENV 
+            echo "DEPLOYMENT_NAME=${deploymentName}" >> $GITHUB_ENV
           elif [[ "${{ inputs.stackAction }}" == "rollback" ]]; then
             echo "Running rollback stack action for previous deployment"
             # Retrieve the last deployment name where the provisioningState is Succeeded
@@ -507,9 +514,7 @@ jobs:
           echo "Environment code from input: ${{ inputs.envCode }}"
           
           # Create a backup of the original file
-          cp "$parameterFile" "${parameterFile}.backup"
-          
-          # Replace tokens with their corresponding values
+          cp "$parameterFile" "${parameterFile}.backup"          # Replace tokens with their corresponding values
           sed -i "s|#{GLOBAL_REGION_CODE}#|${{ vars.GLOBAL_REGION_CODE }}|g" "$parameterFile"
           sed -i "s|#{RESOURCEGROUP_PREFIX}#|${{ vars.RESOURCEGROUP_PREFIX }}|g" "$parameterFile"
           sed -i "s|#{RESOURCEGROUP_LOCATION}#|${{ vars.RESOURCEGROUP_LOCATION }}|g" "$parameterFile"  
@@ -533,22 +538,21 @@ jobs:
           sed -i "s|#{createDnsZones}#|$createDnsZones|g" "$parameterFile"
           sed -i "s|#{publicAccessEnabled}#|$publicAccessEnabled|g" "$parameterFile"
           sed -i "s|#{deployAIHub}#|$deployAIHub|g" "$parameterFile"
-          
-          # Replace VM admin credentials
-          sed -i "s|#{ADMIN_USERNAME}#|${{ secrets.ADMIN_USERNAME || 'azureuser' }}|g" "$parameterFile"          sed -i "s|#{ADMIN_PASSWORD}#|${{ secrets.ADMIN_PASSWORD }}|g" "$parameterFile"
+            # Replace VM admin credentials
+          sed -i "s|#{ADMIN_USERNAME}#|${{ secrets.ADMIN_USERNAME || 'azureuser' }}|g" "$parameterFile"
+          sed -i "s|#{ADMIN_PASSWORD}#|${{ secrets.ADMIN_PASSWORD }}|g" "$parameterFile"
           
           echo "Token replacement completed."
 
       - name: Display Param File
-        run: |-
-          echo "##[group]Contents of ${{ env.templatePath }}${{ env.parameterFile }}"
-          cat ${{ env.templatePath }}${{ env.parameterFile }}
+        run: |
+          echo "##[group]Contents of ${{ env.templatePath }}${{ env.parameterFile }}"          cat ${{ env.templatePath }}${{ env.parameterFile }}
           echo "##[endgroup]"
         continue-on-error: true
 
       - name: OIDC Login to Azure
         if: ${{ !inputs.loginUsingClientSecret }}
-        uses: azure/login@v1.4.6
+        uses: azure/login@v1.6.0
         with:
           client-id: ${{ secrets.CICD_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
@@ -556,7 +560,7 @@ jobs:
 
       - name: Login to Azure with Secret
         if: ${{ inputs.loginUsingClientSecret }}
-        uses: azure/login@v1.4.6
+        uses: azure/login@v1.6.0
         with:
           creds: '{"clientId":"${{ secrets.CICD_CLIENT_ID }}","clientSecret":"${{ secrets.CICD_CLIENT_SECRET }}","tenantId":"${{ secrets.AZURE_TENANT_ID }}","subscriptionId":"${{ secrets.AZURE_SUBSCRIPTION_ID }}"}'
 
@@ -584,12 +588,12 @@ jobs:
             ACR_NAME=$(jq -r '.properties.outputs.ACR_NAME.value // "null"' stack_output_rg.json)
             AI_HUB_ID=$(jq -r '.properties.outputs.AI_HUB_ID.value // "null"' stack_output_rg.json)
             AI_HUB_NAME=$(jq -r '.properties.outputs.AI_HUB_NAME.value // "null"' stack_output_rg.json)
-            
+          
             # Set outputs as environment variables
             echo "ACR_NAME=${ACR_NAME}" >> $GITHUB_ENV
             echo "AI_HUB_ID=${AI_HUB_ID}" >> $GITHUB_ENV
             echo "AI_HUB_NAME=${AI_HUB_NAME}" >> $GITHUB_ENV
-            
+          
           elif [[ "${{ inputs.stackAction }}" == "rollback" ]]; then
             echo "Retrieving the last successful deployment name..."
             deploymentName=$(az deployment group list \
