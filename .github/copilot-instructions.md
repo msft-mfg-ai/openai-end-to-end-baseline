@@ -149,4 +149,10 @@ Only use other file editing tools if:
 - The user specifically requests a different tool
 - You are creating entirely new files (use `create_file`)
 
+## Always perform regressive review of changed files for any residual formatting issues
+
+- Always check for any residual missing newline errors or other formatting inconsistencies in any files that was just modified by the agent mode operations.
+
+# Summary
+
 Apply these conventions when generating new code, infrastructure, or workflow files to ensure consistency with the existing project style.
