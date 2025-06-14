@@ -39,7 +39,7 @@ on:
       loginUsingClientSecret:
         description: Login using Client Secret?
         type: boolean
-        default: false      # Deployment stack action: 'deploy' (default), 'rollback', 'status'
+        default: false      # Deployment stack action: 'deploy' (default), 'rollback', 'status'"
       stackAction:
         description: "Deployment stack action (default: 'deploy'). Allowed values: 'deploy', 'rollback', 'status'"
         type: string
@@ -399,6 +399,10 @@ jobs:
           sed -i "s|#{createDnsZones}#|$createDnsZones|g" "$parameterFile"
           sed -i "s|#{publicAccessEnabled}#|$publicAccessEnabled|g" "$parameterFile"
           sed -i "s|#{deployAIHub}#|$deployAIHub|g" "$parameterFile"
+          
+          # Replace VM admin credentials
+          sed -i "s|#{ADMIN_USERNAME}#|${{ secrets.ADMIN_USERNAME || 'azureuser' }}|g" "$parameterFile"
+          sed -i "s|#{ADMIN_PASSWORD}#|${{ secrets.ADMIN_PASSWORD }}|g" "$parameterFile"
           
           echo "Token replacement completed."
 
