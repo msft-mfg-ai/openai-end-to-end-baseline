@@ -327,8 +327,22 @@ jobs:
             # Check if we found a successful deployment
             if [ -n "$deploymentName" ]; then
               echo "✅ Found last successful deployment stack: $deploymentName"
+              echo "Retrieving cognitive services document intelligence for subsequent purge operation"
+              cognitiveServicesFrName=$(az cognitiveservices account list \
+              --resource-group ${{ env.generatedResourceGroupName }} \
+              --query "[?kind=='FormRecognizer'].name" \
+              --output tsv)
+              echo "Retrieving key vault for subsequent purge operation"
+              keyVaultName=$(az keyvault list \
+              --resource-group ${{ env.generatedResourceGroupName }} \
+              --query "[?contains(name, 'kv-')].name" \
+              --output tsv)
               az stack group delete --name $deploymentName --resource-group ${{ env.generatedResourceGroupName }} --action-on-unmanage deleteAll --yes
               echo "Rollback initiated for deployment: $deploymentName"
+              # Post rollback cleanup
+              echo "Cleaning up resources after rollback..."
+              az keyvault purge -n $keyVaultName -l ${{ vars.RESOURCEGROUP_LOCATION }} --no-wait --verbose
+              az cognitiveservices account purge -g ${{ env.generatedResourceGroupName }} -l ${{ vars.RESOURCEGROUP_LOCATION }} -name $cognitiveServicesFrName --verbose
             else
               echo "❌ No successful deployment stacks found"
               echo "No previous deployment found to rollback"
