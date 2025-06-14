@@ -64,7 +64,8 @@ on:
         type: choice
         options:
           - plan-only
-          - plan-and-deploy          - deploy-only
+          - plan-and-deploy          
+          - deploy-only
 
 jobs:
   Deploy_Bicep:
