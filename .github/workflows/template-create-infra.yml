@@ -162,6 +162,7 @@ jobs:
           creds: '{"clientId":"${{ secrets.CICD_CLIENT_ID }}","clientSecret":"${{ secrets.CICD_CLIENT_SECRET }}","tenantId":"${{ secrets.AZURE_TENANT_ID }}","subscriptionId":"${{ secrets.AZURE_SUBSCRIPTION_ID }}"}'
 
       - name: Retreive last successful deployment name
+        if: ${{ env.generatedResourceGroupName }}
         id: get-last-deployment
         run: |
           echo "Retrieving the last successful deployment name..."
