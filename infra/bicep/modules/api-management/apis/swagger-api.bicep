@@ -30,7 +30,7 @@ module namedValueAPIMServiceUrl '../apim-namevalue.bicep' = {
     apiManagementServiceName: apimService.name
     name: 'apim-management-service-url'
     displayName: 'APIM-Management-Service-URL'
-    value: 'https://management.azure.com/subscriptions/${subscription().subscriptionId}/resourceGroups/${resourceGroup().name}/providers/Microsoft.ApiManagement/service/${apimService.name}'
+    value: '${environment().resourceManager}/subscriptions/${subscription().subscriptionId}/resourceGroups/${resourceGroup().name}/providers/Microsoft.ApiManagement/service/${apimService.name}'
   }
 }
 
@@ -62,7 +62,7 @@ var policy1 = '''
     <inbound>
         <base />
         <set-backend-service base-url="{{APIM-Management-Service-URL}}" />
-        <authentication-managed-identity resource="https://management.azure.com/" />
+        <authentication-managed-identity resource="${environment().resourceManager}/" />
         <cache-lookup vary-by-developer="true" vary-by-developer-groups="true" allow-private-response-caching="true" must-revalidate="true" downstream-caching-type="none" />
     </inbound>
     <backend>

@@ -22,7 +22,9 @@ param aiServicesName string = ''
 param cosmosName string = ''
 // param cosmosResourceGroupName string = resourceGroup().name
 param keyVaultName string = ''
-// param keyVaultNameResourceGroupName string = resourceGroup().name
+// param keyVaultResourceGroupName string = resourceGroup().name
+param apimName string = ''
+// param apimResourceGroupName string = resourceGroup().name
 
 // param aiHubName string = ''
 // // param aiHubResourceGroupName string = resourceGroup().name
@@ -35,6 +37,7 @@ var addSearchRoles = !empty(aiSearchName)
 var addCogServicesRoles = !empty(aiServicesName)
 var addCosmosRoles = !empty(cosmosName)
 var addKeyVaultRoles = !empty(keyVaultName)
+var addApimRoles = !empty(apimName)
 // var addAIHubRoles = !empty(aiHubName)
 
 // ----------------------------------------------------------------------------------------------------
@@ -140,6 +143,16 @@ resource cognitiveServices_Role_Contributor 'Microsoft.Authorization/roleAssignm
     description: 'Permission for ${principalType} ${identityPrincipalId} to be a Cognitive Services Contributor'
   }
 }
+resource cognitiveServices_Role_AzureAIEngineer 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (addCogServicesRoles) {
+  name: guid(aiService.id, identityPrincipalId, roleDefinitions.openai.cognitiveServicesAzureAIEngineerRoleId)
+  scope: aiService
+  properties: {
+    principalId: identityPrincipalId
+    principalType: principalType
+    roleDefinitionId: resourceId('Microsoft.Authorization/roleDefinitions', roleDefinitions.openai.cognitiveServicesAzureAIEngineerRoleId)
+    description: 'Permission for ${principalType} ${identityPrincipalId} to be a Cognitive Services Azure AI Engineer'
+  }
+}
 
 // ----------------------------------------------------------------------------------------------------
 // Search Roles
@@ -216,6 +229,25 @@ resource keyVaultSecretsOfficerAssignment 'Microsoft.Authorization/roleAssignmen
   }
 }
 
+// ----------------------------------------------------------------------------------------------------
+// APIM Roles - assign to Identity running APIM
+// ----------------------------------------------------------------------------------------------------
+resource apimService 'Microsoft.ApiManagement/service@2024-05-01' existing = if (addApimRoles) {
+  name: apimName
+  //scope: resourceGroup(apimResourceGroupName)
+}
+
+resource apimReaderAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (addApimRoles) {
+  name: guid(apimService.id, identityPrincipalId, roleDefinitions.apim.serviceReaderRoleId)
+  scope: apimService
+  properties: {
+    principalId: identityPrincipalId
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', roleDefinitions.apim.serviceReaderRoleId)
+    principalType: principalType
+    description: 'Permission for ${principalType} ${identityPrincipalId} to be a APIM Service Reader'
+  }
+}
+
 // // ----------------------------------------------------------------------------------------------------
 // // AI Hub Roles
 // // ----------------------------------------------------------------------------------------------------
@@ -233,3 +265,36 @@ resource keyVaultSecretsOfficerAssignment 'Microsoft.Authorization/roleAssignmen
 //     description: 'Permission for ${principalType} ${identityPrincipalId} to be in Data Scientist Role'
 //   }
 // }
+
+// ----------------------------------------------------------------------------------------------------
+output containerRegistryRoleAssignmentIds object = (addRegistryRoles) ? {
+  registry_AcrPull_RoleId : registry_Role_AcrPull.id
+} : {}
+
+output storageRoleAssignmentIds object = (addStorageRoles) ? {
+  storage_BlobContributor_RoleId : storage_Role_BlobContributor.id
+  storage_TableContributor_RoleId : storage_Role_TableContributor.id
+  storage_QueueContributor_RoleId : storage_Role_QueueContributor.id
+} : {}
+
+output cognitiveServicesRoleAssignmentIds object = (addCogServicesRoles) ? {
+  cognitiveServices_OpenAIUser_RoleId : cognitiveServices_Role_OpenAIUser.id
+  cognitiveServices_OpenAIContributor_RoleId : cognitiveServices_Role_OpenAIContributor.id
+  cognitiveServices_User_RoleId : cognitiveServices_Role_User.id
+  cognitiveServices_Contributor_RoleId : cognitiveServices_Role_Contributor.id
+  cognitiveServices_AzureAIEngineer_RoleId : cognitiveServices_Role_AzureAIEngineer.id
+} : {}
+
+output searchServiceRoleAssignmentIds object = (addSearchRoles) ? {
+  search_IndexDataContributor_RoleId : search_Role_IndexDataContributor.id
+  search_IndexDataReader_RoleId : search_Role_IndexDataReader.id
+  search_ServiceContributor_RoleId : search_Role_ServiceContributor.id
+} : {}
+
+output cosmosRoleAssignmentIds object = (addCosmosRoles) ? {
+  cosmos_UserAccess_RoleId : cosmosDbUserAccessRoleAssignment.id
+} : {}
+
+output keyVaultRoleAssignmentIds object = (addKeyVaultRoles) ? {
+  keyVault_SecretsOfficer_RoleId : keyVaultSecretsOfficerAssignment.id
+} : {}

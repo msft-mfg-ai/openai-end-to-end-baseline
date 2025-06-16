@@ -540,7 +540,7 @@ az group delete -n $RESOURCE_GROUP -y
 az keyvault purge -n kv-${BASE_NAME} -l $LOCATION
 az cognitiveservices account purge -g $RESOURCE_GROUP -l $LOCATION -n oai-${BASE_NAME}
 # Example
-# az cognitiveservices account purge -g rg-ai-mfg-fernando-AM-15 -l eastus2 --name cog-mfgai-fermando-am-15 --verbose
+# az cognitiveservices account purge -g rg-ai-mfg-xxxxx -l eastus2 --name cog-mfgai-xxxx --verbose
 ```
 
 ## Contributions

@@ -1,7 +1,7 @@
 @description('The name of the API Management instance to deploy this API to.')
 param serviceName string
-//param endpoint string
-param backendName string
+// param endpoint string
+// param backendName string
 param apimLoggerName string
 
 resource apimService 'Microsoft.ApiManagement/service@2023-09-01-preview' existing = {

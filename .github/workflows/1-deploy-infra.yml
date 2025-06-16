@@ -3,6 +3,7 @@
 # ------------------------------------------------------------------------------------------------------------------------
 name: 1 - Deploy Infrastructure
 run-name: 1 - Deploy Infrastructure to ENV ${{ inputs.deployEnvironment }} by @${{ github.actor }}
+
 on:
   workflow_dispatch:
     inputs:
@@ -25,7 +26,7 @@ on:
       bicepFile:
         description: Main Bicep File
         required: true
-        default: 'main-advanced.bicep'
+        default: 'main-basic.bicep'
         type: choice
         options:
           - main-basic.bicep
@@ -33,39 +34,44 @@ on:
       parameterFile:
         description: Parameter File
         required: true
-        default: 'main-advanced.dynamic.bicepparam'
+        default: 'main-basic.dynamic.bicepparam'
         type: string
-      # Group deployment configuration settings into a JSON input to reduce inputs
-      deployConfig:
-        description: |
-          JSON string with deployment configuration. Example:
-          '{"createResourceGroup":true,"publicAccessEnabled":true,"createDnsZones":true,"addRoleAssignments":true,"deployAIHub":true,"runBuildDeployAPI":false}'
+      createResourceGroup:
+        description: Create Resource Group?
+        type: boolean
+        default: true
+      addRoleAssignments:
+        description: Add Role Assignments?
+        type: boolean
+        default: true
+      deployAPIM:
+        description: Deploy APIM?
+        type: boolean
+        default: true
+      runBuildDeployAPI:
+        description: Build and Deploy API?
         required: false
-        type: string
-        default: '{"createResourceGroup":true,"publicAccessEnabled":true,"createDnsZones":true,"addRoleAssignments":true,"deployAIHub":true,"runBuildDeployAPI":false}'
+        default: false
+        type: boolean
       loginUsingClientSecret:
         description: Login using Client Secret?
         required: false
         default: false
         type: boolean
-      stackAction:
-        description: Deployment Stack Action
-        required: false
-        default: 'deploy'
-        type: choice
-        options:
-          - deploy
-          - rollback
-          - status
-      workflowMode:
-        description: 'Workflow Mode'
-        required: false
-        default: 'plan-and-deploy'
-        type: choice
-        options:
-          - plan-only
-          - plan-and-deploy          
-          - deploy-only
+        
+      # runBuildDeployUI:
+      #   description: Build and Deploy UI
+      #   required: false
+      #   default: false
+      #   type: boolean
+      # publicAccessEnabled:
+      #   description: Public Access Enabled?
+      #   type: boolean
+      #   default: true
+      # createDnsZones:
+      #   description: Create DNS Zones?
+      #   type: boolean
+      #   default: true
 
 jobs:
   Deploy_Bicep:
@@ -79,9 +85,18 @@ jobs:
       pages: write
     with:
       envCode: ${{ inputs.deployEnvironment }}
-      templateConfig: >
-        {"templatePath":"./infra/bicep/","templateFile":"${{ inputs.bicepFile }}","parameterFile":"${{ inputs.parameterFile }}","parameterFileReplaceTokens":"true"}
-      deployConfig: ${{ inputs.deployConfig }}
+      templatePath: './infra/bicep/'
+      templateFile: ${{ inputs.bicepFile }}
+      parameterFile: ${{ inputs.parameterFile }}
+      parameterFileReplaceTokens: 'true'
+
+      createResourceGroup: ${{ inputs.createResourceGroup }}
+      addRoleAssignments: ${{ inputs.addRoleAssignments }}
+      runBuildDeployAPI: ${{ inputs.runBuildDeployAPI }}
+      deployAPIM: ${{ inputs.deployAPIM }}
       loginUsingClientSecret: ${{ inputs.loginUsingClientSecret }}
-      stackAction: ${{ inputs.stackAction }}
-      workflowMode: ${{ inputs.workflowMode }}
+
+      deployAIHub: true
+      publicAccessEnabled: true
+      createDnsZones: false
+      requestorName: ${{ github.actor }}
