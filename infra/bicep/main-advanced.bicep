@@ -89,7 +89,7 @@ param admin_password string
 param vm_name string
 
 // --------------------------------------------------------------------------------------------------------------
-// Existing Container App Environment?
+// Container App Environment
 // --------------------------------------------------------------------------------------------------------------
 @description('Name of the Container Apps Environment workload profile to use for the app')
 param appContainerAppEnvironmentWorkloadProfileName string = 'app'
@@ -134,6 +134,9 @@ param batchImageName string = ''
 // --------------------------------------------------------------------------------------------------------------
 // Other deployment switches
 // --------------------------------------------------------------------------------------------------------------
+@description('Should VNET be used in this deploy?')
+param deployVNET bool = true
+
 @description('Should resources be created with public access?')
 param publicAccessEnabled bool = true
 @description('Create DNS Zones?')
@@ -279,7 +282,6 @@ module virtualMachine './modules/virtualMachine/virtualMachine.bicep' = if (!emp
     tags: tags
   }
 }
-
 
 // --------------------------------------------------------------------------------------------------------------
 // -- Container Registry ----------------------------------------------------------------------------------------

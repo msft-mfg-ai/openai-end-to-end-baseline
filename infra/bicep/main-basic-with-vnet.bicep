@@ -53,6 +53,43 @@ param myIpAddress string = ''
 param principalId string = ''
 
 // --------------------------------------------------------------------------------------------------------------
+// Existing networks?
+// --------------------------------------------------------------------------------------------------------------
+@description('If you provide this is will be used instead of creating a new VNET')
+param existingVnetName string = ''
+@description('If you provide an existing VNET what resource group is it in?')
+param existingVnetResourceGroupName string = ''
+@description('If you provide this is will be used instead of creating a new VNET')
+param vnetPrefix string = '10.183.4.0/22'
+param subnetAppGwName string = ''
+param subnetAppGwPrefix string = '10.183.5.0/24'
+param subnetAppSeName string = ''
+param subnetAppSePrefix string = '10.183.4.0/24'
+param subnetPeName string = ''
+param subnetPePrefix string = '10.183.6.0/27'
+param subnetAgentName string = ''
+param subnetAgentPrefix string = '10.183.6.32/27'
+param subnetBastionName string = '' // This is the default for the MFG AI LZ, it can be changed to fit your needs
+param subnetBastionPrefix string = '10.183.6.64/26'
+param subnetJumpboxName string = '' // This is the default for the MFG AI LZ, it can be changed to fit your needs
+param subnetJumpboxPrefix string = '10.183.6.128/28'
+param subnetTrainingName string = ''
+param subnetTrainingPrefix string = '10.183.7.0/25'
+param subnetScoringName string = ''
+param subnetScoringPrefix string = '10.183.7.128/25'
+
+// --------------------------------------------------------------------------------------------------------------
+// Virtual machine jumpbox
+// --------------------------------------------------------------------------------------------------------------
+@description('Admin username for the VM (optional - only deploy VM if provided)')
+param admin_username string
+@secure()
+@description('Admin password for the VM (optional - only deploy VM if provided)')
+param admin_password string
+@description('VM name (optional - only deploy VM if provided)')
+param vm_name string
+
+// --------------------------------------------------------------------------------------------------------------
 // Container App Environment
 // --------------------------------------------------------------------------------------------------------------
 @description('Name of the Container Apps Environment workload profile to use for the app')
@@ -98,8 +135,13 @@ param batchImageName string = ''
 // --------------------------------------------------------------------------------------------------------------
 // Other deployment switches
 // --------------------------------------------------------------------------------------------------------------
+@description('Should VNET be used in this deploy?')
+param deployVNET bool = false
+
 @description('Should resources be created with public access?')
 param publicAccessEnabled bool = true
+@description('Create DNS Zones?')
+param createDnsZones bool = true
 @description('Add Role Assignments for the user assigned identity?')
 param addRoleAssignments bool = true
 @description('Should we run a script to dedupe the KeyVault secrets? (this fails on private networks right now)')
@@ -183,6 +225,64 @@ module resourceNames 'resourcenames.bicep' = {
 }
 
 // --------------------------------------------------------------------------------------------------------------
+// -- VNET ------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------
+module vnet './modules/networking/vnet.bicep' = if (deployVNET) {
+  name: 'vnet${deploymentSuffix}'
+  params: {
+    location: location
+    existingVirtualNetworkName: existingVnetName
+    existingVnetResourceGroupName: existingVnetResourceGroupName
+    newVirtualNetworkName: resourceNames.outputs.vnet_Name
+    vnetAddressPrefix: vnetAddressPrefix
+    subnetAppGwName: !empty(subnetAppGwName) ? subnetAppGwName  : resourceNames.outputs.subnetAppGwName
+    subnetAppGwPrefix: subnetAppGwPrefix 
+    subnetAppSeName: !empty(subnetAppSeName ) ? subnetAppSeName  : resourceNames.outputs.subnetAppSeName
+    subnetAppSePrefix: subnetAppSePrefix
+    subnetPeName: !empty(subnetPeName  ) ? subnetPeName   : resourceNames.outputs.subnetPeName 
+    subnetPePrefix : subnetPePrefix 
+    subnetAgentName: !empty(subnetAgentName) ? subnetAgentName : resourceNames.outputs.subnetAgentName
+    subnetAgentPrefix: subnetAgentPrefix
+    subnetBastionName: !empty(subnetBastionName) ? subnetBastionName : resourceNames.outputs.subnetBastionName
+    subnetBastionPrefix: subnetBastionPrefix
+    subnetJumpboxName: !empty(subnetJumpboxName) ? subnetJumpboxName : resourceNames.outputs.subnetJumpboxName
+    subnetJumpboxPrefix: subnetJumpboxPrefix
+    subnetTrainingName: !empty(subnetTrainingName) ? subnetTrainingName : resourceNames.outputs.subnetTrainingName
+    subnetTrainingPrefix: subnetTrainingPrefix
+    subnetScoringName: !empty(subnetScoringName) ? subnetScoringName : resourceNames.outputs.subnetScoringName
+    subnetScoringPrefix: subnetScoringPrefix
+  }
+}
+
+// --------------------------------------------------------------------------------------------------------------
+// -- JumpBox ------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------
+module virtualMachine './modules/virtualMachine/virtualMachine.bicep' = if (!empty(admin_username) && !empty(admin_password) && !empty(vm_name)) {
+  name: 'jumpboxVirtualMachineDeployment'
+  params: {
+    // Required parameters
+    admin_username: admin_username 
+    admin_password: admin_password 
+    vnet_id: vnet.outputs.vnetResourceId
+    vm_name: !empty(vm_name) ? vm_name : resourceNames.outputs.vm_name
+    vm_nic_name: resourceNames.outputs.vm_nic_name
+    vm_pip_name: resourceNames.outputs.vm_pip_name
+    vm_os_disk_name: resourceNames.outputs.vm_os_disk_name
+    vm_nsg_name: resourceNames.outputs.vm_nsg_name
+    
+    subnet_name: !empty(subnetJumpboxName) ? subnetJumpboxName : resourceNames.outputs.subnetJumpboxName
+    // VM configuration
+    vm_size: 'Standard_B2s_v2'
+    os_disk_size_gb: 128
+    os_type: 'Windows'
+    my_ip_address: myIpAddress
+    // Location and tags
+    location: location
+    tags: tags
+  }
+}
+
+// --------------------------------------------------------------------------------------------------------------
 // -- Container Registry ----------------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------------------------------
 module containerRegistry './modules/app/containerregistry.bicep' = {
@@ -193,8 +293,8 @@ module containerRegistry './modules/app/containerregistry.bicep' = {
     acrSku: 'Premium'
     tags: tags
     publicAccessEnabled: publicAccessEnabled
-    privateEndpointName: ''
-    privateEndpointSubnetId: ''
+    privateEndpointName: 'pe-${resourceNames.outputs.ACR_Name}'
+    privateEndpointSubnetId: deployVNET ? vnet.outputs.subnetPeResourceID : ''
     myIpAddress: myIpAddress
   }
 }
@@ -221,6 +321,11 @@ module storage './modules/storage/storage-account.bicep' = {
     name: resourceNames.outputs.storageAccountName
     location: location
     tags: tags
+    // publicNetworkAccess: publicAccessEnabled
+    privateEndpointSubnetId: deployVNET ? vnet.outputs.subnetPeResourceID : ''
+    privateEndpointBlobName: 'pe-blob-${resourceNames.outputs.storageAccountName}'
+    privateEndpointQueueName: 'pe-queue-${resourceNames.outputs.storageAccountName}'
+    privateEndpointTableName: 'pe-table-${resourceNames.outputs.storageAccountName}'
     myIpAddress: myIpAddress
     containers: ['data', 'batch-input', 'batch-output']
   }
@@ -276,6 +381,8 @@ module keyVault './modules/security/keyvault.bicep' = {
     publicNetworkAccess: publicAccessEnabled ? 'Enabled' : 'Disabled'
     keyVaultOwnerIpAddress: myIpAddress
     createUserAssignedIdentity: false
+    privateEndpointName: 'pe-${resourceNames.outputs.keyVaultName}'
+    privateEndpointSubnetId: deployVNET ? vnet.outputs.subnetPeResourceID : ''
   }
 }
 
@@ -372,6 +479,8 @@ module cosmos './modules/database/cosmosdb.bicep' = {
     containerArray: cosmosContainerArray
     location: location
     tags: tags
+    privateEndpointSubnetId: deployVNET ? vnet.outputs.subnetPeResourceID : ''
+    privateEndpointName: 'pe-${resourceNames.outputs.cosmosName}'
     managedIdentityPrincipalId: identity.outputs.managedIdentityPrincipalId
     userPrincipalId: principalId
     publicNetworkAccess: publicAccessEnabled ? 'enabled' : 'disabled'
@@ -389,6 +498,8 @@ module searchService './modules/search/search-services.bicep' = {
     name: resourceNames.outputs.searchServiceName
     publicNetworkAccess: publicAccessEnabled ? 'enabled' : 'disabled'
     myIpAddress: myIpAddress
+    privateEndpointSubnetId: deployVNET ? vnet.outputs.subnetPeResourceID : ''
+    privateEndpointName: 'pe-${resourceNames.outputs.searchServiceName}'
     managedIdentityId: identity.outputs.managedIdentityId
     sku: {
       name: 'basic'
@@ -429,6 +540,8 @@ module openAI './modules/ai/cognitive-services.bicep' = {
       DeploymentCapacity: 10
     }
     publicNetworkAccess: publicAccessEnabled ? 'enabled' : 'disabled'
+    privateEndpointSubnetId: deployVNET ? vnet.outputs.subnetPeResourceID : ''
+    privateEndpointName: 'pe-${resourceNames.outputs.cogServiceName}'
     myIpAddress: myIpAddress
   }
   dependsOn: [
@@ -443,6 +556,8 @@ module documentIntelligence './modules/ai/document-intelligence.bicep' = {
     location: location // this may be different than the other resources
     tags: tags
     publicNetworkAccess: publicAccessEnabled ? 'enabled' : 'disabled'
+    privateEndpointSubnetId: deployVNET ? vnet.outputs.subnetPeResourceID : ''
+    privateEndpointName: 'pe-${resourceNames.outputs.documentIntelligenceName}'
     myIpAddress: myIpAddress
     managedIdentityId: identity.outputs.managedIdentityId
   }
@@ -467,6 +582,7 @@ module aiFoundryHub './modules/ai-foundry/ai-foundry-hub.bicep' = {
     aiServicesId: openAI.outputs.id
     aiServicesName: openAI.outputs.name
     aiServicesTarget: openAI.outputs.endpoint
+    //aoaiModelDeployments: openAI.outputs.deployments
     aiSearchId: searchService.outputs.id
     aiSearchName: searchService.outputs.name
   }
@@ -479,6 +595,8 @@ module aiFoundryProject './modules/ai-foundry/ai-foundry-project.bicep' = {
     name: resourceNames.outputs.aiHubFoundryProjectName
     tags: commonTags
     hubId: aiFoundryHub.outputs.id
+    //hubName: aiFoundryHub.outputs.name
+    //aiServicesConnectionName: [aiFoundryHub.outputs.connection_aisvcName]
   }
 }
 module aiFoundryIdentityRoleAssignments './modules/iam/role-assignments.bicep' = if (addRoleAssignments) {
@@ -527,6 +645,47 @@ module formatProjectWorkspaceId './modules/cognitive-services/format-project-wor
 }
 
 // --------------------------------------------------------------------------------------------------------------
+// AI Foundry Hub and Project V1
+// Imported from https://github.com/msft-mfg-ai/smart-flow-public
+// --------------------------------------------------------------------------------------------------------------
+// module aiHub_v1 './modules/ai/ai-hub-secure.bicep' = if (deployAIHub) {
+//   name: 'aiHub${deploymentSuffix}'
+//   params: {
+//     aiHubName: resourceNames.outputs.aiHubName
+//     location: location
+//     tags: tags
+
+//     // dependent resources
+//     aiServicesId: openAI.outputs.id
+//     aiServicesTarget: openAI.outputs.endpoint
+//     aiSearchName: searchService.outputs.name
+//     applicationInsightsId: logAnalytics.outputs.applicationInsightsId
+//     containerRegistryId: containerRegistry.outputs.id
+//     keyVaultId: keyVault.outputs.id
+//     storageAccountId: storage.outputs.id
+
+//     // add data scientist role to user and application
+//     addRoleAssignments: addRoleAssignments
+//     userObjectId: principalId
+//     userObjectType: 'User'
+//     managedIdentityPrincipalId: identity.outputs.managedIdentityPrincipalId
+//     managedIdentityType: 'ServicePrincipal'
+//   }
+// }
+
+// module aiProject_v1 './modules/ai/ai-hub-project.bicep' = if (deployAIHub) {
+//   name: 'aiProject${deploymentSuffix}'
+//   params: {
+//     aiProjectName: resourceNames.outputs.aiHubProjectName
+//     aiProjectFriendlyName: aiProjectFriendlyName
+//     aiProjectDescription: aiProjectDescription
+//     location: location
+//     tags: tags
+//     aiHubId: aiHub.outputs.id
+//   }
+// }
+
+// --------------------------------------------------------------------------------------------------------------
 // -- APIM ------------------------------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------------------------------
 module apim './modules/api-management/apim.bicep' = if (deployAPIM) {
@@ -561,6 +720,30 @@ module apimIdentityRoleAssignments './modules/iam/role-assignments.bicep' = if (
 }
 
 // --------------------------------------------------------------------------------------------------------------
+// -- DNS ZONES ---------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------
+module allDnsZones './modules/networking/all-zones.bicep' = if (deployVNET && createDnsZones) {
+  name: 'all-dns-zones${deploymentSuffix}'
+  params: {
+    tags: tags
+    vnetResourceId: vnet.outputs.vnetResourceId
+
+    keyVaultPrivateEndpointName: keyVault.outputs.privateEndpointName
+    acrPrivateEndpointName: containerRegistry.outputs.privateEndpointName
+    openAiPrivateEndpointName: openAI.outputs.privateEndpointName
+    aiSearchPrivateEndpointName: searchService.outputs.privateEndpointName
+    documentIntelligencePrivateEndpointName: documentIntelligence.outputs.privateEndpointName
+    cosmosPrivateEndpointName: cosmos.outputs.privateEndpointName
+    storageBlobPrivateEndpointName: storage.outputs.privateEndpointBlobName
+    storageQueuePrivateEndpointName: storage.outputs.privateEndpointQueueName
+    storageTablePrivateEndpointName: storage.outputs.privateEndpointTableName
+
+    defaultAcaDomain: managedEnvironment.outputs.defaultDomain
+    acaStaticIp: managedEnvironment.outputs.staticIp
+  }
+}
+
+// --------------------------------------------------------------------------------------------------------------
 // -- Container App Environment ---------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------------------------------
 module managedEnvironment './modules/app/managedEnvironment.bicep' = {
@@ -570,7 +753,7 @@ module managedEnvironment './modules/app/managedEnvironment.bicep' = {
     location: location
     logAnalyticsWorkspaceName: logAnalytics.outputs.logAnalyticsWorkspaceName
     logAnalyticsRgName: resourceGroupName
-    // appSubnetId: deployVNET ? vnet.outputs.subnetAppSeResourceID : ''
+    appSubnetId: deployVNET ? vnet.outputs.subnetAppSeResourceID : ''
     tags: tags
     publicAccessEnabled: publicAccessEnabled
     containerAppEnvironmentWorkloadProfiles: containerAppEnvironmentWorkloadProfiles
@@ -617,7 +800,7 @@ module containerAppAPI './modules/app/containerappstub.bicep' = if (deployAPIApp
     }
     env: apiSettings
   }
-  dependsOn: [containerRegistry]
+  dependsOn: createDnsZones ? [allDnsZones, containerRegistry] : [containerRegistry]
 }
 
 var batchTargetPort = 8080
@@ -657,7 +840,25 @@ module containerAppBatch './modules/app/containerappstub.bicep' = if (deployBatc
     }
     env: batchSettings
   }
-  dependsOn: [containerRegistry]
+  dependsOn: createDnsZones ? [allDnsZones, containerRegistry] : [containerRegistry]
+}
+
+// --------------------------------------------------------------------------------------------------------------
+// -- Bastion Host ----------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------
+// Deploy Bastion Host for secure VM access
+module bastion './modules/networking/bastion.bicep' = {
+  name: 'bastionDeployment'
+  params: {
+    name: resourceNames.outputs.bastion_host_name
+    location: location
+    publicIPName: resourceNames.outputs.bastion_pip_name
+    subnetId: vnet.outputs.subnetBastionResourceID  // Make sure this output exists in your vnet module
+    tags: tags
+    enableTunneling: true
+    enableFileCopy: true
+    skuName: 'Standard'
+  }
 }
 
 // --------------------------------------------------------------------------------------------------------------
@@ -691,3 +892,6 @@ output STORAGE_ACCOUNT_BATCH_IN_CONTAINER string = storage.outputs.containerName
 output STORAGE_ACCOUNT_BATCH_OUT_CONTAINER string = storage.outputs.containerNames[2].name
 output STORAGE_ACCOUNT_CONTAINER string = storage.outputs.containerNames[0].name
 output STORAGE_ACCOUNT_NAME string = storage.outputs.name
+output VNET_CORE_ID string = deployVNET ? vnet.outputs.vnetResourceId : ''
+output VNET_CORE_NAME string = deployVNET ? vnet.outputs.vnetName : ''
+output VNET_CORE_PREFIX string = deployVNET ? vnet.outputs.vnetAddressPrefix : ''
