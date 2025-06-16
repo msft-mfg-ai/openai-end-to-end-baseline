@@ -46,6 +46,8 @@ resource aoailbpool 'Microsoft.ApiManagement/service/backends@2024-06-01-preview
   name: backendPoolName
   parent: apiManagementService
   properties: {
+    url: 'https://${backendPoolName}.openai.azure.com/openai' // not sure if this is right -- a total guess...!
+    protocol: 'http'
     description: 'Load balance multiple openai instances'
     type: 'Pool'
     pool: {

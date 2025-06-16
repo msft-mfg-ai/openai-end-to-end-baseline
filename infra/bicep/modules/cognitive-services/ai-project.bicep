@@ -16,9 +16,9 @@ param azureStorageName string
 param azureStorageSubscriptionId string
 param azureStorageResourceGroupName string
 
-param appInsightsName string
-param appInsightsSubscriptionId string
-param appInsightsResourceGroupName string
+// param appInsightsName string
+// param appInsightsSubscriptionId string
+// param appInsightsResourceGroupName string
 
 resource searchService 'Microsoft.Search/searchServices@2024-06-01-preview' existing = {
   name: aiSearchName
@@ -33,10 +33,10 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' existing 
   scope: resourceGroup(azureStorageSubscriptionId, azureStorageResourceGroupName)
 }
 
-resource appInsights 'Microsoft.Insights/components@2020-02-02' existing = {
-  name: appInsightsName
-  scope: resourceGroup(appInsightsSubscriptionId, appInsightsResourceGroupName)
-}
+// resource appInsights 'Microsoft.Insights/components@2020-02-02' existing = {
+//   name: appInsightsName
+//   scope: resourceGroup(appInsightsSubscriptionId, appInsightsResourceGroupName)
+// }
 
 resource account 'Microsoft.CognitiveServices/accounts@2025-04-01-preview' existing = {
   name: accountName
