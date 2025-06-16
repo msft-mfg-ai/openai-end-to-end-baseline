@@ -235,7 +235,7 @@ module containerRegistry './modules/app/containerregistry.bicep' = {
     tags: tags
     publicAccessEnabled: publicAccessEnabled
     privateEndpointName: 'pe-${resourceNames.outputs.ACR_Name}'
-    privateEndpointSubnetId: deployVNET ? vnet.outputs.subnet1ResourceId : ''
+    privateEndpointSubnetId: deployVNET ? vnet.outputs.subnetPeResourceID : ''
     myIpAddress: myIpAddress
   }
 }
@@ -263,7 +263,7 @@ module storage './modules/storage/storage-account.bicep' = {
     location: location
     tags: tags
     // publicNetworkAccess: publicAccessEnabled
-    privateEndpointSubnetId: deployVNET ? vnet.outputs.subnet1ResourceId : ''
+    privateEndpointSubnetId: deployVNET ? vnet.outputs.subnetPeResourceID : ''
     privateEndpointBlobName: 'pe-blob-${resourceNames.outputs.storageAccountName}'
     privateEndpointQueueName: 'pe-queue-${resourceNames.outputs.storageAccountName}'
     privateEndpointTableName: 'pe-table-${resourceNames.outputs.storageAccountName}'
@@ -323,7 +323,7 @@ module keyVault './modules/security/keyvault.bicep' = {
     keyVaultOwnerIpAddress: myIpAddress
     createUserAssignedIdentity: false
     privateEndpointName: 'pe-${resourceNames.outputs.keyVaultName}'
-    privateEndpointSubnetId: deployVNET ? vnet.outputs.subnet1ResourceId : ''
+    privateEndpointSubnetId: deployVNET ? vnet.outputs.subnetPeResourceID : ''
   }
 }
 
@@ -420,7 +420,7 @@ module cosmos './modules/database/cosmosdb.bicep' = {
     containerArray: cosmosContainerArray
     location: location
     tags: tags
-    privateEndpointSubnetId: deployVNET ? vnet.outputs.subnet1ResourceId : ''
+    privateEndpointSubnetId: deployVNET ? vnet.outputs.subnetPeResourceID : ''
     privateEndpointName: 'pe-${resourceNames.outputs.cosmosName}'
     managedIdentityPrincipalId: identity.outputs.managedIdentityPrincipalId
     userPrincipalId: principalId
@@ -439,7 +439,7 @@ module searchService './modules/search/search-services.bicep' = {
     name: resourceNames.outputs.searchServiceName
     publicNetworkAccess: publicAccessEnabled ? 'enabled' : 'disabled'
     myIpAddress: myIpAddress
-    privateEndpointSubnetId: deployVNET ? vnet.outputs.subnet1ResourceId : ''
+    privateEndpointSubnetId: deployVNET ? vnet.outputs.subnetPeResourceID : ''
     privateEndpointName: 'pe-${resourceNames.outputs.searchServiceName}'
     managedIdentityId: identity.outputs.managedIdentityId
     sku: {
@@ -481,7 +481,7 @@ module openAI './modules/ai/cognitive-services.bicep' = {
       DeploymentCapacity: 10
     }
     publicNetworkAccess: publicAccessEnabled ? 'enabled' : 'disabled'
-    privateEndpointSubnetId: deployVNET ? vnet.outputs.subnet1ResourceId : ''
+    privateEndpointSubnetId: deployVNET ? vnet.outputs.subnetPeResourceID : ''
     privateEndpointName: 'pe-${resourceNames.outputs.cogServiceName}'
     myIpAddress: myIpAddress
   }
@@ -497,7 +497,7 @@ module documentIntelligence './modules/ai/document-intelligence.bicep' = {
     location: location // this may be different than the other resources
     tags: tags
     publicNetworkAccess: publicAccessEnabled ? 'enabled' : 'disabled'
-    privateEndpointSubnetId: deployVNET ? vnet.outputs.subnet1ResourceId : ''
+    privateEndpointSubnetId: deployVNET ? vnet.outputs.subnetPeResourceID : ''
     privateEndpointName: 'pe-${resourceNames.outputs.documentIntelligenceName}'
     myIpAddress: myIpAddress
     managedIdentityId: identity.outputs.managedIdentityId
@@ -506,7 +506,6 @@ module documentIntelligence './modules/ai/document-intelligence.bicep' = {
     searchService
   ]
 }
-
 
 // --------------------------------------------------------------------------------------------------------------
 // AI Foundry Hub and Project V2
@@ -691,12 +690,11 @@ module allDnsZones './modules/networking/all-zones.bicep' = if (deployVNET && cr
 module managedEnvironment './modules/app/managedEnvironment.bicep' = {
   name: 'caenv${deploymentSuffix}'
   params: {
-    // existingEnvironmentName: existing_managedAppEnv_Name
     newEnvironmentName: resourceNames.outputs.caManagedEnvName
     location: location
     logAnalyticsWorkspaceName: logAnalytics.outputs.logAnalyticsWorkspaceName
     logAnalyticsRgName: resourceGroupName
-    appSubnetId: deployVNET ? vnet.outputs.subnet2ResourceId : ''
+    appSubnetId: deployVNET ? vnet.outputs.subnetAppSeResourceID : ''
     tags: tags
     publicAccessEnabled: publicAccessEnabled
     containerAppEnvironmentWorkloadProfiles: containerAppEnvironmentWorkloadProfiles

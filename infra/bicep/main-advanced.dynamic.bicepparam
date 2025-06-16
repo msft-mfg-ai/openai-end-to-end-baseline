@@ -9,7 +9,6 @@
 //   USER_PRINCIPAL_ID   - GH Environment Secret - User Principal ID - this is you - BYO User
 //   INSTANCE_NUMBER     - GH Environment Variable
 //   OWNER_EMAIL         - GH Environment Variable - optional
-//   runBuildDeployAPI    - Runtime  - User decision to deploy webapp or not
 //   environmentName     - Runtime  - Environment Code (e.g., dev, qa, prod)
 // --------------------------------------------------------------------------------
 
@@ -24,71 +23,16 @@ param ownerEmailTag = '#{OWNER_EMAIL}#'
 param requestorName= '#{requestorName}#'
 param regionCode = '#{GLOBAL_REGION_CODE}#' 
 param costCenterTag = 'CC'
-// param addRoleAssignments = '#{addRoleAssignments}#'
-param createDnsZones = true // Should we create DNS zones?
-param publicAccessEnabled = true // Should we enable public access to the web app?
+
+param addRoleAssignments = #{addRoleAssignments}#
+param createDnsZones = true
+param publicAccessEnabled = false
+
 param admin_username = '#{ADMIN_USERNAME}#' // This is the username for the admin user of jumpboxvm
 param admin_password = '#{ADMIN_PASSWORD}#' // This is the password for the admin user of jumpboxvm
+param vm_name = '#{VM_NAME}#' // optional Jumpbox VM name - otherwise created by resourceNames.bicep
+param myIpAddress = '#{MY_IP_ADDRESS}#'
+
+param openAI_deploy_location = '#{OPENAI_DEPLOY_LOCATION}#'
 param deployAIHub = true
 param deployAPIApp = false // Should we deploy the web app?
-
-// VM resource names are now generated automatically from resourceNames.bicep module outputs
-
-// param deployUIApp = #{runBuildDeployUI}#  // Should we deploy the web app?
-// param deployBatchApp = #{deployBatchApp}#
-
-// param openAI_deploy_location = '#{OPENAI_DEPLOY_LOCATION}#'
-// param appendResourceTokens = false
-// param myIpAddress = '#{ADMIN_IP_ADDRESS}#'
-
-// param existingVnetName = '#{APP_NAME_NO_DASHES}#-vnet-#{envCode}#'
-// param existingVnetResourceGroupName = '#{RESOURCEGROUP_PREFIX}#-#{envCode}#'
-//param vnetPrefix = '10.2.0.0/16'
-//param subnet1Name = 'subnet1dynamic'
-//param subnet1Prefix = '10.2.0.64/26'
-//param subnet2Name = 'subnet2dyanamic'
-//param subnet2Prefix = '10.2.2.0/23'
-
-// Example parameters file for deploying main-advanced.bicep with jumpbox VM
-// Usage: az deployment group create --resource-group <your-rg> --template-file main-advanced.bicep --parameters @main-advanced.jumpbox.bicepparam
-
-// Basic deployment parameters
-
-// OpenAI configuration
-param openAI_deploy_location = 'East US'
-
-// Network security
-param myIpAddress = '47.198.33.41'
-
-// Jumpbox VM configuration (optional - remove or leave empty to skip VM deployment)
-param vm_name = '' 
-
-// Example Application Gateway certificate (if needed)
-// param appGatewayListenerCertificate = '<base64-encoded-certificate-data>'
-
-// Existing resources (optional)
-// param existing_ACR_Name = ''
-// param existing_ACR_ResourceGroupName = ''
-
-
-
-
-// param existing_ACR_Name = '#{APP_NAME_NO_DASHES}#cr#{envCode}#'
-// param existing_ACR_ResourceGroupName = '#{RESOURCEGROUP_PREFIX}#-#{envCode}#'
-
-// param existing_CogServices_Name = '#{APP_NAME_NO_DASHES}#-cog-#{envCode}#'
-// param existing_CogServices_ResourceGroupName = '#{RESOURCEGROUP_PREFIX}#-#{envCode}#'
-
-// param existing_SearchService_Name = '#{APP_NAME_NO_DASHES}#-srch-#{envCode}#'
-// param existing_SearchService_ResourceGroupName = '#{RESOURCEGROUP_PREFIX}#-#{envCode}#'
-
-// param existing_Cosmos_Name = '#{APP_NAME_NO_DASHES}#-cosmos-#{envCode}#'
-// param existing_Cosmos_ResourceGroupName = '#{RESOURCEGROUP_PREFIX}#-#{envCode}#'
-
-// param existingKeyVaultName = '#{APP_NAME_NO_DASHES}#kv#{envCode}#'
-// param existing_KeyVault_ResourceGroupName = '#{RESOURCEGROUP_PREFIX}#-#{envCode}#'
-
-// param existing_LogAnalytics_Name = '#{APP_NAME_NO_DASHES}#-log-#{envCode}#'
-// param existing_AppInsights_Name = '#{APP_NAME_NO_DASHES}#-appi-#{envCode}#'
-
-// param existing_managedAppEnv_Name = '#{APP_NAME_NO_DASHES}#-cae-#{envCode}#'
