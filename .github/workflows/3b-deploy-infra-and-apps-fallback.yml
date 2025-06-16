@@ -7,11 +7,6 @@
 name: 3b - Deploy Infra, Build, Deploy w Fallback
 run-name: 3b - Deploy Infra, Build, Deploy Fallback to ENV ${{ inputs.deployEnvironment }} by @${{ github.actor }}
 on:
-  # push:
-  #   branches:
-  #     - main
-  #   paths:
-  #     - app/**
   workflow_dispatch:
     inputs:
       deployEnvironment:
@@ -88,6 +83,11 @@ on:
       #   description: Instance number for resource naming
       #   type: string
       #   default: '001'
+  # push:
+  #   branches:
+  #     - main
+  #   paths:
+  #     - app/**
 
 permissions:
   id-token: write # This is required for requesting the JWT
