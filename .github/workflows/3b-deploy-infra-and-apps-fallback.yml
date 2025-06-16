@@ -49,11 +49,11 @@ on:
         description: Deploy AI Hub?
         type: boolean
         default: true
-      runBuildDeployAPI:
-        description: 'Build and Deploy API'
-        required: false
-        default: true
-        type: boolean
+      # runBuildDeployAPI:
+      #   description: 'Build and Deploy API'
+      #   required: false
+      #   default: true
+      #   type: boolean
       runSecurityScan:
         description: 'Run Security Scan'
         required: false
@@ -185,7 +185,7 @@ jobs:
       RESOURCE_GROUP: ${{ needs.template-env.outputs.RESOURCE_GROUP_NAME }}
       ACR_REPO_NAME: ${{ needs.template-env.outputs.ACR_REPO_NAME }}
 
-      BUILD_DEPLOY_UI: ${{ inputs.runBuildDeployAPI }}
+      BUILD_DEPLOY_UI: false # $ { {  inputs.runBuildDeployAPI } }
       UI_APP_PATH: ${{ needs.template-env.outputs.API_APP_PATH }}
       UI_ACR_APP_NAME: ${{ needs.template-env.outputs.API_ACR_APP_NAME }}
 
@@ -193,7 +193,7 @@ jobs:
   deploy-api:
     name: Deploy API ${{ inputs.deployEnvironment }} ${{ inputs.deployType }}
     uses: ./.github/workflows/template-aca-deploy.yml
-    if: inputs.runBuildDeployAPI
+    # i f : inputs.runBuildDeployAPI
     needs:
       - build-all
       - template-env
