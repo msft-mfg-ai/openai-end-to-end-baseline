@@ -2,7 +2,7 @@
 # Action: Deploy Azure Resources via Bicep Files
 # ------------------------------------------------------------------------------------------------------------------------
 name: 1 - Deploy Infrastructure
-run-name: 1 - Deploy Infrastructure to ENV ${{ inputs.deployEnvironment }} by @${{ github.actor }}
+run-name: 1 - Deploy ${{ inputs.bicepVersion }} Infrastructure to ENV ${{ inputs.deployEnvironment }} by @${{ github.actor }}
 
 on:
   workflow_dispatch:
@@ -23,19 +23,30 @@ on:
           - preston
           - chris
           - matt
-      bicepFile:
-        description: Main Bicep File
+      bicepVersion:
+        description: Version - Basic is public, Advanced includes private networking features.
         required: true
-        default: 'main-basic.bicep'
+        default: 'basic'
         type: choice
         options:
-          - main-basic.bicep
-          - main-advanced.bicep
-      parameterFile:
-        description: Parameter File
-        required: true
-        default: 'main-basic.dynamic.bicepparam'
-        type: string
+          - basic
+          - advanced
+      appsToDeploy:
+        description: Apps to Deploy
+        default: none
+        type: choice
+        options:
+          - none
+          - API
+          - UI
+          - API+UI
+      loginMethod:
+        description: Login Method?
+        type: choice
+        default: federated
+        options:
+          - federated
+          - client-secret
       createResourceGroup:
         description: Create Resource Group?
         type: boolean
@@ -48,31 +59,8 @@ on:
         description: Deploy APIM?
         type: boolean
         default: true
-      runBuildDeployAPI:
-        description: Build and Deploy API?
-        required: false
-        default: false
-        type: boolean
-      loginUsingClientSecret:
-        description: Login using Client Secret?
-        required: false
-        default: false
-        type: boolean
-        
-      # runBuildDeployUI:
-      #   description: Build and Deploy UI
-      #   required: false
-      #   default: false
-      #   type: boolean
-      # publicAccessEnabled:
-      #   description: Public Access Enabled?
-      #   type: boolean
-      #   default: true
-      # createDnsZones:
-      #   description: Create DNS Zones?
-      #   type: boolean
-      #   default: true
 
+# ------------------------------------------------------------------------------------------------------------------------
 jobs:
   Deploy_Bicep:
     name: Deploy ${{ inputs.deployEnvironment }} Bicep
@@ -86,17 +74,12 @@ jobs:
     with:
       envCode: ${{ inputs.deployEnvironment }}
       templatePath: './infra/bicep/'
-      templateFile: ${{ inputs.bicepFile }}
-      parameterFile: ${{ inputs.parameterFile }}
+      templateFile: 'main-${{ inputs.bicepVersion }}.bicep'
+      parameterFile: 'main-${{ inputs.bicepVersion }}.bicepparam'
       parameterFileReplaceTokens: 'true'
-
+      requestorName: ${{ github.actor }}
       createResourceGroup: ${{ inputs.createResourceGroup }}
       addRoleAssignments: ${{ inputs.addRoleAssignments }}
-      runBuildDeployAPI: ${{ inputs.runBuildDeployAPI }}
       deployAPIM: ${{ inputs.deployAPIM }}
-      loginUsingClientSecret: ${{ inputs.loginUsingClientSecret }}
-
-      deployAIHub: true
-      publicAccessEnabled: true
-      createDnsZones: false
-      requestorName: ${{ github.actor }}
+      appsToDeploy: ${{ inputs.appsToDeploy }}
+      loginMethod: ${{ inputs.loginMethod }}

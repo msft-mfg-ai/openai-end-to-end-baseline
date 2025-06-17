@@ -10,7 +10,6 @@ resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2024-05-0
     securityRules: [
       {
         name: 'AllowAnyCustom8080Inbound'
-        type: 'Microsoft.Network/networkSecurityGroups/securityRules'
         properties: {
           protocol: '*'
           sourcePortRange: '*'
@@ -24,7 +23,6 @@ resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2024-05-0
       }
       {
         name: 'AllowAnyCustom8000Inbound'
-        type: 'Microsoft.Network/networkSecurityGroups/securityRules'
         properties: {
           protocol: '*'
           sourcePortRange: '*'
@@ -38,7 +36,6 @@ resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2024-05-0
       }
       {
         name: 'AllowAnyCustom443Inbound'
-        type: 'Microsoft.Network/networkSecurityGroups/securityRules'
         properties: {
           protocol: '*'
           sourcePortRange: '*'
@@ -52,7 +49,6 @@ resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2024-05-0
       }
       {
         name: 'AllowAnyCustom80Inbound'
-        type: 'Microsoft.Network/networkSecurityGroups/securityRules'
         properties: {
           protocol: '*'
           sourcePortRange: '*'
@@ -66,7 +62,6 @@ resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2024-05-0
       }
       {
         name: 'AllowAllOutbound'
-        type: 'Microsoft.Network/networkSecurityGroups/securityRules'
         properties: {
           protocol: '*'
           sourcePortRange: '*'

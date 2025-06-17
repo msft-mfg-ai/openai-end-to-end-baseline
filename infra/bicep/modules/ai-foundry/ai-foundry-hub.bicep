@@ -82,8 +82,12 @@ resource connection_aisvc 'Microsoft.MachineLearningServices/workspaces/connecti
   properties: {
     category: aiServiceKind // either AIServices or AzureOpenAI
     target: aiServicesTarget
-    useWorkspaceManagedIdentity: true
+    // when you deploy with authType 'ManagedIdentity', it throws an error:
+    //   AuthType for CognitiveSearch Connection can only be AAD or ApiKey 
     authType: 'AAD'
+    // if you specify this, it fails
+    //    useWorkspaceManagedIdentity: true
+    // See: https://learn.microsoft.com/en-us/azure/templates/microsoft.machinelearningservices/workspaces/connections?pivots=deployment-language-bicep#workspaceconnectionmanagedidentity
     isSharedToAll: true
     metadata: {
       ApiType: 'Azure'
@@ -99,8 +103,12 @@ resource connection_search 'Microsoft.MachineLearningServices/workspaces/connect
   properties: {
     category: 'CognitiveSearch'
     target: 'https://${aiSearchName}.search.windows.net/'
-    // useWorkspaceManagedIdentity: true
+    // when you deploy with authType 'ManagedIdentity', it throws an error:
+    //   AuthType for CognitiveSearch Connection can only be AAD or ApiKey 
     authType: 'AAD'
+    // if you specify this, it fails
+    //    useWorkspaceManagedIdentity: true
+    // See: https://learn.microsoft.com/en-us/azure/templates/microsoft.machinelearningservices/workspaces/connections?pivots=deployment-language-bicep#workspaceconnectionmanagedidentity
     isSharedToAll: true
     metadata: {
       ApiType: 'Azure'

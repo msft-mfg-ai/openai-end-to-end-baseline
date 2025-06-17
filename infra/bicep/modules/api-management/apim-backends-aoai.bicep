@@ -45,7 +45,14 @@ resource backends 'Microsoft.ApiManagement/service/backends@2024-06-01-preview' 
 resource aoailbpool 'Microsoft.ApiManagement/service/backends@2024-06-01-preview' = {
   name: backendPoolName
   parent: apiManagementService
+  #disable-next-line BCP035
   properties: {
+    // Bicep compiler says URL and Protocol are required
+    // When trying to use them in the deploy, it says:
+    //   Url is not supported for backend pool.
+    //   Protocol is not supported for backend pool.
+    // url: 'https://${backendPoolName}.openai.azure.com/openai' // not sure if this is right -- a total guess...!
+    // protocol: 'http'
     description: 'Load balance multiple openai instances'
     type: 'Pool'
     pool: {
