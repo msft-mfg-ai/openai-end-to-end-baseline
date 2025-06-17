@@ -4,7 +4,7 @@
 # Note: in order to do multiple CA build/deploys, you need to change FW and login ONCE, otherwise
 # it tends to have token refresh issues and fail on the second and third app
 # ------------------------------------------------------------------------------------------------------------------------
-name: 3 - Deploy Infra, Build, Deploy All Apps
+name: z-Unused-3 - Deploy Infra, Build, Deploy All Apps
 run-name: 3 - Deploy Infra, Build, Deploy to ENV ${{ inputs.deployEnvironment }} by @${{ github.actor }}
 on:
   workflow_dispatch:
