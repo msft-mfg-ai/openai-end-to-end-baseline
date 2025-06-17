@@ -24,7 +24,7 @@ on:
           - chris
           - matt
       bicepVersion:
-        description: Version - Basic is public, Advanced includes private networking features.
+        description: Version - Basic=public, Advanced=VNET
         required: true
         default: 'basic'
         type: choice
