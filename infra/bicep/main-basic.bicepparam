@@ -30,4 +30,5 @@ param publicAccessEnabled = true
 
 param deployAIHub = #{deployAIHub}#
 param deployAPIM = #{deployAPIM}#
-param deployAPIApp = #{runBuildDeployAPI}#  // Should we deploy the web app?
+param deployAPIApp = #{deployAPI}#  // Should we deploy the API app?
+param deployUIApp = #{deployUI}#  // Should we deploy the UI app?

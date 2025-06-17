@@ -24,21 +24,29 @@ on:
           - chris
           - matt
       bicepVersion:
-        description: Bicep Version - basic or advanced? Basic is public, Advanced includes private networking features.
+        description: Version - Basic is public, Advanced includes private networking features.
         required: true
         default: 'basic'
         type: choice
         options:
           - basic
           - advanced
-      # bicepFile:
-      #   description: Main Bicep File
-      #   required: true
-      #   default: 'main-basic.bicep'
-      #   type: choice
-      #   options:
-      #     - main-basic.bicep
-      #     - main-advanced.bicep
+      appsToDeploy:
+        description: Apps to Deploy
+        default: none
+        type: choice
+        options:
+          - none
+          - API
+          - UI
+          - API+UI
+      loginMethod:
+        description: Login using Client Secret?
+        type: choice
+        default: federated
+        options:
+          - federated
+          - client-secret
       createResourceGroup:
         description: Create Resource Group?
         type: boolean
@@ -51,16 +59,6 @@ on:
         description: Deploy APIM?
         type: boolean
         default: true
-      runBuildDeployAPI:
-        description: Build and Deploy API?
-        required: false
-        default: false
-        type: boolean
-      loginUsingClientSecret:
-        description: Login using Client Secret?
-        required: false
-        default: false
-        type: boolean
 
 # ------------------------------------------------------------------------------------------------------------------------
 jobs:
@@ -79,14 +77,12 @@ jobs:
 
       templateFile: 'main-${{ inputs.bicepVersion }}.bicep'
       parameterFile: 'main-${{ inputs.bicepVersion }}.bicepparam'
-      # templateFile: ${{ inputs.bicepFile }}
-      # parameterFile: '${{ inputs.bicepFile }}param'
       parameterFileReplaceTokens: 'true'
 
       requestorName: ${{ github.actor }}
       createResourceGroup: ${{ inputs.createResourceGroup }}
       addRoleAssignments: ${{ inputs.addRoleAssignments }}
 
-      runBuildDeployAPI: ${{ inputs.runBuildDeployAPI }}
       deployAPIM: ${{ inputs.deployAPIM }}
-      loginUsingClientSecret: ${{ inputs.loginUsingClientSecret }}
+      appsToDeploy: ${{ inputs.appsToDeploy }}
+      loginMethod: ${{ inputs.loginMethod }}

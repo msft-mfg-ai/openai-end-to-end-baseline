@@ -93,7 +93,7 @@ param adminPublisherName string = 'AI Agent Admin'
 // Existing images
 // --------------------------------------------------------------------------------------------------------------
 param apiImageName string = ''
-param batchImageName string = ''
+param UIImageName string = ''
 
 // --------------------------------------------------------------------------------------------------------------
 // Other deployment switches
@@ -111,8 +111,8 @@ param appendResourceTokens bool = false
 // param deployUIApp bool = false
 @description('Should API container app be deployed?')
 param deployAPIApp bool = false
-@description('Should Batch container app be deployed?')
-param deployBatchApp bool = false
+@description('Should UI container app be deployed?')
+param deployUIApp bool = false
 
 @description('Global Region where the resources will be deployed, e.g. AM (America), EM (EMEA), AP (APAC), CH (China)')
 @allowed(['AM', 'EM', 'AP', 'CH'])
@@ -617,33 +617,29 @@ module containerAppAPI './modules/app/containerappstub.bicep' = if (deployAPIApp
   dependsOn: [containerRegistry]
 }
 
-var batchTargetPort = 8080
-var batchSettings = union(apiSettings, [
+var UITargetPort = 8080
+var UISettings = union(apiSettings, [
   { name: 'FUNCTIONS_WORKER_RUNTIME', value: 'dotnet-isolated' }
   // see: https://learn.microsoft.com/en-us/azure/azure-functions/durable/durable-functions-configure-managed-identity
   { name: 'AzureWebJobsStorage__accountName', value: storage.outputs.name }
   { name: 'AzureWebJobsStorage__credential', value: 'managedidentity' }
   { name: 'AzureWebJobsStorage__clientId', value: identity.outputs.managedIdentityClientId }
-  { name: 'BatchAnalysisStorageAccountName', value: storage.outputs.name }
-  { name: 'BatchAnalysisStorageInputContainerName', value: storage.outputs.containerNames[1].name }
-  { name: 'BatchAnalysisStorageOutputContainerName', value: storage.outputs.containerNames[2].name }
   { name: 'CosmosDbDatabaseName', value: cosmos.outputs.databaseName }
   { name: 'CosmosDbContainerName', value: uiChatContainerName }
-  { name: 'MaxBatchSize', value: '10' }
 ])
-module containerAppBatch './modules/app/containerappstub.bicep' = if (deployBatchApp) {
-  name: 'ca-batch-stub${deploymentSuffix}'
+module containerAppUI './modules/app/containerappstub.bicep' = if (deployUIApp) {
+  name: 'ca-UI-stub${deploymentSuffix}'
   params: {
-    appName: resourceNames.outputs.containerAppBatchName
+    appName: resourceNames.outputs.containerAppUIName
     managedEnvironmentName: managedEnvironment.outputs.name
     managedEnvironmentRg: managedEnvironment.outputs.resourceGroupName
     workloadProfileName: appContainerAppEnvironmentWorkloadProfileName
     registryName: resourceNames.outputs.ACR_Name
-    targetPort: batchTargetPort
+    targetPort: UITargetPort
     userAssignedIdentityName: identity.outputs.managedIdentityName
     location: location
-    imageName: batchImageName
-    tags: union(tags, { 'azd-service-name': 'batch' })
+    imageName: UIImageName
+    tags: union(tags, { 'azd-service-name': 'UI' })
     deploymentSuffix: deploymentSuffix
     secrets: {
       cosmos: cosmosSecret.outputs.secretUri
@@ -652,7 +648,7 @@ module containerAppBatch './modules/app/containerappstub.bicep' = if (deployBatc
       searchkey: searchSecret.outputs.secretUri
       apikey: apiKeySecret.outputs.secretUri
     }
-    env: batchSettings
+    env: UISettings
   }
   dependsOn: [containerRegistry]
 }
