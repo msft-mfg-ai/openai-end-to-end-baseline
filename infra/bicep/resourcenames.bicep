@@ -62,12 +62,39 @@ output caManagedIdentityName string       = toLower('${resourceAbbreviations.man
 output kvManagedIdentityName string       = toLower('${resourceAbbreviations.managedIdentityUserAssignedIdentities}-${sanitizedAppName}-${resourceAbbreviations.keyVaultVaults}-${sanitizedEnvironment}${dashInstance}')
 output userAssignedIdentityName string    = toLower('${resourceAbbreviations.managedIdentityUserAssignedIdentities}-${sanitizedAppName}-app-${sanitizedEnvironment}${dashInstance}')
 
-output vnet_Name string                   = toLower('${sanitizedAppName}-${resourceAbbreviations.networkVirtualNetworks}-${sanitizedEnvironment}${resourceTokenWithDash}${dashRegionDashInstance}')
-output vnetAppSubnetName string           = toLower('snet-app')
-output vnetPeSubnetName string            = toLower('snet-prv-endpoint')
-
 // ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Container Registry, Key Vaults and Storage Account names are only alpha numeric characters limited length
 output ACR_Name string                    = take('${resourceAbbreviations.containerRegistryRegistries}${sanitizedAppName}${sanitizedEnvironment}${resourceTokenWithoutDash}${regionInstance}', 50)
 output keyVaultName string                = take('${resourceAbbreviations.keyVaultVaults}${sanitizedAppName}${sanitizedEnvironment}${resourceTokenWithoutDash}${regionInstance}', 24)
 output storageAccountName string          = take('${resourceAbbreviations.storageStorageAccounts}${sanitizedAppName}${sanitizedEnvironment}${resourceTokenWithoutDash}${regionInstance}', 24)
+
+// ----------------------------------------------------------------------------------------------------------------------------------------------------------------
+// Network resource names
+// ----------------------------------------------------------------------------------------------------------------------------------------------------------------
+output vnet_Name string                   = toLower('${sanitizedAppName}-${resourceAbbreviations.networkVirtualNetworks}-${sanitizedEnvironment}${resourceTokenWithDash}${dashRegionDashInstance}')
+output subnetAppGwName string             = toLower('snet-app-gateway')
+output subnetAppSeName string             = toLower('snet-app-services')
+output subnetPeName string                = toLower('snet-private-endpoint')
+output subnetAgentName string             = toLower('snet-agent')
+output subnetBastionName string           = 'AzureBastionSubnet' // Must be exactly this name for Azure Bastion
+output subnetJumpboxName string           = toLower('snet-jumpbox')  
+output subnetTrainingName string          = toLower('snet-training')
+output subnetScoringName string           = toLower('snet-scoring')
+
+//param vnetPrefix string = '10.183.4.0/22'
+//param subnetAppGwPrefix string = '10.183.5.0/24'
+//param subnetAppSePrefix string = '10.183.4.0/24'
+//param subnetPePrefix string = '10.183.6.0/27'
+//param subnetAgentPrefix string = '10.183.6.32/27'
+//param subnetBastionPrefix string = '10.183.6.64/26'
+//param subnetJumpboxPrefix string = '10.183.6.128/28'
+//param subnetTrainingPrefix string = '10.183.7.0/25'
+//param subnetScoringPrefix string = '10.183.7.128/25'
+
+output vm_name string                     = take(toLower('${sanitizedAppName}-${resourceAbbreviations.computeVirtualMachines}${dashInstance}-${sanitizedEnvironment}'),15)
+output vm_nic_name string                 = toLower('${sanitizedAppName}${resourceAbbreviations.networkNetworkInterfaces}${dashInstance}-${sanitizedEnvironment}')
+output vm_pip_name string                 = toLower('${sanitizedAppName}${resourceAbbreviations.networkPublicIPAddresses}${dashInstance}-${sanitizedEnvironment}')
+output vm_os_disk_name string             = toLower('${sanitizedAppName}-${resourceAbbreviations.computeDisks}${dashInstance}-${sanitizedEnvironment}')
+output vm_nsg_name string                 = toLower('${sanitizedAppName}${resourceAbbreviations.networkNetworkSecurityGroups}${dashInstance}-${sanitizedEnvironment}')
+output bastion_host_name string           = toLower('${sanitizedAppName}${resourceAbbreviations.networkBastionHosts}${dashInstance}-${sanitizedEnvironment}')
+output bastion_pip_name string         =    toLower('${sanitizedAppName}${resourceAbbreviations.networkPublicIPAddresses}${resourceAbbreviations.bastionPip}${dashInstance}-${sanitizedEnvironment}')

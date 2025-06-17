@@ -136,4 +136,23 @@ The github repo is msft-mfg-ai/openai-end-to-end-baseline and the primary branch
 
 ---
 
+# Copilot Instructions for Claude Models in VSCode
+[Fix Claude models when Using VSCode](https://github.com/user-attachments/files/20546331/copilot-instructions.md "" "copilot-instructions.md")
+[Courtesy Of:](https://www.linkedin.com/in/kvn27/ " "Michael Elian Kevin")
+## File Editing Tool Preference
+- ❌ **NEVER** use `replace_string_in_file`, `patch_edit`, `text_edit`, or any model-specific editing tool
+- ✅ **ALWAYS** use `insert_edit_into_file` for modifications
+- ✅ Use `create_file` for new files only
+
+Only use other file editing tools if:
+- `insert_edit_into_file` is explicitly not available
+- The user specifically requests a different tool
+- You are creating entirely new files (use `create_file`)
+
+## Always perform regressive review of changed files for any residual formatting issues
+
+- Always check for any residual missing newline errors or other formatting inconsistencies in any files that was just modified by the agent mode operations.
+
+# Summary
+
 Apply these conventions when generating new code, infrastructure, or workflow files to ensure consistency with the existing project style.

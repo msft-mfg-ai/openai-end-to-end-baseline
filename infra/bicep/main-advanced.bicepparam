@@ -9,11 +9,10 @@
 //   USER_PRINCIPAL_ID   - GH Environment Secret - User Principal ID - this is you - BYO User
 //   INSTANCE_NUMBER     - GH Environment Variable
 //   OWNER_EMAIL         - GH Environment Variable - optional
-//   runBuildDeployAPI    - Runtime  - User decision to deploy webapp or not
 //   environmentName     - Runtime  - Environment Code (e.g., dev, qa, prod)
 // --------------------------------------------------------------------------------
 
-using './main-basic.bicep'
+using './main-advanced.bicep'
 
 param applicationName = '#{APP_NAME}#'
 param applicationId = '#{APP_ID}#'
@@ -26,9 +25,15 @@ param regionCode = '#{GLOBAL_REGION_CODE}#'
 param costCenterTag = 'CC'
 
 param addRoleAssignments = #{addRoleAssignments}#
-param createDnsZones = false
-param publicAccessEnabled = true
+param createDnsZones = true
+param publicAccessEnabled = false
 
-param deployAIHub = #{deployAIHub}#
-param deployAPIM = #{deployAPIM}#
-param deployAPIApp = #{runBuildDeployAPI}#  // Should we deploy the web app?
+param admin_username = '#{ADMIN_USERNAME}#' // This is the username for the admin user of jumpboxvm
+param admin_password = '#{ADMIN_PASSWORD}#' // This is the password for the admin user of jumpboxvm
+param vm_name = '#{VM_NAME}#' // optional Jumpbox VM name - otherwise created by resourceNames.bicep
+param myIpAddress = '#{MY_IP_ADDRESS}#'
+
+param openAI_deploy_location = '#{OPENAI_DEPLOY_LOCATION}#'
+param deployAIHub = true
+param deployAPIApp = #{deployAPI}#  // Should we deploy the API app?
+param deployUIApp = #{deployUI}#  // Should we deploy the UI app?

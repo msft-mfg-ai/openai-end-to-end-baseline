@@ -25,7 +25,7 @@ on:
         required: false
         type: string
         default: 'false'
-      deploymentMode:
+      bicepDeploymentMode:
         required: false
         type: string
         default: 'Incremental'
@@ -57,18 +57,20 @@ on:
         description: Add Role Assignments?
         type: boolean
         default: true
-      runBuildDeployAPI:
-        description: Run Build and Deploy API?
-        type: boolean
-        default: false
+
+      appsToDeploy:
+        description: Apps to Build and Deploy?
+        type: string
+        default: 'none'
       deployAPIM:
         description: Run Deploy APIM?
         type: boolean
         default: false
-      loginUsingClientSecret:
-        description: Login using Client Secret?
-        type: boolean
-        default: false
+        
+      loginMethod:
+        description: Login Method?
+        type: string
+        default: 'federated'
       requestorName:
         description: Requestor Name
         type: string
@@ -98,18 +100,23 @@ jobs:
       createDnsZones: ${{ inputs.createDnsZones }}
       deployAIHub: ${{ inputs.deployAIHub }}
       addRoleAssignments: ${{ inputs.addRoleAssignments }}
-      runBuildDeployAPI: ${{ inputs.runBuildDeployAPI }}
+      deployAPI: ${{ inputs.appsToDeploy && inputs.appsToDeploy == 'UI' || inputs.appsToDeploy == 'API+UI' && 'true' || 'false' }}
+      deployUI:  ${{ inputs.appsToDeploy && inputs.appsToDeploy == 'API' || inputs.appsToDeploy == 'API+UI' && 'true' || 'false' }}
       deployAPIM: ${{ inputs.deployAPIM }}
       loginWithFederatedIdentity: ${{ secrets.CICD_CLIENT_SECRET == '' && 'true' || 'false' }}
       loginWithSecret: ${{ secrets.CICD_CLIENT_SECRET != '' && 'true' || 'false' }}
+      requestorName: ${{ inputs.requestorName }}
  
     # ------------------------------------------------------------------------------------------------------------------------
     # Outputs
     # ------------------------------------------------------------------------------------------------------------------------
     outputs:
-      HUB_ID: ${{ steps.deploy-bicep-rg.outputs.AI_HUB_ID }}
-      HUB_NAME: ${{ steps.deploy-bicep-rg.outputs.AI_HUB_NAME }}
-  
+      AI_HUB_ID: ${{ steps.deploy-bicep-rg.outputs.AI_HUB_ID }}
+      AI_HUB_NAME: ${{ steps.deploy-bicep-rg.outputs.AI_HUB_NAME }}
+      AI_ENDPOINT: ${{ steps.deploy-bicep-rg.outputs.AI_ENDPOINT }}
+      UI_CONTAINER_APP_FQDN: ${{ steps.deploy-bicep-rg.outputs.UI_CONTAINER_APP_FQDN }}
+      API_CONTAINER_APP_FQDN: ${{ steps.deploy-bicep-rg.outputs.API_CONTAINER_APP_FQDN }}
+
     # ------------------------------------------------------------------------------------------------------------------------
     # Actions
     # ------------------------------------------------------------------------------------------------------------------------
@@ -139,7 +146,7 @@ jobs:
 
           echo "env.loginWithSecret=${{ env.loginWithSecret }}"
           echo "env.loginWithFederatedIdentity=${{ env.loginWithFederatedIdentity }}"
-          echo "inputs.loginUsingClientSecret=${{ inputs.loginUsingClientSecret }}"
+          echo "inputs.loginMethod=${{ inputs.loginMethod }}"
 
           echo "templatePath=${{ inputs.templatePath }}"
           echo "templateFile=${{ inputs.templateFile }}"
@@ -178,8 +185,7 @@ jobs:
 
       # https://learn.microsoft.com/en-us/entra/workload-id/workload-identity-federation-create-trust
       - name: OIDC Login to Azure
-        if: ${{ !inputs.loginUsingClientSecret }}
-        # if: $ { { env.loginWithFederatedIdentity } }
+        if: ${{ inputs.loginMethod == 'federated'  }}
         uses: azure/login@v2
         with:
           client-id: ${{ secrets.CICD_CLIENT_ID }}
@@ -187,8 +193,7 @@ jobs:
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Login to Azure with Secret
-        if: ${{ inputs.loginUsingClientSecret }}
-        # if: $ { { env.loginWithSecret } }  // this looks right but it ALWAYS runs then fails if secret is missing...
+        if: ${{ inputs.loginMethod == 'client-secret' }}
         uses: azure/login@v2
         with:
           creds: '{"clientId":"${{ secrets.CICD_CLIENT_ID }}","clientSecret":"${{ secrets.CICD_CLIENT_SECRET }}","tenantId":"${{ secrets.AZURE_TENANT_ID }}","subscriptionId":"${{ secrets.AZURE_SUBSCRIPTION_ID }}"}'
@@ -207,7 +212,7 @@ jobs:
           deploymentName: ${{ inputs.templateFile }}-sub-${{ vars.RESOURCEGROUP_LOCATION }}-${{ steps.get-date.outputs.DATE_TIME_STAMP}}
           template: ${{ inputs.templatePath }}${{ inputs.templateFile }}
           parameters: ${{ inputs.templatePath }}${{ inputs.parameterFile }}
-          deploymentMode: ${{ inputs.deploymentMode }} # Must be: Incremental | Complete | Validation
+          deploymentMode: ${{ inputs.bicepDeploymentMode }} # Must be: Incremental | Complete | Validation
           failOnStdErr: false # if set to true, then any warning thrown by Bicep will cause the action to fail
 
       - name: Deploy Azure Resources (RG)
@@ -221,7 +226,7 @@ jobs:
           resourceGroupName: ${{ env.generatedResourceGroupName }}
           template: ${{ inputs.templatePath }}${{ inputs.templateFile }}
           parameters: ${{ inputs.templatePath }}${{ inputs.parameterFile }}
-          deploymentMode: ${{ inputs.deploymentMode }} # Must be: Incremental | Complete | Validation
+          deploymentMode: ${{ inputs.bicepDeploymentMode }} # Must be: Incremental | Complete | Validation
           failOnStdErr: false # if set to true, then any warning thrown by Bicep will cause the action to fail
 
       - name: Display Output
@@ -232,10 +237,15 @@ jobs:
           echo "AI_ENDPOINT=${{ steps.deploy-bicep-rg.outputs.AI_ENDPOINT }}"
           echo "AI_HUB_ID=${{ steps.deploy-bicep-rg.outputs.AI_HUB_ID }}"
           echo "AI_HUB_NAME=${{ steps.deploy-bicep-rg.outputs.AI_HUB_NAME }}"
+          echo "AI_PROJECT_NAME=${{ steps.deploy-bicep-rg.outputs.AI_PROJECT_NAME }}"
           echo "AI_SEARCH_ENDPOINT=${{ steps.deploy-bicep-rg.outputs.AI_SEARCH_ENDPOINT }}"
+          echo "API_CONTAINER_APP_FQDN=${{ steps.deploy-bicep-rg.outputs.API_CONTAINER_APP_FQDN }}"
+          echo "API_CONTAINER_APP_NAME=${{ steps.deploy-bicep-rg.outputs.API_CONTAINER_APP_NAME }}"
           echo "UI_CONTAINER_APP_FQDN=${{ steps.deploy-bicep-rg.outputs.UI_CONTAINER_APP_FQDN }}"
           echo "UI_CONTAINER_APP_NAME=${{ steps.deploy-bicep-rg.outputs.UI_CONTAINER_APP_NAME }}"
           echo "API_KEY=${{ steps.deploy-bicep-rg.outputs.API_KEY }}"
+          echo "API_MANAGEMENT_ID=${{ steps.deploy-bicep-rg.outputs.API_MANAGEMENT_ID }}"
+          echo "API_MANAGEMENT_NAME=${{ steps.deploy-bicep-rg.outputs.API_MANAGEMENT_NAME }}"
           echo "AZURE_CONTAINER_ENVIRONMENT_NAME=${{ steps.deploy-bicep-rg.outputs.AZURE_CONTAINER_ENVIRONMENT_NAME }}"
           echo "AZURE_CONTAINER_REGISTRY_ENDPOINT=${{ steps.deploy-bicep-rg.outputs.AZURE_CONTAINER_REGISTRY_ENDPOINT }}"
           echo "AZURE_CONTAINER_REGISTRY_NAME=${{ steps.deploy-bicep-rg.outputs.AZURE_CONTAINER_REGISTRY_NAME }}"
@@ -260,8 +270,9 @@ jobs:
           SUMMARY: |
             # Deployment summary
             - Resource Group: ${{ env.generatedResourceGroupName }}
-            - AI Hub Name: ${{ steps.deploy-bicep-rg.outputs.AI_HUB_NAME }}
-            - API URL: [${{ steps.deploy-bicep-rg.outputs.UI_CONTAINER_APP_FQDN }}](${{ steps.deploy-bicep-rg.outputs.UI_CONTAINER_APP_FQDN }})
+            - Environment: ${{ inputs.envCode }}
+            - Region: ${{ vars.GLOBAL_REGION_CODE }}
+            - Instance: ${{ vars.INSTANCE_NUMBER }}
 
         run: echo "$SUMMARY" >> $GITHUB_STEP_SUMMARY
         continue-on-error: true

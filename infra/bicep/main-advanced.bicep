@@ -59,37 +59,38 @@ param existingVnetName string = ''
 @description('If you provide an existing VNET what resource group is it in?')
 param existingVnetResourceGroupName string = ''
 @description('If you provide this is will be used instead of creating a new VNET')
-param vnetPrefix string = '10.2.0.0/16'
-@description('If new VNET, this is the Subnet name for the private endpoints')
-param subnet1Name string = ''
-@description('If new VNET, this is the Subnet addresses for the private endpoints, i.e. 10.2.0.0/26') //Provided subnet must have a size of at least /23
-param subnet1Prefix string = '10.2.0.0/23'
-@description('If new VNET, this is the Subnet name for the application')
-param subnet2Name string = ''
-@description('If new VNET, this is the Subnet addresses for the application, i.e. 10.2.2.0/23') // Provided subnet must have a size of at least /23
-param subnet2Prefix string = '10.2.2.0/23'
+param vnetPrefix string = '10.183.4.0/22'
+param subnetAppGwName string = ''
+param subnetAppGwPrefix string = '10.183.5.0/24'
+param subnetAppSeName string = ''
+param subnetAppSePrefix string = '10.183.4.0/24'
+param subnetPeName string = ''
+param subnetPePrefix string = '10.183.6.0/27'
+param subnetAgentName string = ''
+param subnetAgentPrefix string = '10.183.6.32/27'
+param subnetBastionName string = '' // This is the default for the MFG AI LZ, it can be changed to fit your needs
+param subnetBastionPrefix string = '10.183.6.64/26'
+param subnetJumpboxName string = '' // This is the default for the MFG AI LZ, it can be changed to fit your needs
+param subnetJumpboxPrefix string = '10.183.6.128/28'
+param subnetTrainingName string = ''
+param subnetTrainingPrefix string = '10.183.7.0/25'
+param subnetScoringName string = ''
+param subnetScoringPrefix string = '10.183.7.128/25'
 
 // --------------------------------------------------------------------------------------------------------------
-// Existing container registry?
+// Virtual machine jumpbox
 // --------------------------------------------------------------------------------------------------------------
-@description('If you provide this is will be used instead of creating a new Registry')
-param existing_ACR_Name string = ''
-@description('If you provide this is will be used instead of creating a new Registry')
-param existing_ACR_ResourceGroupName string = ''
+@description('Admin username for the VM (optional - only deploy VM if provided)')
+param admin_username string
+@secure()
+@description('Admin password for the VM (optional - only deploy VM if provided)')
+param admin_password string
+@description('VM name (optional - only deploy VM if provided)')
+param vm_name string
 
 // --------------------------------------------------------------------------------------------------------------
-// Existing monitoring?
+// Container App Environment
 // --------------------------------------------------------------------------------------------------------------
-@description('If you provide this is will be used instead of creating a new Workspace')
-param existing_LogAnalytics_Name string = ''
-@description('If you provide this is will be used instead of creating a new App Insights')
-param existing_AppInsights_Name string = ''
-
-// --------------------------------------------------------------------------------------------------------------
-// Existing Container App Environment?
-// --------------------------------------------------------------------------------------------------------------
-@description('If you provide this is will be used instead of creating a new Container App Environment')
-param existing_managedAppEnv_Name string = ''
 @description('Name of the Container Apps Environment workload profile to use for the app')
 param appContainerAppEnvironmentWorkloadProfileName string = 'app'
 @description('Workload profiles for the Container Apps environment')
@@ -103,50 +104,32 @@ param containerAppEnvironmentWorkloadProfiles array = [
 ]
 
 // --------------------------------------------------------------------------------------------------------------
-// Existing OpenAI resources?
+// AI Hub Parameters
 // --------------------------------------------------------------------------------------------------------------
-@description('Name of an existing Cognitive Services account to use')
-param existing_CogServices_Name string = ''
-@description('Resource Group where existing Cognitive Services account Lives')
-param existing_CogServices_ResourceGroupName string = ''
-
-@description('Name of an existing Search Services account to use')
-param existing_SearchService_Name string = ''
-@description('Resource Group where existing Search Services account Lives')
-param existing_SearchService_ResourceGroupName string = ''
-
 @description('Friendly name for your Azure AI resource')
 param aiProjectFriendlyName string = 'Agents Project resource'
 @description('Description of your Azure AI resource displayed in AI studio')
 param aiProjectDescription string = 'This is an example AI Project resource for use in Azure AI Studio.'
-
-// --------------------------------------------------------------------------------------------------------------
-// Existing Cosmos resources?
-// --------------------------------------------------------------------------------------------------------------
-@description('Name of an existing Cosmos account to use')
-param existing_Cosmos_Name string = ''
-@description('Resource Group where existing Cosmos account Lives')
-param existing_Cosmos_ResourceGroupName string = ''
-
-// --------------------------------------------------------------------------------------------------------------
-// Existing Key Vault?
-// --------------------------------------------------------------------------------------------------------------
-@description('Name of an existing Key Vault to use')
-param existing_KeyVault_Name string = ''
-@description('Resource Group where existing Key Vault Lives')
-param existing_KeyVault_ResourceGroupName string = ''
-
-// --------------------------------------------------------------------------------------------------------------
-// AI Hub Parameters
-// --------------------------------------------------------------------------------------------------------------
 @description('Should we deploy an AI Foundry Hub?')
 param deployAIHub bool = true
+@description('Should we deploy an APIM?')
+param deployAPIM bool = false
+
+// --------------------------------------------------------------------------------------------------------------
+// APIM Parameters
+// --------------------------------------------------------------------------------------------------------------
+@description('Name of the APIM Subscription. Defaults to aiagent-subscription')
+param apimSubscriptionName string = 'aiagent-subscription'
+@description('Email of the APIM Publisher')
+param apimPublisherEmail string = 'somebody@somewhere.com'
+@description('Name of the APIM Publisher')
+param adminPublisherName string = 'AI Agent Admin'
 
 // --------------------------------------------------------------------------------------------------------------
 // Existing images
 // --------------------------------------------------------------------------------------------------------------
 param apiImageName string = ''
-param batchImageName string = ''
+param UIImageName string = ''
 
 // --------------------------------------------------------------------------------------------------------------
 // Other deployment switches
@@ -166,8 +149,8 @@ param appendResourceTokens bool = false
 // param deployUIApp bool = false
 @description('Should API container app be deployed?')
 param deployAPIApp bool = false
-@description('Should Batch container app be deployed?')
-param deployBatchApp bool = false
+@description('Should UI container app be deployed?')
+param deployUIApp bool = false
 
 @description('Global Region where the resources will be deployed, e.g. AM (America), EM (EMEA), AP (APAC), CH (China)')
 @allowed(['AM', 'EM', 'AP', 'CH'])
@@ -201,9 +184,6 @@ var appName = applicationName != '' ? applicationName : '${applicationPrefix}_${
 
 var deploymentSuffix = '-${runDateTime}'
 
-// if this bicep was called from AZD, then it needs this tag added to the resource group (at a minimum) to deploy successfully...
-var azdTag = azdEnvName != '' ? { 'azd-env-name': azdEnvName } : {}
-
 var commonTags = {
   'creation-date': take(runDateTime, 8)
   'application-name': appName
@@ -219,10 +199,14 @@ var ownerEmailTagObject = ownerEmailTag == '' ? {} :  {
   'business-owner': ownerEmailTag
   'point-of-contact': ownerEmailTag
 }
+// if this bicep was called from AZD, then it needs this tag added to the resource group (at a minimum) to deploy successfully...
+var azdTag = azdEnvName != '' ? { 'azd-env-name': azdEnvName } : {}
 var tags = union(commonTags, azdTag, costCenterTagObject, ownerEmailTagObject)
 
 // Run a script to dedupe the KeyVault secrets -- this fails on private networks right now so turn if off for them
 var deduplicateKVSecrets = publicAccessEnabled ? deduplicateKeyVaultSecrets : false
+
+var vnetAddressPrefix = vnetPrefix
 
 // --------------------------------------------------------------------------------------------------------------
 // -- Generate Resource Names -----------------------------------------------------------------------------------
@@ -248,11 +232,51 @@ module vnet './modules/networking/vnet.bicep' = {
     existingVirtualNetworkName: existingVnetName
     existingVnetResourceGroupName: existingVnetResourceGroupName
     newVirtualNetworkName: resourceNames.outputs.vnet_Name
-    vnetAddressPrefix: vnetPrefix
-    subnet1Name: !empty(subnet1Name) ? subnet1Name : resourceNames.outputs.vnetPeSubnetName
-    subnet1Prefix: subnet1Prefix
-    subnet2Name: !empty(subnet2Name) ? subnet2Name : resourceNames.outputs.vnetAppSubnetName
-    subnet2Prefix: subnet2Prefix
+    vnetAddressPrefix: vnetAddressPrefix
+    subnetAppGwName: !empty(subnetAppGwName) ? subnetAppGwName  : resourceNames.outputs.subnetAppGwName
+    subnetAppGwPrefix: subnetAppGwPrefix 
+    subnetAppSeName: !empty(subnetAppSeName ) ? subnetAppSeName  : resourceNames.outputs.subnetAppSeName
+    subnetAppSePrefix: subnetAppSePrefix
+    subnetPeName: !empty(subnetPeName  ) ? subnetPeName   : resourceNames.outputs.subnetPeName 
+    subnetPePrefix : subnetPePrefix 
+    subnetAgentName: !empty(subnetAgentName) ? subnetAgentName : resourceNames.outputs.subnetAgentName
+    subnetAgentPrefix: subnetAgentPrefix
+    subnetBastionName: !empty(subnetBastionName) ? subnetBastionName : resourceNames.outputs.subnetBastionName
+    subnetBastionPrefix: subnetBastionPrefix
+    subnetJumpboxName: !empty(subnetJumpboxName) ? subnetJumpboxName : resourceNames.outputs.subnetJumpboxName
+    subnetJumpboxPrefix: subnetJumpboxPrefix
+    subnetTrainingName: !empty(subnetTrainingName) ? subnetTrainingName : resourceNames.outputs.subnetTrainingName
+    subnetTrainingPrefix: subnetTrainingPrefix
+    subnetScoringName: !empty(subnetScoringName) ? subnetScoringName : resourceNames.outputs.subnetScoringName
+    subnetScoringPrefix: subnetScoringPrefix
+  }
+}
+
+// --------------------------------------------------------------------------------------------------------------
+// -- JumpBox ------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------
+module virtualMachine './modules/virtualMachine/virtualMachine.bicep' = if (!empty(admin_username) && !empty(admin_password) && !empty(vm_name)) {
+  name: 'jumpboxVirtualMachineDeployment'
+  params: {
+    // Required parameters
+    admin_username: admin_username 
+    admin_password: admin_password 
+    vnet_id: vnet.outputs.vnetResourceId
+    vm_name: !empty(vm_name) ? vm_name : resourceNames.outputs.vm_name
+    vm_nic_name: resourceNames.outputs.vm_nic_name
+    vm_pip_name: resourceNames.outputs.vm_pip_name
+    vm_os_disk_name: resourceNames.outputs.vm_os_disk_name
+    vm_nsg_name: resourceNames.outputs.vm_nsg_name
+    
+    subnet_name: !empty(subnetJumpboxName) ? subnetJumpboxName : resourceNames.outputs.subnetJumpboxName
+    // VM configuration
+    vm_size: 'Standard_B2s_v2'
+    os_disk_size_gb: 128
+    os_type: 'Windows'
+    my_ip_address: myIpAddress
+    // Location and tags
+    location: location
+    tags: tags
   }
 }
 
@@ -262,15 +286,13 @@ module vnet './modules/networking/vnet.bicep' = {
 module containerRegistry './modules/app/containerregistry.bicep' = {
   name: 'containerregistry${deploymentSuffix}'
   params: {
-    existingRegistryName: existing_ACR_Name
-    existing_ACR_ResourceGroupName: existing_ACR_ResourceGroupName
     newRegistryName: resourceNames.outputs.ACR_Name
     location: location
     acrSku: 'Premium'
     tags: tags
     publicAccessEnabled: publicAccessEnabled
     privateEndpointName: 'pe-${resourceNames.outputs.ACR_Name}'
-    privateEndpointSubnetId: vnet.outputs.subnet1ResourceId
+    privateEndpointSubnetId: vnet.outputs.subnetPeResourceID
     myIpAddress: myIpAddress
   }
 }
@@ -281,10 +303,7 @@ module containerRegistry './modules/app/containerregistry.bicep' = {
 module logAnalytics './modules/monitor/loganalytics.bicep' = {
   name: 'law${deploymentSuffix}'
   params: {
-    existingLogAnalyticsName: existing_LogAnalytics_Name
-    existingLogAnalyticsRgName: resourceGroupName
     newLogAnalyticsName: resourceNames.outputs.logAnalyticsWorkspaceName
-    existingApplicationInsightsName: existing_AppInsights_Name
     newApplicationInsightsName: resourceNames.outputs.appInsightsName
     location: location
     tags: tags
@@ -301,7 +320,7 @@ module storage './modules/storage/storage-account.bicep' = {
     location: location
     tags: tags
     // publicNetworkAccess: publicAccessEnabled
-    privateEndpointSubnetId: vnet.outputs.subnet1ResourceId
+    privateEndpointSubnetId: vnet.outputs.subnetPeResourceID
     privateEndpointBlobName: 'pe-blob-${resourceNames.outputs.storageAccountName}'
     privateEndpointQueueName: 'pe-queue-${resourceNames.outputs.storageAccountName}'
     privateEndpointTableName: 'pe-table-${resourceNames.outputs.storageAccountName}'
@@ -311,7 +330,7 @@ module storage './modules/storage/storage-account.bicep' = {
 }
 
 // --------------------------------------------------------------------------------------------------------------
-// -- Key Vault Resources ---------------------------------------------------------------------------------------
+// -- Identity and Access Resources -----------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------------------------------
 module identity './modules/iam/identity.bicep' = {
   name: 'app-identity${deploymentSuffix}'
@@ -321,7 +340,7 @@ module identity './modules/iam/identity.bicep' = {
   }
 }
 module appIdentityRoleAssignments './modules/iam/role-assignments.bicep' = if (addRoleAssignments) {
-  name: 'identity-access${deploymentSuffix}'
+  name: 'identity-roles${deploymentSuffix}'
   params: {
     identityPrincipalId: identity.outputs.managedIdentityPrincipalId
     principalType: 'ServicePrincipal'
@@ -334,7 +353,7 @@ module appIdentityRoleAssignments './modules/iam/role-assignments.bicep' = if (a
 }
 
 module adminUserRoleAssignments './modules/iam/role-assignments.bicep' = if (addRoleAssignments && !empty(principalId)) {
-  name: 'user-access${deploymentSuffix}'
+  name: 'user-roles${deploymentSuffix}'
   params: {
     identityPrincipalId: principalId
     principalType: 'User'
@@ -346,21 +365,22 @@ module adminUserRoleAssignments './modules/iam/role-assignments.bicep' = if (add
   }
 }
 
+// --------------------------------------------------------------------------------------------------------------
+// -- Key Vault Resources ---------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------
 module keyVault './modules/security/keyvault.bicep' = {
   name: 'keyvault${deploymentSuffix}'
   params: {
     location: location
     commonTags: tags
     keyVaultName: resourceNames.outputs.keyVaultName
-    // existingKeyVaultName: existing_KeyVault_Name
-    // existingKeyVaultResourceGroupName: existing_KeyVault_ResourceGroupName
     keyVaultOwnerUserId: principalId
     adminUserObjectIds: [identity.outputs.managedIdentityPrincipalId]
     publicNetworkAccess: publicAccessEnabled ? 'Enabled' : 'Disabled'
     keyVaultOwnerIpAddress: myIpAddress
     createUserAssignedIdentity: false
     privateEndpointName: 'pe-${resourceNames.outputs.keyVaultName}'
-    privateEndpointSubnetId: vnet.outputs.subnet1ResourceId
+    privateEndpointSubnetId: vnet.outputs.subnetPeResourceID
   }
 }
 
@@ -442,22 +462,22 @@ module searchSecret './modules/security/keyvault-search-secret.bicep' = {
 // --------------------------------------------------------------------------------------------------------------
 var uiDatabaseName = 'ChatHistory'
 var uiChatContainerName = 'ChatTurn'
+var uiChatContainerName2 = 'ChatHistory'
 var cosmosContainerArray = [
   { name: 'AgentLog', partitionKey: '/requestId' }
   { name: 'UserDocuments', partitionKey: '/userId' }
   { name: uiChatContainerName, partitionKey: '/chatId' }
+  { name: uiChatContainerName2, partitionKey: '/chatId' }
 ]
 module cosmos './modules/database/cosmosdb.bicep' = {
   name: 'cosmos${deploymentSuffix}'
   params: {
     accountName: resourceNames.outputs.cosmosName
-    existingAccountName: existing_Cosmos_Name
-    existingCosmosResourceGroupName: existing_Cosmos_ResourceGroupName
     databaseName: uiDatabaseName
     containerArray: cosmosContainerArray
     location: location
     tags: tags
-    privateEndpointSubnetId: vnet.outputs.subnet1ResourceId
+    privateEndpointSubnetId: vnet.outputs.subnetPeResourceID
     privateEndpointName: 'pe-${resourceNames.outputs.cosmosName}'
     managedIdentityPrincipalId: identity.outputs.managedIdentityPrincipalId
     userPrincipalId: principalId
@@ -467,18 +487,16 @@ module cosmos './modules/database/cosmosdb.bicep' = {
 }
 
 // --------------------------------------------------------------------------------------------------------------
-// -- Cognitive Services Resources ------------------------------------------------------------------------------
+// -- Search Service Resource ------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------------------------------
 module searchService './modules/search/search-services.bicep' = {
   name: 'search${deploymentSuffix}'
   params: {
     location: location
     name: resourceNames.outputs.searchServiceName
-    existingSearchServiceName: existing_SearchService_Name
-    existingSearchServiceResourceGroupName: existing_SearchService_ResourceGroupName
     publicNetworkAccess: publicAccessEnabled ? 'enabled' : 'disabled'
     myIpAddress: myIpAddress
-    privateEndpointSubnetId: vnet.outputs.subnet1ResourceId
+    privateEndpointSubnetId: vnet.outputs.subnetPeResourceID
     privateEndpointName: 'pe-${resourceNames.outputs.searchServiceName}'
     managedIdentityId: identity.outputs.managedIdentityId
     sku: {
@@ -494,8 +512,6 @@ module openAI './modules/ai/cognitive-services.bicep' = {
   name: 'openai${deploymentSuffix}'
   params: {
     managedIdentityId: identity.outputs.managedIdentityId
-    existing_CogServices_Name: existing_CogServices_Name
-    //existing_CogServices_ResourceGroupName: existing_CogServices_ResourceGroupName
     name: resourceNames.outputs.cogServiceName
     location: openAI_deploy_location // this may be different than the other resources
     pe_location: location
@@ -522,7 +538,7 @@ module openAI './modules/ai/cognitive-services.bicep' = {
       DeploymentCapacity: 10
     }
     publicNetworkAccess: publicAccessEnabled ? 'enabled' : 'disabled'
-    privateEndpointSubnetId: vnet.outputs.subnet1ResourceId
+    privateEndpointSubnetId: vnet.outputs.subnetPeResourceID
     privateEndpointName: 'pe-${resourceNames.outputs.cogServiceName}'
     myIpAddress: myIpAddress
   }
@@ -534,13 +550,11 @@ module openAI './modules/ai/cognitive-services.bicep' = {
 module documentIntelligence './modules/ai/document-intelligence.bicep' = {
   name: 'doc-intelligence${deploymentSuffix}'
   params: {
-    existing_CogServices_Name: '' //existing_DocumentIntelligence_Name
-    //existing_CogServices_ResourceGroupName: '' //existing_DocumentIntelligence_RG_Name
     name: resourceNames.outputs.documentIntelligenceName
     location: location // this may be different than the other resources
     tags: tags
     publicNetworkAccess: publicAccessEnabled ? 'enabled' : 'disabled'
-    privateEndpointSubnetId: vnet.outputs.subnet1ResourceId
+    privateEndpointSubnetId: vnet.outputs.subnetPeResourceID
     privateEndpointName: 'pe-${resourceNames.outputs.documentIntelligenceName}'
     myIpAddress: myIpAddress
     managedIdentityId: identity.outputs.managedIdentityId
@@ -550,44 +564,158 @@ module documentIntelligence './modules/ai/document-intelligence.bicep' = {
   ]
 }
 
-module aiHub './modules/ai/ai-hub-secure.bicep' = if (deployAIHub) {
-  name: 'aiHub${deploymentSuffix}'
+// --------------------------------------------------------------------------------------------------------------
+// AI Foundry Hub and Project V2
+// Imported from https://github.com/adamhockemeyer/ai-agent-experience
+// --------------------------------------------------------------------------------------------------------------
+module aiFoundryHub './modules/ai-foundry/ai-foundry-hub.bicep' = {
+  name:  'aiHub${deploymentSuffix}'
   params: {
-    aiHubName: resourceNames.outputs.aiHubName
     location: location
-    tags: tags
-
-    // dependent resources
-    aiServicesId: openAI.outputs.id
-    aiServicesTarget: openAI.outputs.endpoint
-    aiSearchName: searchService.outputs.name
+    name: resourceNames.outputs.aiHubName
+    tags: commonTags
     applicationInsightsId: logAnalytics.outputs.applicationInsightsId
-    containerRegistryId: containerRegistry.outputs.id
-    keyVaultId: keyVault.outputs.id
     storageAccountId: storage.outputs.id
-
-    // add data scientist role to user and application
-    addRoleAssignments: addRoleAssignments
-    userObjectId: principalId
-    userObjectType: 'User'
-    //managedIdentityResourceId: identity.outputs.managedIdentityId
-    managedIdentityPrincipalId: identity.outputs.managedIdentityPrincipalId
-    managedIdentityType: 'ServicePrincipal'
+    aiServiceKind: openAI.outputs.kind
+    aiServicesId: openAI.outputs.id
+    aiServicesName: openAI.outputs.name
+    aiServicesTarget: openAI.outputs.endpoint
+    //aoaiModelDeployments: openAI.outputs.deployments
+    aiSearchId: searchService.outputs.id
+    aiSearchName: searchService.outputs.name
   }
 }
 
-module aiProject './modules/ai/ai-hub-project.bicep' = if (deployAIHub) {
+module aiFoundryProject './modules/ai-foundry/ai-foundry-project.bicep' = {
+  name: 'aiFoundryProject${deploymentSuffix}'
+  params: {
+    location: location
+    name: resourceNames.outputs.aiHubFoundryProjectName
+    tags: commonTags
+    hubId: aiFoundryHub.outputs.id
+    //hubName: aiFoundryHub.outputs.name
+    //aiServicesConnectionName: [aiFoundryHub.outputs.connection_aisvcName]
+  }
+}
+module aiFoundryIdentityRoleAssignments './modules/iam/role-assignments.bicep' = if (addRoleAssignments) {
+  name: 'foundry-roles${deploymentSuffix}'
+  params: {
+    identityPrincipalId: aiFoundryProject.outputs.principalId
+    principalType: 'ServicePrincipal'
+    aiServicesName: openAI.outputs.name
+  }
+}
+
+// AI Project and Capability Host
+module aiProject './modules/cognitive-services/ai-project.bicep' = {
   name: 'aiProject${deploymentSuffix}'
   params: {
-    aiProjectName: resourceNames.outputs.aiHubProjectName
-    aiProjectFriendlyName: aiProjectFriendlyName
-    aiProjectDescription: aiProjectDescription
     location: location
-    tags: tags
-    aiHubId: aiHub.outputs.id
+    accountName: openAI.outputs.name
+    projectName:  resourceNames.outputs.aiHubProjectName
+    projectDescription:aiProjectDescription
+    displayName: aiProjectFriendlyName
+    // Connect to existing resources
+    aiSearchName: searchService.outputs.name
+    aiSearchServiceResourceGroupName: resourceGroup().name
+    aiSearchServiceSubscriptionId: subscription().subscriptionId
+
+    cosmosDBName: cosmos.outputs.name
+    cosmosDBResourceGroupName: resourceGroup().name
+    cosmosDBSubscriptionId: subscription().subscriptionId
+
+    azureStorageName: storage.outputs.name
+    azureStorageResourceGroupName: resourceGroup().name
+    azureStorageSubscriptionId: subscription().subscriptionId
+
+    // // Connect to App Insights
+    // appInsightsName: logAnalytics.outputs.applicationInsightsName
+    // appInsightsResourceGroupName: resourceGroup().name
+    // appInsightsSubscriptionId: subscription().subscriptionId
   }
 }
 
+module formatProjectWorkspaceId './modules/cognitive-services/format-project-workspace-id.bicep' = {
+  name: 'aiProjectFormatWorkspaceId${deploymentSuffix}'
+  params: {
+    projectWorkspaceId: aiProject.outputs.projectWorkspaceId
+  }
+}
+
+// --------------------------------------------------------------------------------------------------------------
+// AI Foundry Hub and Project V1
+// Imported from https://github.com/msft-mfg-ai/smart-flow-public
+// --------------------------------------------------------------------------------------------------------------
+// module aiHub_v1 './modules/ai/ai-hub-secure.bicep' = if (deployAIHub) {
+//   name: 'aiHub${deploymentSuffix}'
+//   params: {
+//     aiHubName: resourceNames.outputs.aiHubName
+//     location: location
+//     tags: tags
+
+//     // dependent resources
+//     aiServicesId: openAI.outputs.id
+//     aiServicesTarget: openAI.outputs.endpoint
+//     aiSearchName: searchService.outputs.name
+//     applicationInsightsId: logAnalytics.outputs.applicationInsightsId
+//     containerRegistryId: containerRegistry.outputs.id
+//     keyVaultId: keyVault.outputs.id
+//     storageAccountId: storage.outputs.id
+
+//     // add data scientist role to user and application
+//     addRoleAssignments: addRoleAssignments
+//     userObjectId: principalId
+//     userObjectType: 'User'
+//     managedIdentityPrincipalId: identity.outputs.managedIdentityPrincipalId
+//     managedIdentityType: 'ServicePrincipal'
+//   }
+// }
+
+// module aiProject_v1 './modules/ai/ai-hub-project.bicep' = if (deployAIHub) {
+//   name: 'aiProject${deploymentSuffix}'
+//   params: {
+//     aiProjectName: resourceNames.outputs.aiHubProjectName
+//     aiProjectFriendlyName: aiProjectFriendlyName
+//     aiProjectDescription: aiProjectDescription
+//     location: location
+//     tags: tags
+//     aiHubId: aiHub.outputs.id
+//   }
+// }
+
+// --------------------------------------------------------------------------------------------------------------
+// -- APIM ------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------
+module apim './modules/api-management/apim.bicep' = if (deployAPIM) {
+  name: 'apim${deploymentSuffix}'
+  params: {
+    location: location
+    name: resourceNames.outputs.apimName
+    commonTags: commonTags
+    publisherEmail: apimPublisherEmail
+    publisherName: adminPublisherName
+    appInsightsName: logAnalytics.outputs.applicationInsightsName
+    subscriptionName: apimSubscriptionName
+  }
+}
+
+module apimConfiguration './modules/api-management/apim-oai-config.bicep' = if (deployAPIM) {
+  name: 'apimConfig${deploymentSuffix}'
+  params: {
+    apimName: apim.outputs.name
+    apimLoggerName: apim.outputs.loggerName
+    cognitiveServicesName: openAI.outputs.name
+  }
+}
+
+module apimIdentityRoleAssignments './modules/iam/role-assignments.bicep' = if (deployAPIM && addRoleAssignments) {
+  name: 'apim-roles${deploymentSuffix}'
+  params: {
+    identityPrincipalId: aiFoundryProject.outputs.principalId
+    principalType: 'ServicePrincipal'
+    apimName: apim.outputs.name
+  }
+}
 
 // --------------------------------------------------------------------------------------------------------------
 // -- DNS ZONES ---------------------------------------------------------------------------------
@@ -619,25 +747,16 @@ module allDnsZones './modules/networking/all-zones.bicep' = if (createDnsZones) 
 module managedEnvironment './modules/app/managedEnvironment.bicep' = {
   name: 'caenv${deploymentSuffix}'
   params: {
-    existingEnvironmentName: existing_managedAppEnv_Name
     newEnvironmentName: resourceNames.outputs.caManagedEnvName
     location: location
     logAnalyticsWorkspaceName: logAnalytics.outputs.logAnalyticsWorkspaceName
     logAnalyticsRgName: resourceGroupName
-    appSubnetId: vnet.outputs.subnet2ResourceId
+    appSubnetId: vnet.outputs.subnetAppSeResourceID
     tags: tags
     publicAccessEnabled: publicAccessEnabled
     containerAppEnvironmentWorkloadProfiles: containerAppEnvironmentWorkloadProfiles
   }
 }
-
-// Applications use managed identity to access resources, keys are not needed but kept for future reference
-// var accessKeys = [
-//   { name: 'AOAIStandardServiceKey', secretRef: 'aikey' }
-//   { name: 'AzureDocumentIntelligenceKey', secretRef: 'docintellikey' }
-//   { name: 'AzureAISearchKey', secretRef: 'searchkey' }
-//   { name: 'CosmosDbKey', secretRef: 'cosmos' }
-// ]
 
 var apiTargetPort = 8080
 var apiSettings = [
@@ -682,33 +801,29 @@ module containerAppAPI './modules/app/containerappstub.bicep' = if (deployAPIApp
   dependsOn: createDnsZones ? [allDnsZones, containerRegistry] : [containerRegistry]
 }
 
-var batchTargetPort = 8080
-var batchSettings = union(apiSettings, [
+var UITargetPort = 8080
+var UISettings = union(apiSettings, [
   { name: 'FUNCTIONS_WORKER_RUNTIME', value: 'dotnet-isolated' }
   // see: https://learn.microsoft.com/en-us/azure/azure-functions/durable/durable-functions-configure-managed-identity
   { name: 'AzureWebJobsStorage__accountName', value: storage.outputs.name }
   { name: 'AzureWebJobsStorage__credential', value: 'managedidentity' }
   { name: 'AzureWebJobsStorage__clientId', value: identity.outputs.managedIdentityClientId }
-  { name: 'BatchAnalysisStorageAccountName', value: storage.outputs.name }
-  { name: 'BatchAnalysisStorageInputContainerName', value: storage.outputs.containerNames[1].name }
-  { name: 'BatchAnalysisStorageOutputContainerName', value: storage.outputs.containerNames[2].name }
   { name: 'CosmosDbDatabaseName', value: cosmos.outputs.databaseName }
   { name: 'CosmosDbContainerName', value: uiChatContainerName }
-  { name: 'MaxBatchSize', value: '10' }
 ])
-module containerAppBatch './modules/app/containerappstub.bicep' = if (deployBatchApp) {
-  name: 'ca-batch-stub${deploymentSuffix}'
+module containerAppUI './modules/app/containerappstub.bicep' = if (deployUIApp) {
+  name: 'ca-UI-stub${deploymentSuffix}'
   params: {
-    appName: resourceNames.outputs.containerAppBatchName
+    appName: resourceNames.outputs.containerAppUIName
     managedEnvironmentName: managedEnvironment.outputs.name
     managedEnvironmentRg: managedEnvironment.outputs.resourceGroupName
     workloadProfileName: appContainerAppEnvironmentWorkloadProfileName
     registryName: resourceNames.outputs.ACR_Name
-    targetPort: batchTargetPort
+    targetPort: UITargetPort
     userAssignedIdentityName: identity.outputs.managedIdentityName
     location: location
-    imageName: batchImageName
-    tags: union(tags, { 'azd-service-name': 'batch' })
+    imageName: UIImageName
+    tags: union(tags, { 'azd-service-name': 'UI' })
     deploymentSuffix: deploymentSuffix
     secrets: {
       cosmos: cosmosSecret.outputs.secretUri
@@ -717,9 +832,27 @@ module containerAppBatch './modules/app/containerappstub.bicep' = if (deployBatc
       searchkey: searchSecret.outputs.secretUri
       apikey: apiKeySecret.outputs.secretUri
     }
-    env: batchSettings
+    env: UISettings
   }
   dependsOn: createDnsZones ? [allDnsZones, containerRegistry] : [containerRegistry]
+}
+
+// --------------------------------------------------------------------------------------------------------------
+// -- Bastion Host ----------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------
+// Deploy Bastion Host for secure VM access
+module bastion './modules/networking/bastion.bicep' = {
+  name: 'bastionDeployment'
+  params: {
+    name: resourceNames.outputs.bastion_host_name
+    location: location
+    publicIPName: resourceNames.outputs.bastion_pip_name
+    subnetId: vnet.outputs.subnetBastionResourceID  // Make sure this output exists in your vnet module
+    tags: tags
+    enableTunneling: true
+    enableFileCopy: true
+    skuName: 'Standard'
+  }
 }
 
 // --------------------------------------------------------------------------------------------------------------
@@ -729,13 +862,15 @@ output SUBSCRIPTION_ID string = subscription().subscriptionId
 output ACR_NAME string = containerRegistry.outputs.name
 output ACR_URL string = containerRegistry.outputs.loginServer
 output AI_ENDPOINT string = openAI.outputs.endpoint
-output AI_HUB_ID string = deployAIHub ? aiHub.outputs.id : ''
-output AI_HUB_NAME string = deployAIHub ? aiHub.outputs.name : ''
+output AI_HUB_ID string = deployAIHub ? aiFoundryHub.outputs.id : ''
+output AI_HUB_NAME string = deployAIHub ? aiFoundryHub.outputs.name : ''
 output AI_PROJECT_NAME string = resourceNames.outputs.aiHubProjectName
 output AI_SEARCH_ENDPOINT string = searchService.outputs.endpoint
 output API_CONTAINER_APP_FQDN string = deployAPIApp ? containerAppAPI.outputs.fqdn : ''
 output API_CONTAINER_APP_NAME string = deployAPIApp ? containerAppAPI.outputs.name : ''
 output API_KEY string = apiKeyValue
+output API_MANAGEMENT_ID string = deployAPIM ? apim.outputs.id : ''
+output API_MANAGEMENT_NAME string = deployAPIM ? apim.outputs.name : ''
 output AZURE_CONTAINER_ENVIRONMENT_NAME string = managedEnvironment.outputs.name
 output AZURE_CONTAINER_REGISTRY_ENDPOINT string = containerRegistry.outputs.loginServer
 output AZURE_CONTAINER_REGISTRY_NAME string = containerRegistry.outputs.name
@@ -754,3 +889,8 @@ output STORAGE_ACCOUNT_NAME string = storage.outputs.name
 output VNET_CORE_ID string = vnet.outputs.vnetResourceId
 output VNET_CORE_NAME string = vnet.outputs.vnetName
 output VNET_CORE_PREFIX string = vnet.outputs.vnetAddressPrefix
+
+// Virtual Machine outputs (if deployed)
+output VM_ID string = (!empty(admin_username) && !empty(vm_name)) ? virtualMachine.outputs.vm_id : ''
+output VM_PRIVATE_IP string = (!empty(admin_username) && !empty(vm_name)) ? virtualMachine.outputs.vm_private_ip : ''
+output VM_PUBLIC_IP string = (!empty(admin_username) && !empty(vm_name)) ? virtualMachine.outputs.vm_public_ip : ''
