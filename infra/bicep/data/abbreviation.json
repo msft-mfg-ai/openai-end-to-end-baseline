@@ -25,7 +25,7 @@
   "cognitiveServicesFormRecognizer-prefix": "cog-fr-",
   "cognitiveServicesHub": "hub",
   "cognitiveServicesAIHub": "ai-hub",
-  "cognitiveServicesHubProject": "ai-foundry-hub-proj",
+  "cognitiveServicesHubProject": "ai-foundry-hproj",
   "cognitiveServicesFoundryProject": "ai-foundry-proj",
   "cognitiveServicesTextAnalytics": "cog-ta-",
   "computeAvailabilitySets": "avail-",

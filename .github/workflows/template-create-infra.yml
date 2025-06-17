@@ -102,6 +102,7 @@ jobs:
       deployAPIM: ${{ inputs.deployAPIM }}
       loginWithFederatedIdentity: ${{ secrets.CICD_CLIENT_SECRET == '' && 'true' || 'false' }}
       loginWithSecret: ${{ secrets.CICD_CLIENT_SECRET != '' && 'true' || 'false' }}
+      requestorName: ${{ inputs.requestorName }}
  
     # ------------------------------------------------------------------------------------------------------------------------
     # Outputs
