@@ -41,7 +41,7 @@ on:
           - UI
           - API+UI
       loginMethod:
-        description: Login using Client Secret?
+        description: Login Method?
         type: choice
         default: federated
         options:

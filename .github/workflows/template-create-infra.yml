@@ -111,9 +111,12 @@ jobs:
     # Outputs
     # ------------------------------------------------------------------------------------------------------------------------
     outputs:
-      HUB_ID: ${{ steps.deploy-bicep-rg.outputs.AI_HUB_ID }}
-      HUB_NAME: ${{ steps.deploy-bicep-rg.outputs.AI_HUB_NAME }}
-  
+      AI_HUB_ID: ${{ steps.deploy-bicep-rg.outputs.AI_HUB_ID }}
+      AI_HUB_NAME: ${{ steps.deploy-bicep-rg.outputs.AI_HUB_NAME }}
+      AI_ENDPOINT: ${{ steps.deploy-bicep-rg.outputs.AI_ENDPOINT }}
+      UI_CONTAINER_APP_FQDN: ${{ steps.deploy-bicep-rg.outputs.UI_CONTAINER_APP_FQDN }}
+      API_CONTAINER_APP_FQDN: ${{ steps.deploy-bicep-rg.outputs.API_CONTAINER_APP_FQDN }}
+
     # ------------------------------------------------------------------------------------------------------------------------
     # Actions
     # ------------------------------------------------------------------------------------------------------------------------
@@ -209,7 +212,7 @@ jobs:
           deploymentName: ${{ inputs.templateFile }}-sub-${{ vars.RESOURCEGROUP_LOCATION }}-${{ steps.get-date.outputs.DATE_TIME_STAMP}}
           template: ${{ inputs.templatePath }}${{ inputs.templateFile }}
           parameters: ${{ inputs.templatePath }}${{ inputs.parameterFile }}
-          bicepDeploymentMode: ${{ inputs.bicepDeploymentMode }} # Must be: Incremental | Complete | Validation
+          deploymentMode: ${{ inputs.bicepDeploymentMode }} # Must be: Incremental | Complete | Validation
           failOnStdErr: false # if set to true, then any warning thrown by Bicep will cause the action to fail
 
       - name: Deploy Azure Resources (RG)
@@ -223,7 +226,7 @@ jobs:
           resourceGroupName: ${{ env.generatedResourceGroupName }}
           template: ${{ inputs.templatePath }}${{ inputs.templateFile }}
           parameters: ${{ inputs.templatePath }}${{ inputs.parameterFile }}
-          bicepDeploymentMode: ${{ inputs.bicepDeploymentMode }} # Must be: Incremental | Complete | Validation
+          deploymentMode: ${{ inputs.bicepDeploymentMode }} # Must be: Incremental | Complete | Validation
           failOnStdErr: false # if set to true, then any warning thrown by Bicep will cause the action to fail
 
       - name: Display Output
@@ -262,8 +265,13 @@ jobs:
           SUMMARY: |
             # Deployment summary
             - Resource Group: ${{ env.generatedResourceGroupName }}
+            - Environment: ${{ inputs.envCode }}
+            - Region: ${{ vars.GLOBAL_REGION_CODE }}
+            - Instance: ${{ vars.INSTANCE_NUMBER }}
             - AI Hub Name: ${{ steps.deploy-bicep-rg.outputs.AI_HUB_NAME }}
-            - API URL: [${{ steps.deploy-bicep-rg.outputs.UI_CONTAINER_APP_FQDN }}](${{ steps.deploy-bicep-rg.outputs.UI_CONTAINER_APP_FQDN }})
+            - AI_ENDPOINT: ${{ steps.deploy-bicep-rg.outputs.AI_ENDPOINT }}
+            - UI URL: [${{ steps.deploy-bicep-rg.outputs.UI_CONTAINER_APP_FQDN }}](${{ steps.deploy-bicep-rg.outputs.UI_CONTAINER_APP_FQDN }})
+            - API URL: [${{ steps.deploy-bicep-rg.outputs.API_CONTAINER_APP_FQDN }}](${{ steps.deploy-bicep-rg.outputs.API_CONTAINER_APP_FQDN }})
 
         run: echo "$SUMMARY" >> $GITHUB_STEP_SUMMARY
         continue-on-error: true
