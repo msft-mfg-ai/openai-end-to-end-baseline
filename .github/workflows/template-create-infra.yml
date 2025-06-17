@@ -60,8 +60,8 @@ on:
 
       appsToDeploy:
         description: Apps to Build and Deploy?
-        type: boolean
-        default: false
+        type: string
+        default: 'none'
       deployAPIM:
         description: Run Deploy APIM?
         type: boolean
