@@ -190,9 +190,11 @@ jobs:
 
       - name: Determine Azure Authentication Method
         id: auth-check
+        env:
+          CICD_CLIENT_SECRET: ${{ secrets.CICD_CLIENT_SECRET }}
         run: |
           # Check if we have OIDC secrets or should fall back to client secret
-          if [[ -n "${{ secrets.CICD_CLIENT_SECRET }}" ]]; then
+          if [[ -n "$CICD_CLIENT_SECRET" ]]; then
             echo "auth-method=client-secret" >> $GITHUB_OUTPUT
             echo "Using Client Secret authentication (secret available)"
           else
@@ -201,7 +203,7 @@ jobs:
           fi
 
       # https://learn.microsoft.com/en-us/entra/workload-id/workload-identity-federation-create-trust
-      - name: OIDC Login to Azure
+      - name: Login to Azure using OIDC
         if: ${{ steps.auth-check.outputs.auth-method == 'oidc' }}
         # if: $ { {  inputs.loginMethod == 'federated'  } }
         uses: azure/login@v2
@@ -210,7 +212,7 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Login to Azure with Secret
+      - name: Login to Azure using Secret
         if: ${{ steps.auth-check.outputs.auth-method == 'client-secret' }}
         #if: $ { {  inputs.loginMethod == 'client-secret' } }
         uses: azure/login@v2
