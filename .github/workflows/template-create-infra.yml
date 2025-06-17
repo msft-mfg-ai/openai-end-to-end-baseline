@@ -58,7 +58,6 @@ on:
         description: Add Role Assignments?
         type: boolean
         default: true
-
       appsToDeploy:
         description: Apps to Build and Deploy?
         type: string
@@ -67,11 +66,6 @@ on:
         description: Run Deploy APIM?
         type: boolean
         default: false
-        
-      # loginMethod:
-      #   description: Login Method?
-      #   type: string
-      #   default: 'federated'
       requestorName:
         description: Requestor Name
         type: string
@@ -193,7 +187,7 @@ jobs:
         env:
           CICD_CLIENT_SECRET: ${{ secrets.CICD_CLIENT_SECRET }}
         run: |
-          # Check if we have OIDC secrets or should fall back to client secret
+          # Check if we have a client secret or should fall back to OIDC
           if [[ -n "$CICD_CLIENT_SECRET" ]]; then
             echo "auth-method=client-secret" >> $GITHUB_OUTPUT
             echo "Using Client Secret authentication (secret available)"
@@ -205,7 +199,6 @@ jobs:
       # https://learn.microsoft.com/en-us/entra/workload-id/workload-identity-federation-create-trust
       - name: Login to Azure using OIDC
         if: ${{ steps.auth-check.outputs.auth-method == 'oidc' }}
-        # if: $ { {  inputs.loginMethod == 'federated'  } }
         uses: azure/login@v2
         with:
           client-id: ${{ secrets.CICD_CLIENT_ID }}
@@ -214,7 +207,6 @@ jobs:
 
       - name: Login to Azure using Secret
         if: ${{ steps.auth-check.outputs.auth-method == 'client-secret' }}
-        #if: $ { {  inputs.loginMethod == 'client-secret' } }
         uses: azure/login@v2
         with:
           creds: '{"clientId":"${{ secrets.CICD_CLIENT_ID }}","clientSecret":"${{ secrets.CICD_CLIENT_SECRET }}","tenantId":"${{ secrets.AZURE_TENANT_ID }}","subscriptionId":"${{ secrets.AZURE_SUBSCRIPTION_ID }}"}'
@@ -264,7 +256,7 @@ jobs:
         id: deploy-bicep-rg
         with:
           scope: resourceGroup
-          location: ${{ vars.RESOURCEGROUP_LOCATION }}
+          #location: $ { { vars.RESOURCEGROUP_LOCATION } } # not allowed for RG deploy...
           name: ${{ inputs.templateFile }}-rg-${{ vars.RESOURCEGROUP_LOCATION }}-${{ steps.get-date.outputs.DATE_TIME_STAMP}}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           resource-group-name: ${{ env.generatedResourceGroupName }}
