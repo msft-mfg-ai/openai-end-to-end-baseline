@@ -237,10 +237,15 @@ jobs:
           echo "AI_ENDPOINT=${{ steps.deploy-bicep-rg.outputs.AI_ENDPOINT }}"
           echo "AI_HUB_ID=${{ steps.deploy-bicep-rg.outputs.AI_HUB_ID }}"
           echo "AI_HUB_NAME=${{ steps.deploy-bicep-rg.outputs.AI_HUB_NAME }}"
+          echo "AI_PROJECT_NAME=${{ steps.deploy-bicep-rg.outputs.AI_PROJECT_NAME }}"
           echo "AI_SEARCH_ENDPOINT=${{ steps.deploy-bicep-rg.outputs.AI_SEARCH_ENDPOINT }}"
+          echo "API_CONTAINER_APP_FQDN=${{ steps.deploy-bicep-rg.outputs.API_CONTAINER_APP_FQDN }}"
+          echo "API_CONTAINER_APP_NAME=${{ steps.deploy-bicep-rg.outputs.API_CONTAINER_APP_NAME }}"
           echo "UI_CONTAINER_APP_FQDN=${{ steps.deploy-bicep-rg.outputs.UI_CONTAINER_APP_FQDN }}"
           echo "UI_CONTAINER_APP_NAME=${{ steps.deploy-bicep-rg.outputs.UI_CONTAINER_APP_NAME }}"
           echo "API_KEY=${{ steps.deploy-bicep-rg.outputs.API_KEY }}"
+          echo "API_MANAGEMENT_ID=${{ steps.deploy-bicep-rg.outputs.API_MANAGEMENT_ID }}"
+          echo "API_MANAGEMENT_NAME=${{ steps.deploy-bicep-rg.outputs.API_MANAGEMENT_NAME }}"
           echo "AZURE_CONTAINER_ENVIRONMENT_NAME=${{ steps.deploy-bicep-rg.outputs.AZURE_CONTAINER_ENVIRONMENT_NAME }}"
           echo "AZURE_CONTAINER_REGISTRY_ENDPOINT=${{ steps.deploy-bicep-rg.outputs.AZURE_CONTAINER_REGISTRY_ENDPOINT }}"
           echo "AZURE_CONTAINER_REGISTRY_NAME=${{ steps.deploy-bicep-rg.outputs.AZURE_CONTAINER_REGISTRY_NAME }}"
@@ -268,10 +273,6 @@ jobs:
             - Environment: ${{ inputs.envCode }}
             - Region: ${{ vars.GLOBAL_REGION_CODE }}
             - Instance: ${{ vars.INSTANCE_NUMBER }}
-            - AI Hub Name: ${{ steps.deploy-bicep-rg.outputs.AI_HUB_NAME }}
-            - AI_ENDPOINT: ${{ steps.deploy-bicep-rg.outputs.AI_ENDPOINT }}
-            - UI URL: [${{ steps.deploy-bicep-rg.outputs.UI_CONTAINER_APP_FQDN }}](${{ steps.deploy-bicep-rg.outputs.UI_CONTAINER_APP_FQDN }})
-            - API URL: [${{ steps.deploy-bicep-rg.outputs.API_CONTAINER_APP_FQDN }}](${{ steps.deploy-bicep-rg.outputs.API_CONTAINER_APP_FQDN }})
 
         run: echo "$SUMMARY" >> $GITHUB_STEP_SUMMARY
         continue-on-error: true
