@@ -82,4 +82,3 @@ jobs:
       addRoleAssignments: ${{ inputs.addRoleAssignments }}
       deployAPIM: ${{ inputs.deployAPIM }}
       appsToDeploy: ${{ inputs.appsToDeploy }}
-      loginMethod: ${{ inputs.loginMethod }}
