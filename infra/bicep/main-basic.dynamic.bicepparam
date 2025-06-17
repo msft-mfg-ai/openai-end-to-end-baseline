@@ -26,7 +26,6 @@ param regionCode = '#{GLOBAL_REGION_CODE}#'
 param costCenterTag = 'CC'
 
 param addRoleAssignments = #{addRoleAssignments}#
-param createDnsZones = false
 param publicAccessEnabled = true
 
 param deployAIHub = #{deployAIHub}#
