@@ -68,9 +68,9 @@ on:
         default: false
         
       loginMethod:
-        description: Login using Client Secret?
-        type: boolean
-        default: false
+        description: Login Method?
+        type: string
+        default: 'federated'
       requestorName:
         description: Requestor Name
         type: string
