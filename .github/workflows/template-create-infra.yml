@@ -26,6 +26,7 @@ on:
         type: string
         default: 'false'
       bicepDeploymentMode:
+        description: 'DEPRECATED: No longer used with bicep-deploy action'
         required: false
         type: string
         default: 'Incremental'
@@ -75,6 +76,10 @@ on:
         description: Requestor Name
         type: string
         default: 'UNKNOWN'
+      useOldBicepTask:
+        description: Use the old Deploy ARM Task?
+        type: boolean
+        default: false
 
 # ------------------------------------------------------------------------------------------------------------------------
 jobs:
@@ -181,7 +186,7 @@ jobs:
           echo "##[group]Contents of ${{ inputs.templatePath }}${{ inputs.parameterFile }}"
           cat ${{ inputs.templatePath }}${{ inputs.parameterFile }}
           echo "##[endgroup]"
-        continue-on-error: true
+        continue-on-error: true      
 
       # https://learn.microsoft.com/en-us/entra/workload-id/workload-identity-federation-create-trust
       - name: OIDC Login to Azure
@@ -202,10 +207,28 @@ jobs:
         if: ${{ inputs.runCreateInfra && inputs.deployInResourceGroup }}
         run: az group create --name ${{ env.generatedResourceGroupName }} --location ${{ vars.RESOURCEGROUP_LOCATION }} --tags Environment=${{ inputs.envCode }}
 
+      # The azure/arm-deploy action is being deprecated, replaced by azure/bicep-deploy
+      # See: https://github.com/Azure/arm-deploy (old) vs https://github.com/azure/bicep-deploy (new)
+      # - Removed 'deploymentMode' and 'failOnStdErr' (not supported in bicep-deploy)
+      # - Added required 'subscription-id' parameter
       - name: Deploy Azure Resources (Sub)
-        uses: azure/arm-deploy@v2
-        if: ${{ inputs.runCreateInfra && !inputs.deployInResourceGroup }}
+        uses: azure/bicep-deploy@v2
+        if: ${{ inputs.runCreateInfra && !inputs.useOldBicepTask && !inputs.deployInResourceGroup }}
         id: deploy-bicep-sub
+        with:
+          scope: subscription
+          location: ${{ vars.RESOURCEGROUP_LOCATION }}
+          name: ${{ inputs.templateFile }}-sub-${{ vars.RESOURCEGROUP_LOCATION }}-${{ steps.get-date.outputs.DATE_TIME_STAMP}}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          template-file: ${{ inputs.templatePath }}${{ inputs.templateFile }}
+          parameters-file: ${{ inputs.templatePath }}${{ inputs.parameterFile }}
+          type: deployment
+          operation: create
+
+      - name: Deploy Azure Resources ARM Task (Sub)
+        uses: azure/arm-deploy@v2
+        if: ${{ inputs.runCreateInfra && inputs.useOldBicepTask && !inputs.deployInResourceGroup }}
+        id: deploy-bicep-sub-old
         with:
           scope: subscription
           region: ${{ vars.RESOURCEGROUP_LOCATION }}
@@ -215,10 +238,29 @@ jobs:
           deploymentMode: ${{ inputs.bicepDeploymentMode }} # Must be: Incremental | Complete | Validation
           failOnStdErr: false # if set to true, then any warning thrown by Bicep will cause the action to fail
 
+      # The azure/arm-deploy action is being deprecated, replaced by azure/bicep-deploy
+      # See: https://github.com/Azure/arm-deploy (old) vs https://github.com/azure/bicep-deploy (new)
+      # - Removed 'deploymentMode' and 'failOnStdErr' (not supported in bicep-deploy)
+      # - Added required 'subscription-id' parameter
       - name: Deploy Azure Resources (RG)
-        uses: azure/arm-deploy@v2
-        if: ${{ inputs.runCreateInfra && inputs.deployInResourceGroup }}
+        uses: azure/bicep-deploy@v2
+        if: ${{ inputs.runCreateInfra && !inputs.useOldBicepTask && inputs.deployInResourceGroup }}
         id: deploy-bicep-rg
+        with:
+          scope: resourceGroup
+          location: ${{ vars.RESOURCEGROUP_LOCATION }}
+          name: ${{ inputs.templateFile }}-rg-${{ vars.RESOURCEGROUP_LOCATION }}-${{ steps.get-date.outputs.DATE_TIME_STAMP}}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          resource-group-name: ${{ env.generatedResourceGroupName }}
+          template-file: ${{ inputs.templatePath }}${{ inputs.templateFile }}
+          parameters-file: ${{ inputs.templatePath }}${{ inputs.parameterFile }}
+          type: deployment
+          operation: create
+
+      - name: Deploy Azure Resources ARM Task (RG)
+        uses: azure/arm-deploy@v2
+        if: ${{ inputs.runCreateInfra && inputs.useOldBicepTask && inputs.deployInResourceGroup }}
+        id: deploy-bicep-rg-old
         with:
           scope: resourcegroup
           region: ${{ vars.RESOURCEGROUP_LOCATION }}
@@ -276,4 +318,3 @@ jobs:
 
         run: echo "$SUMMARY" >> $GITHUB_STEP_SUMMARY
         continue-on-error: true
-        # - Link to App URL: [https://${{ steps.deploy-bicep-rg.outputs.hostName }}](https://${{ steps.deploy-bicep-rg.outputs.hostName }})
