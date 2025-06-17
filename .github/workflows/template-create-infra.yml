@@ -185,7 +185,7 @@ jobs:
 
       # https://learn.microsoft.com/en-us/entra/workload-id/workload-identity-federation-create-trust
       - name: OIDC Login to Azure
-        if: ${{ !inputs.loginMethod == 'federated'  }}
+        if: ${{ inputs.loginMethod == 'federated'  }}
         uses: azure/login@v2
         with:
           client-id: ${{ secrets.CICD_CLIENT_ID }}
