@@ -4,7 +4,7 @@
 # Note: in order to do multiple CA build/deploys, you need to change FW and login ONCE, otherwise
 # it tends to have token refresh issues and fail on the second and third app
 # ------------------------------------------------------------------------------------------------------------------------
-name: z-Unused-3 - Deploy Infra, Build, Deploy All Apps
+name: 3 - Deploy Infra, Build, Deploy All Apps
 run-name: 3 - Deploy Infra, Build, Deploy to ENV ${{ inputs.deployEnvironment }} by @${{ github.actor }}
 on:
   workflow_dispatch:
@@ -25,49 +25,47 @@ on:
           - preston
           - chris
           - matt
-      parameterFile:
-        description: 'Parameter File'
+      bicepVersion:
+        description: Version - Basic is public, Advanced includes private networking features.
         required: true
-        default: 'main.dynamic.bicepparam'
+        default: 'basic'
+        type: choice
+        options:
+          - basic
+          - advanced
+      appsToDeploy:
+        description: Apps to Deploy
+        default: none
+        type: choice
+        options:
+          - none
+          - API
+          - UI
+          - API+UI
+      loginMethod:
+        description: Login Method?
+        type: choice
+        default: federated
+        options:
+          - federated
+          - client-secret
       createResourceGroup:
         description: Create Resource Group?
-        type: boolean
-        default: true
-      publicAccessEnabled:
-        description: Public Access Enabled?
-        type: boolean
-        default: true
-      createDnsZones:
-        description: Create DNS Zones?
         type: boolean
         default: true
       addRoleAssignments:
         description: Add Role Assignments?
         type: boolean
         default: true
-      deployAIHub:
-        description: Deploy AI Hub?
-        type: boolean
-        default: true
-      runBuildDeployAPI:
-        description: 'Build and Deploy API'
-        required: false
-        default: true
-        type: boolean
       runSecurityScan:
         description: 'Run Security Scan'
         required: false
         default: false
         type: boolean
-      # runSmokeTest:
-      #   description: 'Run Smoke Tests'
-      #   required: false
-      #   default: false
-      #   type: boolean
-      # instance: # moved to GH Variable
-      #   description: Instance number for resource naming
-      #   type: string
-      #   default: '001'
+      deployAPIM:
+        description: Deploy APIM?
+        type: boolean
+        default: true
   # push:
   #   branches:
   #     - main
@@ -105,10 +103,15 @@ jobs:
       ACR_REPO_NAME: ${{ env.ACR_REPO_NAME }}
       CONTAINER_APP_ENV_NAME: '${{ vars.APP_NAME_NO_DASHES }}-cae-${{ inputs.deployEnvironment }}'
 
-      UI_CONTAINER_APP_NAME: '${{ vars.APP_NAME_NO_DASHES }}-ca-ui-${{ inputs.deployEnvironment }}'
+      UI_CONTAINER_APP_NAME: 'ca-ui-${{ vars.APP_NAME_NO_DASHES }}-${{ inputs.deployEnvironment }}-${{ vars.INSTANCE_NUMBER }}'
       UI_APP_PATH: ${{ env.UI_APP_PATH }}
       UI_ACR_APP_NAME: ${{ env.UI_ACR_APP_NAME }}
       UI_PORT: ${{ env.UI_PORT }}
+
+      API_CONTAINER_APP_NAME: 'ca-api-${{ vars.APP_NAME_NO_DASHES }}-${{ inputs.deployEnvironment }}-${{ vars.INSTANCE_NUMBER }}'
+      API_APP_PATH: ${{ env.API_APP_PATH }}
+      API_ACR_APP_NAME: ${{ env.API_ACR_APP_NAME }}
+      API_PORT: ${{ env.API_PORT }}
 
     steps:
       - name: Set common environment variables
@@ -151,40 +154,22 @@ jobs:
     with:
       envCode: ${{ inputs.deployEnvironment }}
       templatePath: './infra/bicep/'
-      templateFile: 'main-basic.bicep'
-      parameterFile: '${{ inputs.bicepFile }}param'
+      templateFile: 'main-${{ inputs.bicepVersion }}.bicep'
+      parameterFile: 'main-${{ inputs.bicepVersion }}.bicepparam'
       parameterFileReplaceTokens: 'true'
+      requestorName: ${{ github.actor }}
       createResourceGroup: ${{ inputs.createResourceGroup }}
-      publicAccessEnabled: ${{ inputs.publicAccessEnabled }}
-      createDnsZones: ${{ inputs.createDnsZones }}
-      deployAIHub: ${{ inputs.deployAIHub }}
       addRoleAssignments: ${{ inputs.addRoleAssignments }}
+      deployAPIM: ${{ inputs.deployAPIM }}
+      appsToDeploy: ${{ inputs.appsToDeploy }}
+      loginMethod: ${{ inputs.loginMethod }}
 
   # ------------------------------------------------------------------------------------------------------------------------
-  build-all:
-    name: Build All Apps
-    uses: ./.github/workflows/template-aca-build-all.yml
-    needs:
-      - template-env
-      - deploy-bicep
-    secrets: inherit
-    with:
-      ENV_CODE: ${{ inputs.deployEnvironment }}
-      ACR_NAME: ${{ needs.template-env.outputs.ACR_NAME }}
-      RESOURCE_GROUP: ${{ needs.template-env.outputs.RESOURCE_GROUP_NAME }}
-      ACR_REPO_NAME: ${{ needs.template-env.outputs.ACR_REPO_NAME }}
-
-      BUILD_DEPLOY_API: ${{ inputs.runBuildDeployAPI }}
-      API_APP_PATH: ${{ needs.template-env.outputs.API_APP_PATH }}
-      API_ACR_APP_NAME: ${{ needs.template-env.outputs.API_ACR_APP_NAME }}
-
-  # ------------------------------------------------------------------------------------------------------------------------
-  deploy-api:
-    name: Deploy API ${{ inputs.deployEnvironment }} ${{ inputs.deployType }}
+  deploy-ui:
+    name: Deploy UI ${{ inputs.deployEnvironment }} ${{ inputs.deployType }}
     uses: ./.github/workflows/template-aca-deploy.yml
-    if: inputs.runBuildDeployAPI
+    if: inputs.runBuildDeployUI
     needs:
-      - build-all
       - template-env
     secrets: inherit
     with:
@@ -193,8 +178,25 @@ jobs:
       CONTAINER_APP_ENV_NAME: ${{ needs.build-all.outputs.UI_APP_PATH }}
       CONTAINER_NAME: ${{ needs.template-env.outputs.UI_CONTAINER_APP_NAME }}
       ACR_NAME: ${{ needs.template-env.outputs.ACR_NAME }}
-      IMAGE_NAME: ${{ needs.build-all.outputs.API_IMAGE_NAME }}
+      IMAGE_NAME: ${{ needs.build-all.outputs.UI_IMAGE_NAME }}
       PORT: ${{ needs.template-env.outputs.UI_PORT }}
+
+  # ------------------------------------------------------------------------------------------------------------------------
+  deploy-api:
+    name: Deploy API ${{ inputs.deployEnvironment }} ${{ inputs.deployType }}
+    uses: ./.github/workflows/template-aca-deploy.yml
+    if: inputs.runBuildDeployAPI
+    needs:
+      - template-env
+    secrets: inherit
+    with:
+      ENV_CODE: ${{ needs.template-env.outputs.ENV_CODE }}
+      RESOURCE_GROUP: ${{ needs.template-env.outputs.RESOURCE_GROUP_NAME }}
+      CONTAINER_APP_ENV_NAME: ${{ needs.build-all.outputs.API_APP_PATH }}
+      CONTAINER_NAME: ${{ needs.template-env.outputs.API_CONTAINER_APP_NAME }}
+      ACR_NAME: ${{ needs.template-env.outputs.ACR_NAME }}
+      IMAGE_NAME: ${{ needs.build-all.outputs.API_IMAGE_NAME }}
+      PORT: ${{ needs.template-env.outputs.API_PORT }}
 
   # ------------------------------------------------------------------------------------------------------------------------
   # Deploy a Project inside the AI Foundry Hub

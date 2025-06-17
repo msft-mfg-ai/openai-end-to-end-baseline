@@ -74,15 +74,12 @@ jobs:
     with:
       envCode: ${{ inputs.deployEnvironment }}
       templatePath: './infra/bicep/'
-
       templateFile: 'main-${{ inputs.bicepVersion }}.bicep'
       parameterFile: 'main-${{ inputs.bicepVersion }}.bicepparam'
       parameterFileReplaceTokens: 'true'
-
       requestorName: ${{ github.actor }}
       createResourceGroup: ${{ inputs.createResourceGroup }}
       addRoleAssignments: ${{ inputs.addRoleAssignments }}
-
       deployAPIM: ${{ inputs.deployAPIM }}
       appsToDeploy: ${{ inputs.appsToDeploy }}
       loginMethod: ${{ inputs.loginMethod }}

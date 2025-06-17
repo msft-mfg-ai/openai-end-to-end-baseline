@@ -16,6 +16,16 @@ on:
         required: true
         type: string
 
+      BUILD_DEPLOY_API:
+        default: true
+        type: boolean
+      API_APP_PATH:
+        required: true
+        type: string
+      API_ACR_APP_NAME:
+        required: true
+        type: string
+
       BUILD_DEPLOY_UI:
         default: true
         type: boolean
