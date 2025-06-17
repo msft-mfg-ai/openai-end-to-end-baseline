@@ -31,11 +31,6 @@ on:
         options:
           - main-basic.bicep
           - main-advanced.bicep
-      parameterFile:
-        description: Parameter File
-        required: true
-        default: 'main-basic.dynamic.bicepparam'
-        type: string
       createResourceGroup:
         description: Create Resource Group?
         type: boolean
@@ -58,21 +53,8 @@ on:
         required: false
         default: false
         type: boolean
-        
-      # runBuildDeployUI:
-      #   description: Build and Deploy UI
-      #   required: false
-      #   default: false
-      #   type: boolean
-      # publicAccessEnabled:
-      #   description: Public Access Enabled?
-      #   type: boolean
-      #   default: true
-      # createDnsZones:
-      #   description: Create DNS Zones?
-      #   type: boolean
-      #   default: true
 
+# ------------------------------------------------------------------------------------------------------------------------
 jobs:
   Deploy_Bicep:
     name: Deploy ${{ inputs.deployEnvironment }} Bicep
@@ -87,16 +69,13 @@ jobs:
       envCode: ${{ inputs.deployEnvironment }}
       templatePath: './infra/bicep/'
       templateFile: ${{ inputs.bicepFile }}
-      parameterFile: ${{ inputs.parameterFile }}
+      parameterFile: '${{ inputs.bicepFile }}param'
       parameterFileReplaceTokens: 'true'
 
+      requestorName: ${{ github.actor }}
       createResourceGroup: ${{ inputs.createResourceGroup }}
       addRoleAssignments: ${{ inputs.addRoleAssignments }}
+
       runBuildDeployAPI: ${{ inputs.runBuildDeployAPI }}
       deployAPIM: ${{ inputs.deployAPIM }}
       loginUsingClientSecret: ${{ inputs.loginUsingClientSecret }}
-
-      deployAIHub: true
-      publicAccessEnabled: true
-      createDnsZones: false
-      requestorName: ${{ github.actor }}
