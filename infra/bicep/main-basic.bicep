@@ -193,8 +193,6 @@ module containerRegistry './modules/app/containerregistry.bicep' = {
     acrSku: 'Premium'
     tags: tags
     publicAccessEnabled: publicAccessEnabled
-    privateEndpointName: ''
-    privateEndpointSubnetId: ''
     myIpAddress: myIpAddress
   }
 }
@@ -570,7 +568,6 @@ module managedEnvironment './modules/app/managedEnvironment.bicep' = {
     location: location
     logAnalyticsWorkspaceName: logAnalytics.outputs.logAnalyticsWorkspaceName
     logAnalyticsRgName: resourceGroupName
-    // appSubnetId: deployVNET ? vnet.outputs.subnetAppSeResourceID : ''
     tags: tags
     publicAccessEnabled: publicAccessEnabled
     containerAppEnvironmentWorkloadProfiles: containerAppEnvironmentWorkloadProfiles

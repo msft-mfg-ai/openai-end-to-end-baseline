@@ -134,9 +134,6 @@ param batchImageName string = ''
 // --------------------------------------------------------------------------------------------------------------
 // Other deployment switches
 // --------------------------------------------------------------------------------------------------------------
-@description('Should VNET be used in this deploy?')
-param deployVNET bool = true
-
 @description('Should resources be created with public access?')
 param publicAccessEnabled bool = true
 @description('Create DNS Zones?')
