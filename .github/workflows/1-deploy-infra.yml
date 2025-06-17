@@ -23,14 +23,22 @@ on:
           - preston
           - chris
           - matt
-      bicepFile:
-        description: Main Bicep File
+      bicepVersion:
+        description: Bicep Version - basic or advanced? Basic is public, Advanced includes private networking features.
         required: true
-        default: 'main-basic.bicep'
+        default: 'basic'
         type: choice
         options:
-          - main-basic.bicep
-          - main-advanced.bicep
+          - basic
+          - advanced
+      # bicepFile:
+      #   description: Main Bicep File
+      #   required: true
+      #   default: 'main-basic.bicep'
+      #   type: choice
+      #   options:
+      #     - main-basic.bicep
+      #     - main-advanced.bicep
       createResourceGroup:
         description: Create Resource Group?
         type: boolean
@@ -68,8 +76,11 @@ jobs:
     with:
       envCode: ${{ inputs.deployEnvironment }}
       templatePath: './infra/bicep/'
-      templateFile: ${{ inputs.bicepFile }}
-      parameterFile: '${{ inputs.bicepFile }}param'
+
+      templateFile: 'main-${{ inputs.bicepVersion }}.bicep'
+      parameterFile: 'main-${{ inputs.bicepVersion }}.bicepparam'
+      # templateFile: ${{ inputs.bicepFile }}
+      # parameterFile: '${{ inputs.bicepFile }}param'
       parameterFileReplaceTokens: 'true'
 
       requestorName: ${{ github.actor }}
