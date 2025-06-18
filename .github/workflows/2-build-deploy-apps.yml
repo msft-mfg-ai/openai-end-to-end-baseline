@@ -23,6 +23,7 @@ on:
         options:
           - dev
           - qa
+          - stage
           - prod
           - lyle
           - scott

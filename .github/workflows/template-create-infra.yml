@@ -25,11 +25,6 @@ on:
         required: false
         type: string
         default: 'false'
-      bicepDeploymentMode:
-        description: 'DEPRECATED: No longer used with bicep-deploy action'
-        required: false
-        type: string
-        default: 'Incremental'
       runCreateInfra:
         required: false
         default: true
@@ -74,6 +69,11 @@ on:
         description: Use the old Deploy ARM Task?
         type: boolean
         default: false
+      bicepDeploymentMode:
+        description: 'DEPRECATED: No longer used with bicep-deploy action'
+        required: false
+        type: string
+        default: 'Incremental'
 
 # ------------------------------------------------------------------------------------------------------------------------
 jobs:
