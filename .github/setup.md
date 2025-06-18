@@ -6,12 +6,12 @@ The GitHub workflows in this project require several secrets set at the reposito
 
 ## Workflow Definitions
 
-- **[1_deploy_infra.yml](./workflows/1_deploy_infra.yml):** Deploys the main.bicep template with all new resources and does nothing else. You can use this to do a `what-if` deployment to see what resources will be created/updated/deleted by the [main-basic.bicep](../infra/bicep/main-basic.bicep) file or  [main-advanced.bicep](../infra/bicep/main-advanced.bicep) file.
-- **[2-build-deploy-apps.yml](./workflows/2-build-deploy-apps.yml):** Builds the app and deploys it to Azure - this could/should be set up to happen automatically after each check-in to main branch app folder
-- **[3-deploy-infra-and-apps](./workflows/1-infra-build-deploy-all.yml):** Deploys the main*.bicep template then builds and deploys all the apps
+- **[1_deploy_infra.yml](./workflows/1_deploy_infra.yml):** Deploys the main-*.bicep template with all new resources and does nothing else. You can use this to do a `what-if` deployment to see what resources will be created/updated/deleted by the [main-basic.bicep](../infra/bicep/main-basic.bicep) file or  [main-advanced.bicep](../infra/bicep/main-advanced.bicep) file.
+- **(Optional) [2-build-deploy-apps.yml](./workflows/2-build-deploy-apps.yml):** Builds the app and deploys it to Azure - this could/should be set up to happen automatically after each check-in to main branch app folder
+- **(Optional) [3-deploy-infra-and-apps](./workflows/1-infra-build-deploy-all.yml):** Deploys the main*.bicep template then builds and deploys all the apps
 - **[4_scan_build_pr.yml](./workflows/4_scan_build_pr.yml):** Runs each time a Pull Request is submitted and includes the results in the PR
 - **[5_scheduled_scan.yml](./workflows/5_scheduled_scan.yml):** Runs a scheduled periodic scan of the app for security vulnerabilities
-- **[6-deploy-ai-hub-project.yml](./workflows/6-deploy-ai-hub-project.yml):** Deploys an AI Foundry Hub
+- **(Optional) [6-deploy-ai-hub-project.yml](./workflows/6-deploy-ai-hub-project.yml):** Deploys an AI Foundry Hub
 
 ---
 
@@ -31,11 +31,12 @@ Follow these steps to get started quickly:
     gh secret set --env <envName> CICD_CLIENT_ID -b xxx-xx-xx-xx-xxxx
     ```
 
-    Optional:
-    *(Note that you only need to use CLIENT_SECRET if you are NOT using a Federated Identity. If you want to use a Federated Identity, you should omit this secret.)*
+    Optional - Add a client secret if not using a federated identity.
+
+    > *Note that you only need to use CICD_CLIENT_SECRET if you are NOT using a Federated Identity. If you want to use a Federated Identity, you should omit this secret.*
 
     ```bash
-    gh secret set --env <envName> CLIENT_SECRET -b xxxxxxxxxx
+    gh secret set --env <envName> CICD_CLIENT_SECRET -b xxxxxxxxxx
     ```
 
 1. The following variables should be set or updated at the repository level, as they should be the same for most uses. If desired, you could set them at the environment level to customize them for each environment. These values are used by the Bicep templates to configure the resource names that are deployed.
@@ -63,15 +64,6 @@ Follow these steps to get started quickly:
     gh variable set COST_CENTER -b 'CC'
     ```
 
-    <!-- 
-    If you're doing advanced networking, you will need these:
-    ```bash
-    gh variable set VNET_NAME -b vnet-aichat
-    gh variable set SUBNET_NAME -b subnet-aichat
-    gh variable set SUBNET_PREFIX -b
-    ``` 
-    -->
-
 1. Run the **[1-infra-build-deploy-all](./workflows/1-infra-build-deploy-all.yml):** action in this repo to deploy the UI.
 
 That's it - you should have a fully working deployed environment!
@@ -80,7 +72,7 @@ That's it - you should have a fully working deployed environment!
 
 ### Admin Rights
 
-USER_PRINCIPAL_ID is an optional settings at the environment level - set this only if you want your admin to have access to the Key Vault and Container Registry. You can customize and run the following commands, or you can set these secrets up manually.
+USER_PRINCIPAL_ID is an optional settings at the environment level - set this only if you want your admin to have access to the Key Vault and Container Registry. You can customize this by environment if desired.
 
 ```bash
 gh secret set --env dev USER_PRINCIPAL_ID <yourGuid>

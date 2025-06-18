@@ -15,6 +15,7 @@ on:
         options:
           - dev
           - qa
+          - stage
           - prod
           - lyle
           - scott
@@ -24,7 +25,7 @@ on:
           - chris
           - matt
       bicepVersion:
-        description: Version - Basic is public, Advanced includes private networking features.
+        description: Version - Basic=public, Advanced=VNET
         required: true
         default: 'basic'
         type: choice
@@ -40,13 +41,6 @@ on:
           - API
           - UI
           - API+UI
-      loginMethod:
-        description: Login Method?
-        type: choice
-        default: federated
-        options:
-          - federated
-          - client-secret
       createResourceGroup:
         description: Create Resource Group?
         type: boolean
@@ -82,4 +76,3 @@ jobs:
       addRoleAssignments: ${{ inputs.addRoleAssignments }}
       deployAPIM: ${{ inputs.deployAPIM }}
       appsToDeploy: ${{ inputs.appsToDeploy }}
-      loginMethod: ${{ inputs.loginMethod }}
