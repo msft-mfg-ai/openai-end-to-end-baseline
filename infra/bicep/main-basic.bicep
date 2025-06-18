@@ -244,6 +244,8 @@ module appIdentityRoleAssignments './modules/iam/role-assignments.bicep' = if (a
     aiSearchName: searchService.outputs.name
     aiServicesName: openAI.outputs.name
     cosmosName: cosmos.outputs.name
+    keyVaultName: keyVault.outputs.name
+    apimName: deployAPIM ? apim.outputs.name : ''
   }
 }
 
@@ -257,6 +259,8 @@ module adminUserRoleAssignments './modules/iam/role-assignments.bicep' = if (add
     aiSearchName: searchService.outputs.name
     aiServicesName: openAI.outputs.name
     cosmosName: cosmos.outputs.name
+    keyVaultName: keyVault.outputs.name
+    apimName: deployAPIM ? apim.outputs.name : ''
   }
 }
 
@@ -479,14 +483,6 @@ module aiFoundryProject './modules/ai-foundry/ai-foundry-project.bicep' = {
     hubId: aiFoundryHub.outputs.id
   }
 }
-module aiFoundryIdentityRoleAssignments './modules/iam/role-assignments.bicep' = if (addRoleAssignments) {
-  name: 'foundry-roles${deploymentSuffix}'
-  params: {
-    identityPrincipalId: aiFoundryProject.outputs.principalId
-    principalType: 'ServicePrincipal'
-    aiServicesName: openAI.outputs.name
-  }
-}
 
 // AI Project and Capability Host
 module aiProject './modules/cognitive-services/ai-project.bicep' = {
@@ -546,15 +542,6 @@ module apimConfiguration './modules/api-management/apim-oai-config.bicep' = if (
     apimName: apim.outputs.name
     apimLoggerName: apim.outputs.loggerName
     cognitiveServicesName: openAI.outputs.name
-  }
-}
-
-module apimIdentityRoleAssignments './modules/iam/role-assignments.bicep' = if (deployAPIM && addRoleAssignments) {
-  name: 'apim-roles${deploymentSuffix}'
-  params: {
-    identityPrincipalId: aiFoundryProject.outputs.principalId
-    principalType: 'ServicePrincipal'
-    apimName: apim.outputs.name
   }
 }
 

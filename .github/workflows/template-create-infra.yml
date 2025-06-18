@@ -99,8 +99,8 @@ jobs:
       createDnsZones: ${{ inputs.createDnsZones }}
       deployAIHub: ${{ inputs.deployAIHub }}
       addRoleAssignments: ${{ inputs.addRoleAssignments }}
-      deployAPI: ${{ inputs.appsToDeploy && inputs.appsToDeploy == 'UI' || inputs.appsToDeploy == 'API+UI' && 'true' || 'false' }}
-      deployUI:  ${{ inputs.appsToDeploy && inputs.appsToDeploy == 'API' || inputs.appsToDeploy == 'API+UI' && 'true' || 'false' }}
+      deployAPI: ${{ inputs.appsToDeploy && inputs.appsToDeploy == 'API' || inputs.appsToDeploy == 'API+UI' && 'true' || 'false' }}
+      deployUI:  ${{ inputs.appsToDeploy && inputs.appsToDeploy == 'UI' || inputs.appsToDeploy == 'API+UI' && 'true' || 'false' }}
       deployAPIM: ${{ inputs.deployAPIM }}
       loginWithFederatedIdentity: ${{ secrets.CICD_CLIENT_SECRET == '' && 'true' || 'false' }}
       loginWithSecret: ${{ secrets.CICD_CLIENT_SECRET != '' && 'true' || 'false' }}
