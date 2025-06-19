@@ -259,7 +259,8 @@ jobs:
           operation: ${{ inputs.bicepDeploymentMode }} # Must be: create | validate | whatIf
           #location: $ { { vars.RESOURCEGROUP_LOCATION } } # not allowed for RG deploy...
 
-      # # # The azure/arm-deploy action is being deprecated, replaced by azure/bicep-deploy
+      ### The azure/arm-deploy action is being deprecated, replaced by azure/bicep-deploy
+      ### See: https://github.com/Azure/arm-deploy (old) vs https://github.com/azure/bicep-deploy (new)
       # - name: Deploy Azure Resources ARM Task Dep (Sub)
       #   uses: azure/arm-deploy@v2
       #   if: $ { { inputs.runCreateInfra && inputs.useOldBicepTask && !inputs.deployInResourceGroup && inputs.armDeploymentMode != 'Validation' } }

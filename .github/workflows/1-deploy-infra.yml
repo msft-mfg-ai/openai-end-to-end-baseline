@@ -41,7 +41,7 @@ on:
           - API
           - UI
           - API+UI
-      bicepAction:
+      bicepDeploymentMode:
         description: Bicep Mode
         default: create
         type: choice
@@ -83,5 +83,4 @@ jobs:
       addRoleAssignments: ${{ inputs.addRoleAssignments }}
       deployAPIM: ${{ inputs.deployAPIM }}
       appsToDeploy: ${{ inputs.appsToDeploy }}
-      bicepDeploymentMode: ${{ inputs.bicepAction }}
-
+      bicepDeploymentMode: ${{ inputs.bicepDeploymentMode }}
