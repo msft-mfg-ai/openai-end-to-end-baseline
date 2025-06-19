@@ -273,7 +273,7 @@ jobs:
             --no-prompt true
       - name: Deploy Azure Resources ARM Task Dep (Sub)
         uses: azure/arm-deploy@v2
-        if: ${{ inputs.runCreateInfra && inputs.useOldBicepTask && !inputs.deployInResourceGroup && inputs.armDeploymentMode != 'Validation' }}
+        if: ${{ inputs.runCreateInfra && inputs.useOldBicepTask && !inputs.deployInResourceGroup }}
         id: deploy-bicep-sub
         with:
           scope: subscription
