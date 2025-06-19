@@ -42,7 +42,7 @@ on:
           - UI
           - API+UI
       bicepAction:
-        description: Bicep Deploy Mode
+        description: Bicep Mode
         default: create
         type: choice
         options:
@@ -60,19 +60,6 @@ on:
         description: Deploy APIM?
         type: boolean
         default: true
-
-        # armDeploymentMode:
-      #   description: Bicep Deploy Mode
-      #   default: Incremental
-      #   type: choice
-      #   options:
-      #     - Incremental
-      #     - Complete
-      #     - Validation
-      # useOldBicepTask:
-      #   description: Use the old Deploy ARM Task?
-      #   type: boolean
-      #   default: true
 
 # ------------------------------------------------------------------------------------------------------------------------
 jobs:
@@ -97,5 +84,4 @@ jobs:
       deployAPIM: ${{ inputs.deployAPIM }}
       appsToDeploy: ${{ inputs.appsToDeploy }}
       bicepDeploymentMode: ${{ inputs.bicepAction }}
-      # useOldBicepTask: ${{ inputs.useOldBicepTask }}
-      # armDeploymentMode: ${{ inputs.armDeploymentMode }}
+

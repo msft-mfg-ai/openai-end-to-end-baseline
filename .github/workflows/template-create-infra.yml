@@ -70,16 +70,6 @@ on:
         required: false
         type: string
         default: 'create'
-      # useOldBicepTask:
-      #   description: Use the old Deploy ARM Task?
-      #   type: boolean
-      #   default: true
-      # armDeploymentMode:
-      #   description: 'For use with old arm-deploy action -- Must be: Incremental | Complete | Validation'
-      #   required: false
-      #   type: string
-      #   default: 'Incremental'
-
 
 # ------------------------------------------------------------------------------------------------------------------------
 jobs:
