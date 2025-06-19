@@ -3,8 +3,10 @@
 //   Public Endpoints, includes EVERYTHING for the application,
 //   with optional parameters for existing resources.
 // --------------------------------------------------------------------------------------------------------------
-// You can test it with this command:
-//   az deployment group create -n manual --resource-group rg_mfg-ai-lz --template-file 'main-basic.bicep' --parameters environmentName=dev applicationName=myApp
+// You can test before deploy it with this command (run these commands in the same directory as this bicep file):
+//   az deployment group what-if --resource-group rg_mfg-ai-lz --template-file 'main-basic.bicep' --parameters environmentName=dev applicationName=otaiexp applicationId=otaiexp1 instanceNumber=002 regionCode=naa
+// You can deploy it with this command:
+//   az deployment group create -n manual --resource-group rg_mfg-ai-lz --template-file 'main-basic.bicep' --parameters environmentName=dev applicationName=otaiexp applicationId=otaiexp1 instanceNumber=002 regionCode=naa
 // Or with a parameter file:
 //   az deployment group create -n manual --resource-group rg_mfg-ai-lz --template-file 'main-basic.bicep' --parameters main-basic.your.bicepparam
 // --------------------------------------------------------------------------------------------------------------
@@ -145,6 +147,19 @@ var resourceGroupName = resourceGroup().name
 var appName = applicationName != '' ? applicationName : '${applicationPrefix}_${resourceToken}'
 
 var deploymentSuffix = '-${runDateTime}'
+
+// var tags = {
+//   'creation-date': take(runDateTime, 8)
+//   'application-name':  'oai'
+//   'application-id':    'not-applicable'
+//   'application-owner': 'me.somedomain.com'
+//   'business-owner':    'me.somedomain.com'
+//   'cost-center':       '999999'
+//   'created-by':        'me.somedomain.com'
+//   'environment-name':  'dev'
+//   'requestor-name':    'me.somedomain.com'
+// }
+// var commonTags = tags
 
 var commonTags = {
   'creation-date': take(runDateTime, 8)

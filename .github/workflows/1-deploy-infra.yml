@@ -41,6 +41,14 @@ on:
           - API
           - UI
           - API+UI
+      bicepAction:
+        description: Bicep Deploy Mode
+        default: create
+        type: choice
+        options:
+          - create
+          - validate
+          - whatIf
       createResourceGroup:
         description: Create Resource Group?
         type: boolean
