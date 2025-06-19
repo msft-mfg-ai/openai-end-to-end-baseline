@@ -227,7 +227,7 @@ jobs:
       - name: Deploy Azure Resources (Sub)
         uses: azure/bicep-deploy@v2
         if: ${{ inputs.runCreateInfra && !inputs.useOldBicepTask && !inputs.deployInResourceGroup }}
-        id: deploy-bicep-sub
+        id: deploy-bicep-sub-new
         with:
           scope: subscription
           location: ${{ vars.RESOURCEGROUP_LOCATION }}
@@ -244,7 +244,7 @@ jobs:
       - name: Deploy Azure Resources (RG)
         uses: azure/bicep-deploy@v2
         if: ${{ inputs.runCreateInfra && !inputs.useOldBicepTask && inputs.deployInResourceGroup }} 
-        id: deploy-bicep-rg
+        id: deploy-bicep-rg-new
         with:
           scope: resourceGroup
           name: ${{ inputs.templateFile }}-rg-${{ vars.RESOURCEGROUP_LOCATION }}-${{ steps.get-date.outputs.DATE_TIME_STAMP}}
@@ -259,8 +259,8 @@ jobs:
       # # The azure/arm-deploy action is being deprecated, replaced by azure/bicep-deploy
       - name: Deploy Azure Resources ARM Task Dep (Sub)
         uses: azure/arm-deploy@v2
-        if: $ { { inputs.runCreateInfra && inputs.useOldBicepTask && !inputs.deployInResourceGroup } }
-        id: deploy-bicep-sub-old
+        if: ${{ inputs.runCreateInfra && inputs.useOldBicepTask && !inputs.deployInResourceGroup }}
+        id: deploy-bicep-sub
         with:
           scope: subscription
           region: ${{ vars.RESOURCEGROUP_LOCATION }}
@@ -271,8 +271,8 @@ jobs:
           failOnStdErr: false # if set to true, then any warning thrown by Bicep will cause the action to fail
       - name: Deploy Azure Resources ARM Task Dep (RG)
         uses: azure/arm-deploy@v2
-        if: $ { { inputs.runCreateInfra && inputs.useOldBicepTask && inputs.deployInResourceGroup } }
-        id: deploy-bicep-rg-old
+        if: ${{ inputs.runCreateInfra && inputs.useOldBicepTask && inputs.deployInResourceGroup }}
+        id: deploy-bicep-rg
         with:
           scope: resourcegroup
           region: ${{ vars.RESOURCEGROUP_LOCATION }}
