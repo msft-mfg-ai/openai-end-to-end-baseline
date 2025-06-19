@@ -140,6 +140,9 @@ jobs:
           echo "env.generatedResourceGroupName=${{ env.generatedResourceGroupName }}"
           echo "templateFilePath=${{ inputs.templatePath }}${{ inputs.templateFile }}"
           echo "parameterFilePath=${{ inputs.templatePath }}${{ inputs.parameterFile }}"
+          echo "armDeploymentMode=${{ inputs.armDeploymentMode }}"
+          echo "bicepDeploymentMode=${{ inputs.bicepDeploymentMode }}"
+          echo "useOldBicepTask=${{ inputs.useOldBicepTask }}"
 
           echo "vars.APP_NAME=${{ vars.APP_NAME }}"
           echo "vars.RESOURCEGROUP_PREFIX=${{ vars.RESOURCEGROUP_PREFIX }}"
@@ -258,7 +261,7 @@ jobs:
 
       # # The azure/arm-deploy action is being deprecated, replaced by azure/bicep-deploy
       - name: What-If Analysis (RG)
-        if: ${{ inputs.runCreateInfra && inputs.useOldBicepTask && !inputs.deployInResourceGroup && inputs.armDeploymentMode == 'Validation' }}
+        if: ${{ inputs.runCreateInfra && inputs.deployInResourceGroup && inputs.armDeploymentMode == 'Validation' }}
         id: whatif-analysis-rg
         run: |
           echo "Running what-if analysis for Resource Group deployment..."
