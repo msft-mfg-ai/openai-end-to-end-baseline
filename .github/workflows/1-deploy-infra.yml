@@ -49,6 +49,18 @@ on:
           - create
           - whatIf
           # - validate  (hidden for now...)
+      armDeploymentMode:
+        description: Bicep Deploy Mode
+        default: Incremental
+        type: choice
+        options:
+          - Incremental
+          - Complete
+          - Validation
+      useOldBicepTask:
+        description: Use the old Deploy ARM Task?
+        type: boolean
+        default: true
       createResourceGroup:
         description: Create Resource Group?
         type: boolean
