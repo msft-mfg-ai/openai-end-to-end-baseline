@@ -34,7 +34,7 @@ on:
           - advanced
       appsToDeploy:
         description: Apps to Deploy
-        default: none
+        default: API+UI
         type: choice
         options:
           - none
@@ -47,8 +47,8 @@ on:
         type: choice
         options:
           - create
-          - validate
           - whatIf
+          # - validate  (hidden for now...)
       createResourceGroup:
         description: Create Resource Group?
         type: boolean
