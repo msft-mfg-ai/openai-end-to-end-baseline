@@ -257,9 +257,20 @@ jobs:
           #location: $ { { vars.RESOURCEGROUP_LOCATION } } # not allowed for RG deploy...
 
       # # The azure/arm-deploy action is being deprecated, replaced by azure/bicep-deploy
+      - name: What-If Analysis (RG)
+        if: ${{ inputs.runCreateInfra && inputs.useOldBicepTask && !inputs.deployInResourceGroup && inputs.armDeploymentMode == 'Validation' }}
+        id: whatif-analysis-rg
+        run: |
+          echo "Running what-if analysis for Resource Group deployment..."
+          az deployment group what-if \
+            --name ${{ inputs.templateFile }}-whatif-rg-${{ vars.RESOURCEGROUP_LOCATION }}-${{ steps.get-date.outputs.DATE_TIME_STAMP}} \
+            --resource-group "${{ env.generatedResourceGroupName }}" \
+            --template-file "${{ inputs.templatePath }}${{ inputs.templateFile }}" \
+            --parameters "${{ inputs.templatePath }}${{ inputs.parameterFile }}" \
+            --no-prompt true
       - name: Deploy Azure Resources ARM Task Dep (Sub)
         uses: azure/arm-deploy@v2
-        if: ${{ inputs.runCreateInfra && inputs.useOldBicepTask && !inputs.deployInResourceGroup }}
+        if: ${{ inputs.runCreateInfra && inputs.useOldBicepTask && !inputs.deployInResourceGroup && inputs.armDeploymentMode != 'Validation' }}
         id: deploy-bicep-sub
         with:
           scope: subscription
