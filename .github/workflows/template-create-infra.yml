@@ -70,15 +70,15 @@ on:
         required: false
         type: string
         default: 'create'
-      useOldBicepTask:
-        description: Use the old Deploy ARM Task?
-        type: boolean
-        default: true
-      armDeploymentMode:
-        description: 'For use with old arm-deploy action -- Must be: Incremental | Complete | Validation'
-        required: false
-        type: string
-        default: 'Incremental'
+      # useOldBicepTask:
+      #   description: Use the old Deploy ARM Task?
+      #   type: boolean
+      #   default: true
+      # armDeploymentMode:
+      #   description: 'For use with old arm-deploy action -- Must be: Incremental | Complete | Validation'
+      #   required: false
+      #   type: string
+      #   default: 'Incremental'
 
 
 # ------------------------------------------------------------------------------------------------------------------------
@@ -140,9 +140,7 @@ jobs:
           echo "env.generatedResourceGroupName=${{ env.generatedResourceGroupName }}"
           echo "templateFilePath=${{ inputs.templatePath }}${{ inputs.templateFile }}"
           echo "parameterFilePath=${{ inputs.templatePath }}${{ inputs.parameterFile }}"
-          echo "armDeploymentMode=${{ inputs.armDeploymentMode }}"
           echo "bicepDeploymentMode=${{ inputs.bicepDeploymentMode }}"
-          echo "useOldBicepTask=${{ inputs.useOldBicepTask }}"
 
           echo "vars.APP_NAME=${{ vars.APP_NAME }}"
           echo "vars.RESOURCEGROUP_PREFIX=${{ vars.RESOURCEGROUP_PREFIX }}"
@@ -224,13 +222,25 @@ jobs:
         if: ${{ inputs.runCreateInfra && inputs.deployInResourceGroup }}
         run: az group create --name ${{ env.generatedResourceGroupName }} --location ${{ vars.RESOURCEGROUP_LOCATION }} --tags Environment=${{ inputs.envCode }}
 
+      - name: What-If Analysis (RG)
+        if: ${{ inputs.runCreateInfra && inputs.deployInResourceGroup && inputs.bicepDeploymentMode == 'whatIf' }}
+        id: whatif-analysis-rg
+        run: |
+          echo "Running what-if analysis..."
+          az deployment group what-if \
+            --name ${{ inputs.templateFile }}-whatif-rg-${{ vars.RESOURCEGROUP_LOCATION }}-${{ steps.get-date.outputs.DATE_TIME_STAMP}} \
+            --resource-group "${{ env.generatedResourceGroupName }}" \
+            --template-file "${{ inputs.templatePath }}${{ inputs.templateFile }}" \
+            --parameters "${{ inputs.templatePath }}${{ inputs.parameterFile }}" \
+            --no-prompt true
+
       # The azure/arm-deploy action is being deprecated, replaced by azure/bicep-deploy
       # See: https://github.com/Azure/arm-deploy (old) vs https://github.com/azure/bicep-deploy (new)
       # Note: 'failOnStdErr' is not supported in bicep-deploy... will that be an issue in GHA where warnings are treated as errors???
       - name: Deploy Azure Resources (Sub)
         uses: azure/bicep-deploy@v2
-        if: ${{ inputs.runCreateInfra && !inputs.useOldBicepTask && !inputs.deployInResourceGroup }}
-        id: deploy-bicep-sub-new
+        if: ${{ inputs.runCreateInfra && !inputs.deployInResourceGroup && inputs.bicepDeploymentMode != 'whatIf' }}
+        id: deploy-bicep-sub
         with:
           scope: subscription
           location: ${{ vars.RESOURCEGROUP_LOCATION }}
@@ -246,8 +256,8 @@ jobs:
       # Note: 'failOnStdErr' is not supported in bicep-deploy... will that be an issue in GHA where warnings are treated as errors???
       - name: Deploy Azure Resources (RG)
         uses: azure/bicep-deploy@v2
-        if: ${{ inputs.runCreateInfra && !inputs.useOldBicepTask && inputs.deployInResourceGroup }} 
-        id: deploy-bicep-rg-new
+        if: ${{ inputs.runCreateInfra && inputs.deployInResourceGroup && inputs.bicepDeploymentMode != 'whatIf' }} 
+        id: deploy-bicep-rg
         with:
           scope: resourceGroup
           name: ${{ inputs.templateFile }}-rg-${{ vars.RESOURCEGROUP_LOCATION }}-${{ steps.get-date.outputs.DATE_TIME_STAMP}}
@@ -259,43 +269,32 @@ jobs:
           operation: ${{ inputs.bicepDeploymentMode }} # Must be: create | validate | whatIf
           #location: $ { { vars.RESOURCEGROUP_LOCATION } } # not allowed for RG deploy...
 
-      # # The azure/arm-deploy action is being deprecated, replaced by azure/bicep-deploy
-      - name: What-If Analysis (RG)
-        if: ${{ inputs.runCreateInfra && inputs.deployInResourceGroup && inputs.armDeploymentMode == 'Validation' }}
-        id: whatif-analysis-rg
-        run: |
-          echo "Running what-if analysis for Resource Group deployment..."
-          az deployment group what-if \
-            --name ${{ inputs.templateFile }}-whatif-rg-${{ vars.RESOURCEGROUP_LOCATION }}-${{ steps.get-date.outputs.DATE_TIME_STAMP}} \
-            --resource-group "${{ env.generatedResourceGroupName }}" \
-            --template-file "${{ inputs.templatePath }}${{ inputs.templateFile }}" \
-            --parameters "${{ inputs.templatePath }}${{ inputs.parameterFile }}" \
-            --no-prompt true
-      - name: Deploy Azure Resources ARM Task Dep (Sub)
-        uses: azure/arm-deploy@v2
-        if: ${{ inputs.runCreateInfra && inputs.useOldBicepTask && !inputs.deployInResourceGroup }}
-        id: deploy-bicep-sub
-        with:
-          scope: subscription
-          region: ${{ vars.RESOURCEGROUP_LOCATION }}
-          deploymentName: ${{ inputs.templateFile }}-sub-${{ vars.RESOURCEGROUP_LOCATION }}-${{ steps.get-date.outputs.DATE_TIME_STAMP}}
-          template: ${{ inputs.templatePath }}${{ inputs.templateFile }}
-          parameters: ${{ inputs.templatePath }}${{ inputs.parameterFile }}
-          deploymentMode: ${{ inputs.armDeploymentMode }} # Must be: Incremental | Complete | Validation
-          failOnStdErr: false # if set to true, then any warning thrown by Bicep will cause the action to fail
-      - name: Deploy Azure Resources ARM Task Dep (RG)
-        uses: azure/arm-deploy@v2
-        if: ${{ inputs.runCreateInfra && inputs.useOldBicepTask && inputs.deployInResourceGroup }}
-        id: deploy-bicep-rg
-        with:
-          scope: resourcegroup
-          region: ${{ vars.RESOURCEGROUP_LOCATION }}
-          deploymentName: ${{ inputs.templateFile }}-rg-${{ vars.RESOURCEGROUP_LOCATION }}-${{ steps.get-date.outputs.DATE_TIME_STAMP}}
-          resourceGroupName: ${{ env.generatedResourceGroupName }}
-          template: ${{ inputs.templatePath }}${{ inputs.templateFile }}
-          parameters: ${{ inputs.templatePath }}${{ inputs.parameterFile }}
-          deploymentMode: ${{ inputs.armDeploymentMode }} # Must be: Incremental | Complete | Validation
-          failOnStdErr: false # if set to true, then any warning thrown by Bicep will cause the action to fail
+      # # # The azure/arm-deploy action is being deprecated, replaced by azure/bicep-deploy
+      # - name: Deploy Azure Resources ARM Task Dep (Sub)
+      #   uses: azure/arm-deploy@v2
+      #   if: $ { { inputs.runCreateInfra && inputs.useOldBicepTask && !inputs.deployInResourceGroup && inputs.armDeploymentMode != 'Validation' } }
+      #   id: deploy-bicep-sub-old
+      #   with:
+      #     scope: subscription
+      #     region: ${{ vars.RESOURCEGROUP_LOCATION }}
+      #     deploymentName: ${{ inputs.templateFile }}-sub-${{ vars.RESOURCEGROUP_LOCATION }}-${{ steps.get-date.outputs.DATE_TIME_STAMP}}
+      #     template: ${{ inputs.templatePath }}${{ inputs.templateFile }}
+      #     parameters: ${{ inputs.templatePath }}${{ inputs.parameterFile }}
+      #     deploymentMode: ${{ inputs.armDeploymentMode }} # Must be: Incremental | Complete | Validation
+      #     failOnStdErr: false # if set to true, then any warning thrown by Bicep will cause the action to fail
+      # - name: Deploy Azure Resources ARM Task Dep (RG)
+      #   uses: azure/arm-deploy@v2
+      #   if: $ { { inputs.runCreateInfra && inputs.useOldBicepTask && inputs.deployInResourceGroup && inputs.armDeploymentMode != 'Validation' } }
+      #   id: deploy-bicep-rg-old
+      #   with:
+      #     scope: resourcegroup
+      #     region: ${{ vars.RESOURCEGROUP_LOCATION }}
+      #     deploymentName: ${{ inputs.templateFile }}-rg-${{ vars.RESOURCEGROUP_LOCATION }}-${{ steps.get-date.outputs.DATE_TIME_STAMP}}
+      #     resourceGroupName: ${{ env.generatedResourceGroupName }}
+      #     template: ${{ inputs.templatePath }}${{ inputs.templateFile }}
+      #     parameters: ${{ inputs.templatePath }}${{ inputs.parameterFile }}
+      #     deploymentMode: ${{ inputs.armDeploymentMode }} # Must be: Incremental | Complete | Validation
+      #     failOnStdErr: false # if set to true, then any warning thrown by Bicep will cause the action to fail
 
       - name: Display Output
         if: ${{ inputs.runCreateInfra }}
