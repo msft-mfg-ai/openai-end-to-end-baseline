@@ -2,7 +2,7 @@
 # Action: Deploy Azure Resources via Bicep Files
 # ------------------------------------------------------------------------------------------------------------------------
 name: 1 - Deploy Infrastructure
-run-name: 1 - Deploy Infra ${{ inputs.bicepDeploymentMode }} / ${{ inputs.bicepVersion }} / ${{ inputs.deployEnvironment }} / @${{ github.actor }}
+run-name: '1 - Deploy Infra: ${{ inputs.bicepDeploymentMode }} / ${{ inputs.bicepVersion }} / ${{ inputs.deployEnvironment }} / @${{ github.actor }}'
 
 on:
   workflow_dispatch:
