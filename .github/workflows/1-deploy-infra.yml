@@ -64,7 +64,7 @@ on:
 # ------------------------------------------------------------------------------------------------------------------------
 jobs:
   Deploy_Bicep:
-    name: Deploy ${{ inputs.deployEnvironment }} Bicep
+    name: Deploy ${{ inputs.deployEnvironment }} Bicep (${{ inputs.bicepDeploymentMode }})
     uses: ./.github/workflows/template-create-infra.yml
     secrets: inherit
     permissions:
