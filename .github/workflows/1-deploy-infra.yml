@@ -96,3 +96,6 @@ jobs:
       addRoleAssignments: ${{ inputs.addRoleAssignments }}
       deployAPIM: ${{ inputs.deployAPIM }}
       appsToDeploy: ${{ inputs.appsToDeploy }}
+      useOldBicepTask: ${{ inputs.useOldBicepTask }}
+      bicepDeploymentMode: ${{ inputs.bicepAction }}
+      armDeploymentMode: ${{ inputs.armDeploymentMode }}
