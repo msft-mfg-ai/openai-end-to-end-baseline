@@ -2,7 +2,7 @@
 # Action: Deploy Azure Resources via Bicep Files
 # ------------------------------------------------------------------------------------------------------------------------
 name: 1 - Deploy Infrastructure
-run-name: 1 - Deploy ${{ inputs.bicepVersion }} Infrastructure to ENV ${{ inputs.deployEnvironment }} by @${{ github.actor }}
+run-name: '1 - Deploy Infra: ${{ inputs.bicepDeploymentMode }} / ${{ inputs.bicepVersion }} / ENV ${{ inputs.deployEnvironment }} by @${{ github.actor }}'
 
 on:
   workflow_dispatch:
@@ -34,13 +34,20 @@ on:
           - advanced
       appsToDeploy:
         description: Apps to Deploy
-        default: none
+        default: API+UI
         type: choice
         options:
           - none
           - API
           - UI
           - API+UI
+      bicepDeploymentMode:
+        description: Bicep Mode
+        default: create
+        type: choice
+        options:
+          - create
+          - whatIf
       createResourceGroup:
         description: Create Resource Group?
         type: boolean
@@ -57,7 +64,7 @@ on:
 # ------------------------------------------------------------------------------------------------------------------------
 jobs:
   Deploy_Bicep:
-    name: Deploy ${{ inputs.deployEnvironment }} Bicep
+    name: Deploy ${{ inputs.deployEnvironment }} Bicep (${{ inputs.bicepDeploymentMode }})
     uses: ./.github/workflows/template-create-infra.yml
     secrets: inherit
     permissions:
@@ -76,3 +83,4 @@ jobs:
       addRoleAssignments: ${{ inputs.addRoleAssignments }}
       deployAPIM: ${{ inputs.deployAPIM }}
       appsToDeploy: ${{ inputs.appsToDeploy }}
+      bicepDeploymentMode: ${{ inputs.bicepDeploymentMode }}
