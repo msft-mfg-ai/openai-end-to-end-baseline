@@ -4,8 +4,8 @@
 # Note: in order to do multiple CA build/deploys, you need to change FW and login ONCE, otherwise
 # it tends to have token refresh issues and fail on the second and third app
 # ------------------------------------------------------------------------------------------------------------------------
-name: z-Unused-2 - Build and Deploy All Apps
-run-name: 2 - Build and Deploy All Apps to ENV ${{ inputs.deployEnvironment }} by @${{ github.actor }}
+name: 2 - Build and Deploy CA Apps
+run-name: 2 - Build and Deploy CA Apps to ENV ${{ inputs.deployEnvironment }} by @${{ github.actor }}
 
 on:
   # push:
@@ -37,20 +37,17 @@ on:
         required: false
         default: true
         type: boolean
+      runBuildDeployUI:
+        description: 'Build and Deploy UI (not needed - only one DockerFile)'
+        required: false
+        default: false
+        type: boolean
       runSecurityScan:
         description: 'Run Security Scan'
         required: false
         default: false
         type: boolean
-      # runSmokeTest:
-      #   description: 'Run Smoke Tests'
-      #   required: false
-      #   default: false
-      #   type: boolean
-      # instance: # moved to GH Variable
-      #   description: Instance number for resource naming
-      #   type: string
-      #   default: '001'
+
 permissions:
   id-token: write # This is required for requesting the JWT
   contents: read # This is required for actions/checkout
@@ -60,9 +57,13 @@ env:
   # these are defined by the project itself, so they can stay here...
   ACR_REPO_NAME: 'aiapps'
 
-  API_APP_PATH: 'website/chatapi'
+  API_APP_PATH: ''
   API_ACR_APP_NAME: 'chatapi'
   API_PORT: '8080'
+
+  UI_APP_PATH: 'ui'
+  UI_ACR_APP_NAME: 'chatui'
+  UI_PORT: '8080'
 
 # ------------------------------------------------------------------------------------------------------------------------
 jobs:
@@ -75,17 +76,32 @@ jobs:
       PROJECT_ROOT: ${{ github.workspace }}
       ENV_CODE: ${{ inputs.deployEnvironment }}
       APP_NAME: ${{ vars.APP_NAME }}
-      APP_NAME_NO_DASHES: ${{ vars.APP_NAME_NO_DASHES }}
-      RESOURCE_GROUP_NAME: '${{ vars.RESOURCEGROUP_PREFIX }}-${{ inputs.deployEnvironment }}-${{ vars.GLOBAL_REGION_CODE }}-${{ vars.INSTANCE_NUMBER }}'
+      APP_NAME_NO_DASHES: ${{ steps.set-env.outputs.APP_NAME_NO_DASHES }}
 
-      ACR_NAME: '${{ vars.APP_NAME_NO_DASHES }}cr${{ inputs.deployEnvironment }}'
+      RESOURCE_GROUP_NAME: ${{ steps.set-env.outputs.RESOURCE_GROUP_NAME }}
+
+      # BICEP DEFINITION: output acrName string = toLower('${resourceAbbreviations.appContainerRegistry}-${sanitizedAppName}-${sanitizedEnvironment}${resourceToken}${dashRegionDashInstance}')
+      # EXAMPLE: crooaidevnaa020
+      ACR_NAME: 'cr${{ steps.set-env.outputs.APP_NAME_NO_DASHES }}${{ inputs.deployEnvironment }}${{ vars.GLOBAL_REGION_CODE }}${{ vars.INSTANCE_NUMBER }}'
       ACR_REPO_NAME: ${{ env.ACR_REPO_NAME }}
-      CONTAINER_APP_ENV_NAME: '${{ vars.APP_NAME_NO_DASHES }}-cae-${{ inputs.deployEnvironment }}'
 
-      API_CONTAINER_APP_NAME: '${{ vars.APP_NAME_NO_DASHES }}-ca-ui-${{ inputs.deployEnvironment }}'
+      # BICEP DEFINITION: output caManagedEnvName string = toLower('${resourceAbbreviations.appManagedEnvironments}-${sanitizedAppName}-${sanitizedEnvironment}${resourceToken}${dashRegionDashInstance}')
+      # EXAMPLE: cae-ooai-dev-naa-020
+      CONTAINER_APP_ENV_NAME: 'cae-${{ steps.set-env.outputs.APP_NAME_NO_DASHES }}-${{ steps.set-env.outputs.ENV_DASH_REGION_DASH_INSTANCE }}'
+
+      # BICEP DEFINITION: output containerAppAPIName string = take(toLower('${resourceAbbreviations.appContainerApps}-api-${sanitizedAppName}-${sanitizedEnvironment}${resourceTokenWithDash}${dashRegionDashInstance}'), 32)
+      # EXAMPLE: ca-api-ooai-dev-naa-020
+      API_CONTAINER_APP_NAME: 'ca-api-${{ steps.set-env.outputs.APP_NAME_NO_DASHES }}-${{ steps.set-env.outputs.ENV_DASH_REGION_DASH_INSTANCE }}'
       API_APP_PATH: ${{ env.API_APP_PATH }}
       API_ACR_APP_NAME: ${{ env.API_ACR_APP_NAME }}
       API_PORT: ${{ env.API_PORT }}
+
+      # BICEP DEFINITION: output containerAppUIName string = take(toLower('${resourceAbbreviations.appContainerApps}-ui-${sanitizedAppName}-${sanitizedEnvironment}${resourceTokenWithDash}${dashRegionDashInstance}'), 32)
+      # EXAMPLE: ca-ui-ooai-dev-naa-020
+      UI_CONTAINER_APP_NAME: 'ca-ui-${{ steps.set-env.outputs.APP_NAME_NO_DASHES }}-${{ steps.set-env.outputs.ENV_DASH_REGION_DASH_INSTANCE }}'
+      UI_APP_PATH: ${{ env.UI_APP_PATH }}
+      UI_ACR_APP_NAME: ${{ env.UI_ACR_APP_NAME }}
+      UI_PORT: ${{ env.UI_PORT }}
 
     steps:
       - name: Set common environment variables
@@ -94,14 +110,32 @@ jobs:
           echo "PROJECT_ROOT: ${{ github.workspace }}"
           echo "inputs.ENV_CODE: ${{ inputs.deployEnvironment }}"
           echo "vars.APP_NAME: ${{ vars.APP_NAME }}"
-          echo "vars.APP_NAME_NO_DASHES: ${{ vars.APP_NAME_NO_DASHES }}"
-          echo "AZURE_RESOURCE_GROUP: ${{ vars.RESOURCE_GROUP_NAME }}"
+
+          APP_NAME_NO_DASHES="$(echo ${{ vars.APP_NAME }} | tr -d '-' | tr -d '_')"
+          echo "APP_NAME_NO_DASHES=$APP_NAME_NO_DASHES"
+          echo "APP_NAME_NO_DASHES=$APP_NAME_NO_DASHES" >> $GITHUB_OUTPUT
+          
+          ENV_DASH_REGION_DASH_INSTANCE="$(echo "${{ inputs.deployEnvironment }}-${{ vars.GLOBAL_REGION_CODE }}-${{ vars.INSTANCE_NUMBER }}" | tr '[:upper:]' '[:lower:]')"
+          echo "ENV_DASH_REGION_DASH_INSTANCE=$ENV_DASH_REGION_DASH_INSTANCE"
+          echo "ENV_DASH_REGION_DASH_INSTANCE=$ENV_DASH_REGION_DASH_INSTANCE" >> $GITHUB_OUTPUT
+          
+          RESOURCE_GROUP_NAME="$(echo "${{ vars.RESOURCEGROUP_PREFIX }}-${{ inputs.deployEnvironment }}-${{ vars.GLOBAL_REGION_CODE }}-${{ vars.INSTANCE_NUMBER }}" | tr '[:upper:]' '[:lower:]')"
+          echo "RESOURCE_GROUP_NAME=$RESOURCE_GROUP_NAME"
+          echo "RESOURCE_GROUP_NAME=$RESOURCE_GROUP_NAME" >> $GITHUB_OUTPUT
+
+          echo "APP_NAME_NO_DASHES: $APP_NAME_NO_DASHES"
+          echo "RESOURCE_GROUP_NAME: $RESOURCE_GROUP_NAME"
+          echo "ENV_DASH_REGION_DASH_INSTANCE: $ENV_DASH_REGION_DASH_INSTANCE"
 
           echo "ACR_REPO_NAME: ${{ env.ACR_REPO_NAME }}"
 
           echo "API_APP_PATH: ${{ env.API_APP_PATH }}"
           echo "API_ACR_APP_NAME: ${{ env.API_ACR_APP_NAME }}"
           echo "API_PORT: ${{ env.API_PORT }}"
+
+          echo "UI_APP_PATH: ${{ env.UI_APP_PATH }}"
+          echo "UI_ACR_APP_NAME: ${{ env.UI_ACR_APP_NAME }}"
+          echo "UI_PORT: ${{ env.UI_PORT }}"
 
   # ------------------------------------------------------------------------------------------------------------------------
   scan-code:
@@ -116,36 +150,75 @@ jobs:
       security-events: write
 
   # ------------------------------------------------------------------------------------------------------------------------
-  build-all:
-    name: Build All Apps
-    uses: ./.github/workflows/template-aca-build-all.yml
+  build-api:
+    name: Build API Image
+    uses: ./.github/workflows/template-aca-build.yml
+    if: inputs.runBuildDeployAPI
     needs:
       - template-env
     secrets: inherit
     with:
       ENV_CODE: ${{ needs.template-env.outputs.ENV_CODE }}
-      ACR_NAME: ${{ needs.template-env.outputs.ACR_NAME }}
       RESOURCE_GROUP: ${{ needs.template-env.outputs.RESOURCE_GROUP_NAME }}
-      ACR_REPO_NAME: ${{ needs.template-env.outputs.ACR_REPO_NAME }}
 
-      BUILD_DEPLOY_API: ${{ inputs.runBuildDeployAPI }}
-      API_APP_PATH: ${{ needs.template-env.outputs.API_APP_PATH }}
-      API_ACR_APP_NAME: ${{ needs.template-env.outputs.API_ACR_APP_NAME }}
+      ACR_NAME: ${{ needs.template-env.outputs.ACR_NAME }}
+      ACR_REPO_NAME: ${{ needs.template-env.outputs.ACR_REPO_NAME }}
+      ACR_FW_UPDATE: false # not needed if ACR is publicly accessible
+
+      APP_PATH: ${{ needs.template-env.outputs.API_APP_PATH }}
+      ACR_APP_NAME: ${{ needs.template-env.outputs.API_ACR_APP_NAME }}
+
+  # ------------------------------------------------------------------------------------------------------------------------
+  build-ui:
+    name: Build UI Image
+    uses: ./.github/workflows/template-aca-build.yml
+    if: inputs.runBuildDeployUI
+    needs:
+      - template-env
+    secrets: inherit
+    with:
+      ENV_CODE: ${{ needs.template-env.outputs.ENV_CODE }}
+      RESOURCE_GROUP: ${{ needs.template-env.outputs.RESOURCE_GROUP_NAME }}
+
+      ACR_NAME: ${{ needs.template-env.outputs.ACR_NAME }}
+      ACR_REPO_NAME: ${{ needs.template-env.outputs.ACR_REPO_NAME }}
+      ACR_FW_UPDATE: false # not needed if ACR is publicly accessible
+
+      APP_PATH: ${{ needs.template-env.outputs.UI_APP_PATH }}
+      ACR_APP_NAME: ${{ needs.template-env.outputs.UI_ACR_APP_NAME }}
 
   # ------------------------------------------------------------------------------------------------------------------------
   deploy-api:
-    name: Deploy API ${{ inputs.deployEnvironment }} ${{ inputs.deployType }}
+    name: Deploy API to ${{ inputs.deployEnvironment }}
     uses: ./.github/workflows/template-aca-deploy.yml
     if: inputs.runBuildDeployAPI
     needs:
-      - build-all
+      - build-api
       - template-env
     secrets: inherit
     with:
       ENV_CODE: ${{ needs.template-env.outputs.ENV_CODE }}
-      RESOURCE_GROUP: ${{ needs.template-env.outputs.RESOURCE_GROUP_NAME }}
-      CONTAINER_APP_ENV_NAME: ${{ needs.build-all.outputs.API_APP_PATH }}
-      CONTAINER_NAME: ${{ needs.template-env.outputs.API_CONTAINER_APP_NAME }}
       ACR_NAME: ${{ needs.template-env.outputs.ACR_NAME }}
-      IMAGE_NAME: ${{ needs.build-all.outputs.API_IMAGE_NAME }}
+      RESOURCE_GROUP: ${{ needs.template-env.outputs.RESOURCE_GROUP_NAME }}
+      CONTAINER_APP_ENV_NAME: ${{ needs.template-env.outputs.CONTAINER_APP_ENV_NAME }}
+      CONTAINER_NAME: ${{ needs.template-env.outputs.API_CONTAINER_APP_NAME }}
       PORT: ${{ needs.template-env.outputs.API_PORT }}
+      IMAGE_NAME: ${{ needs.build-api.outputs.IMAGE_NAME }}
+
+  # ------------------------------------------------------------------------------------------------------------------------
+  deploy-ui:
+    name: Deploy UI to ${{ inputs.deployEnvironment }}
+    uses: ./.github/workflows/template-aca-deploy.yml
+    if: inputs.runBuildDeployUI
+    needs:
+      - build-ui
+      - template-env
+    secrets: inherit
+    with:
+      ENV_CODE: ${{ needs.template-env.outputs.ENV_CODE }}
+      ACR_NAME: ${{ needs.template-env.outputs.ACR_NAME }}
+      RESOURCE_GROUP: ${{ needs.template-env.outputs.RESOURCE_GROUP_NAME }}
+      CONTAINER_APP_ENV_NAME: ${{ needs.template-env.outputs.CONTAINER_APP_ENV_NAME }}
+      CONTAINER_NAME: ${{ needs.template-env.outputs.UI_CONTAINER_APP_NAME }}
+      PORT: ${{ needs.template-env.outputs.UI_PORT }}
+      IMAGE_NAME: ${{ needs.build-ui.outputs.IMAGE_NAME }}
