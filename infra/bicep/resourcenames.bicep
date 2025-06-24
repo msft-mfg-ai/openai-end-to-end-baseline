@@ -71,7 +71,7 @@ output storageAccountName string          = take('${resourceAbbreviations.storag
 // ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Network resource names
 // ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-output vnet_Name string                   = toLower('${sanitizedAppName}-${resourceAbbreviations.networkVirtualNetworks}-${sanitizedEnvironment}${resourceTokenWithDash}${dashRegionDashInstance}')
+output vnet_Name string                   = toLower('${resourceAbbreviations.networkVirtualNetworks}-${sanitizedAppName}-${sanitizedEnvironment}${resourceTokenWithDash}${dashRegionDashInstance}')
 output subnetAppGwName string             = toLower('snet-app-gateway')
 output subnetAppSeName string             = toLower('snet-app-services')
 output subnetPeName string                = toLower('snet-private-endpoint')
