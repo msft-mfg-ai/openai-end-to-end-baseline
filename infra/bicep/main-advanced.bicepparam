@@ -24,7 +24,8 @@ param requestorName= '#{requestorName}#'
 param regionCode = '#{GLOBAL_REGION_CODE}#' 
 param costCenterTag = 'CC'
 
-param addRoleAssignments = #{addRoleAssignments}#
+//commenting out the role assignment parameters as they are not used in this deployment
+//param addRoleAssignments = #{addRoleAssignments}#
 param createDnsZones = true
 param publicAccessEnabled = false
 
@@ -35,6 +36,7 @@ param myIpAddress = '#{MY_IP_ADDRESS}#'
 
 param openAI_deploy_location = '#{OPENAI_DEPLOY_LOCATION}#'
 param deployAIHub = true
-param deployAPIM = #{deployAPIM}#
+//added the '' in between the parameters
+param deployAPIM = '#{deployAPIM}#'
 param deployAPIApp = #{deployAPI}#  // Should we deploy the API app?
-param deployUIApp = #{deployUI}#  // Should we deploy the UI app?
+param deployUIApp = #{deployUI}#' // Should we deploy the UI app?

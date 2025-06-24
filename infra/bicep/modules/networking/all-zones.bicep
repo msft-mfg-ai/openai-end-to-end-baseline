@@ -1,11 +1,13 @@
 param tags object = {}
 param vnetResourceId string
 param keyVaultPrivateEndpointName string
-param acrPrivateEndpointName string
+
+//commented out as they are not being deployed in the LZ
+//param acrPrivateEndpointName string
 param openAiPrivateEndpointName string
-param documentIntelligencePrivateEndpointName string
+//param documentIntelligencePrivateEndpointName string
 param aiSearchPrivateEndpointName string
-param cosmosPrivateEndpointName string
+//param cosmosPrivateEndpointName string
 param storageBlobPrivateEndpointName string
 param storageQueuePrivateEndpointName string
 param storageTablePrivateEndpointName string
@@ -23,15 +25,16 @@ module kvZone 'zone-with-a-record.bicep' = {
   }
 }
 
-module acrZone 'zone-with-a-record.bicep' = {
-  name: 'acrZone'
-  params: {
-    zoneName: 'privatelink.azurecr.io'
-    vnetResourceId: vnetResourceId
-    tags: tags
-    privateEndpointNames: [acrPrivateEndpointName]
-  }
-}
+// Uncomment the following lines if you want to deploy the ACR and Document Intelligence zones
+// module acrZone 'zone-with-a-record.bicep' = {
+//   name: 'acrZone'
+//   params: {
+//     zoneName: 'privatelink.azurecr.io'
+//     vnetResourceId: vnetResourceId
+//     tags: tags
+//     privateEndpointNames: [acrPrivateEndpointName]
+//   }
+// }
 
 module openAiZone 'zone-with-a-record.bicep' = {
   name: 'openAiZone'
@@ -43,15 +46,16 @@ module openAiZone 'zone-with-a-record.bicep' = {
   }
 }
 
-module documentIntelligenceZone 'zone-with-a-record.bicep' = {
-  name: 'docInteliZone'
-  params: {
-    zoneName: 'privatelink.cognitiveservices.azure.com'
-    vnetResourceId: vnetResourceId
-    tags: tags
-    privateEndpointNames: [documentIntelligencePrivateEndpointName]
-  }
-}
+// Uncomment the following line if you want to deploy the Document Intelligence zone
+// module documentIntelligenceZone 'zone-with-a-record.bicep' = {
+//   name: 'docInteliZone'
+//   params: {
+//     zoneName: 'privatelink.cognitiveservices.azure.com'
+//     vnetResourceId: vnetResourceId
+//     tags: tags
+//     privateEndpointNames: [documentIntelligencePrivateEndpointName]
+//   }
+// }
 
 module aiSearchZone 'zone-with-a-record.bicep' = {
   name: 'aiSearchZone'
@@ -63,15 +67,16 @@ module aiSearchZone 'zone-with-a-record.bicep' = {
   }
 }
 
-module cosmosZone 'zone-with-a-record.bicep' = {
-  name: 'cosmosZone'
-  params: {
-    zoneName: 'privatelink.documents.azure.com'
-    vnetResourceId: vnetResourceId
-    tags: tags
-    privateEndpointNames: [cosmosPrivateEndpointName]
-  }
-}
+// Uncomment the following lines if you want to deploy the Cosmos DB and Storage File zones
+// module cosmosZone 'zone-with-a-record.bicep' = {
+//   name: 'cosmosZone'
+//   params: {
+//     zoneName: 'privatelink.documents.azure.com'
+//     vnetResourceId: vnetResourceId
+//     tags: tags
+//     privateEndpointNames: [cosmosPrivateEndpointName]
+//   }
+// }
 
 module storageBlobZone 'zone-with-a-record.bicep' = {
   name: 'storageBlobZone'
