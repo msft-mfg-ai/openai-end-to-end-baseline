@@ -60,7 +60,7 @@ resource existingVirtualNetwork 'Microsoft.Network/virtualNetworks@2024-01-01' e
 module appSubnetNSG './network-security-group.bicep' = if (!useExistingResource) {
   name: 'nsg'
   params: {
-    nsgName: '${newVirtualNetworkName}-${subnetAppSeName}-nsg-${location}'
+    nsgName: 'nsg-${newVirtualNetworkName}-${subnetAppSeName}-${location}'
     location: location
   }
 }
