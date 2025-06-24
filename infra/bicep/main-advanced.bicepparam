@@ -14,9 +14,9 @@
 
 using './main-advanced.bicep'
 
-param applicationName = '#{APP_NAME}#'
-param applicationId = '#{APP_ID}#'
-param environmentName = '#{envCode}#'
+param applicationName = '#{APPLICATIONNAME}#'
+param applicationId = '#{APPLICATIONID}#'
+param environmentName = '#{ENVCODE}#'
 param principalId = '#{USER_PRINCIPAL_ID}#'
 param instanceNumber = '#{INSTANCE_NUMBER}#'
 param ownerEmailTag = '#{OWNER_EMAIL}#' 
