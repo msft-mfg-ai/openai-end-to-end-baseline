@@ -1,6 +1,6 @@
 // --------------------------------------------------------------------------------
 // This file contains the parameters for the Bicep deployment.
-// Note: This is dynamically modified by the build process.
+// Note: This is dynamically modified by the build process.  
 // Anything that starts with a # and a { is a variable that will be replaced at runtime.
 // --------------------------------------------------------------------------------
 // The following values should be defined in GitHub Secrets or Environment Variables:

@@ -33,10 +33,12 @@ targetScope = 'resourceGroup'
 @description('Full Application Name (supply this or use default of prefix+token)')
 param applicationName string = ''
 @description('If you do not supply Application Name, this prefix will be combined with a token to create a unique applicationName')
-param applicationPrefix string = 'ai_doc'
+//param applicationPrefix string = 'ai_doc'
+param applicationPrefix string = ''
 
 @description('The environment code (i.e. dev, qa, prod)')
-param environmentName string = 'dev'
+//param environmentName string = 'dev'
+param environmentName string = ''
 @description('Environment name used by the azd command (optional)')
 param azdEnvName string = ''
 
@@ -136,7 +138,7 @@ param apiImageName string = ''
 param UIImageName string = ''
 
 // --------------------------------------------------------------------------------------------------------------
-// Other deployment switches
+// Other deployment switches  
 // --------------------------------------------------------------------------------------------------------------
 @description('Should resources be created with public access?')
 param publicAccessEnabled bool = true
@@ -158,7 +160,8 @@ param deployUIApp bool = false
 
 @description('Global Region where the resources will be deployed, e.g. AM (America), EM (EMEA), AP (APAC), CH (China)')
 //@allowed(['AM', 'EM', 'AP', 'CH', 'NAA'])
-param regionCode string = 'NAA'
+//param regionCode string = 'NAA'
+param regionCode string = ''
 
 @description('Instance number for the application, e.g. 001, 002, etc. This is used to differentiate multiple instances of the same application in the same environment.')
 param instanceNumber string = '001' // used to differentiate multiple instances of the same application in the same environment
