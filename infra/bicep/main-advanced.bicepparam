@@ -37,6 +37,8 @@ param myIpAddress = '#{MY_IP_ADDRESS}#'
 param openAI_deploy_location = '#{OPENAI_DEPLOY_LOCATION}#'
 param deployAIHub = true
 //added the '' in between the parameters
-param deployAPIM = '#{deployAPIM}#'
-param deployAPIApp = #{deployAPI}#  // Should we deploy the API app?
-param deployUIApp = #{deployUI}#' // Should we deploy the UI app?
+//param deployAPIM = #{deployAPIM}#
+
+param deployAPIM = true
+param deployAPIApp = true  // Should we deploy the API app?
+param deployUIApp = true// Should we deploy the UI app?
