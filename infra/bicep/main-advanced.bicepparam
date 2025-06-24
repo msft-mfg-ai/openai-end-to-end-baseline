@@ -41,4 +41,4 @@ param deployAIHub = true
 
 param deployAPIM = true
 param deployAPIApp = true  // Should we deploy the API app?
-param deployUIApp = #{deployUI}# // Should we deploy the UI app?
+param deployUIApp = true // Should we deploy the UI app?
