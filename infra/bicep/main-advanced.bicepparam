@@ -14,9 +14,9 @@
 
 using './main-advanced.bicep'
 
-param applicationName = '#{APPLICATIONNAME}#'
-param applicationId = '#{APPLICATIONID}#'
-param environmentName = '#{ENVCODE}#'
+param applicationName = '#{APP_NAME}#'
+param applicationId = '#{APP_ID}#'
+param environmentName = '#{envCode}#'
 param principalId = '#{USER_PRINCIPAL_ID}#'
 param instanceNumber = '#{INSTANCE_NUMBER}#'
 param ownerEmailTag = '#{OWNER_EMAIL}#' 
@@ -41,4 +41,4 @@ param deployAIHub = true
 
 param deployAPIM = true
 param deployAPIApp = true  // Should we deploy the API app?
-param deployUIApp = true// Should we deploy the UI app?
+param deployUIApp = #{deployUI}# // Should we deploy the UI app?
