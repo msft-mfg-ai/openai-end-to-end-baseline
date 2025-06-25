@@ -98,3 +98,14 @@ output vm_os_disk_name string             = toLower('${sanitizedAppName}-${resou
 output vm_nsg_name string                 = toLower('${sanitizedAppName}${resourceAbbreviations.networkNetworkSecurityGroups}${dashInstance}-${sanitizedEnvironment}')
 output bastion_host_name string           = toLower('${resourceAbbreviations.networkBastionHosts}-${sanitizedAppName}-${sanitizedEnvironment}-${dashInstance}')
 output bastion_pip_name string         =    toLower('${resourceAbbreviations.networkPublicIPAddresses}-${sanitizedAppName}-${resourceAbbreviations.bastionPip}-${sanitizedEnvironment}-${dashInstance}')
+
+
+// ----------------------------------------------------------------------------------------------------------------------------------------------------------------
+// Private Endpoint Names (sequential)
+output peStorageAccountName string = 'pep-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-001'
+output peCosmosDbName string = 'pep-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-002'
+output peKeyVaultName string = 'pep-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-003'
+output peAcrName string = 'pep-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-004'
+output peSearchServiceName string = 'pep-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-005'
+output peOpenAIName string = 'pep-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-006'
+output peDocumentIntelligenceName string = 'pep-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-007'
