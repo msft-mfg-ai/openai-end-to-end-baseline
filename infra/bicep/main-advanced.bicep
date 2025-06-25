@@ -50,7 +50,7 @@ param location string = resourceGroup().location
 param openAI_deploy_location string = location
 
 @description('DEPLOYMENTCOUNT is usd to determine the number of instances of the application to deploy, e.g. 001, 002, etc. it will reflect in the resource names')
-param deploymentCount string = '' // used to differentiate multiple instances of the same application in the same environment
+param deploymentCount string // used to differentiate multiple instances of the same application in the same environment
 // --------------------------------------------------------------------------------------------------------------
 // Personal info
 // --------------------------------------------------------------------------------------------------------------
