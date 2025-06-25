@@ -117,4 +117,4 @@ output peAIHubName string = 'pep-${sanitizedAppName}-${sanitizedEnvironment}-${r
 output peAppInsightsName string = 'pep-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-012'
 output peMonitorName string = 'pep-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-013'
 
-output vnetNsgName string = '${resourceAbbreviations.networkNetworkSecurityGroups}-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-001'
+output vnetNsgName string = '${resourceAbbreviations.networkNetworkSecurityGroups}${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-001'

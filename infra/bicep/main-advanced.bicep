@@ -49,6 +49,8 @@ param location string = resourceGroup().location
 @description('OAI Region availability: East US, East US2, North Central US, South Central US, Sweden Central, West US, and West US3')
 param openAI_deploy_location string = location
 
+@description('DEPLOYMENTCOUNT is usd to determine the number of instances of the application to deploy, e.g. 001, 002, etc. it will reflect in the resource names')
+param deploymentCount string = '' // used to differentiate multiple instances of the same application in the same environment
 // --------------------------------------------------------------------------------------------------------------
 // Personal info
 // --------------------------------------------------------------------------------------------------------------
@@ -186,6 +188,7 @@ param runDateTime string = utcNow()
 // -- Variables -------------------------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------------------------------
 var resourceToken = toLower(uniqueString(resourceGroup().id, location))
+//var resourceGroupName = resourceGroup().name
 var resourceGroupName = resourceGroup().name
 
 // if user supplied a full application name, use that, otherwise use default prefix and a unique token
@@ -240,7 +243,8 @@ module resourceNames 'resourcenames.bicep' = {
     environmentName: environmentName
     resourceToken: appendResourceTokens ? resourceToken : ''
     regionCode: regionCode
-    instance: instanceNumber
+    //instance: instanceNumber
+    instance: deploymentCount
   }
 }
 

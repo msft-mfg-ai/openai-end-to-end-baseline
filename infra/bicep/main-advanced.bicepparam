@@ -23,6 +23,7 @@ param ownerEmailTag = '#{OWNER_EMAIL}#'
 param requestorName= '#{requestorName}#'
 param regionCode = '#{GLOBAL_REGION_CODE}#' 
 param costCenterTag = 'CC'
+param deploymentCount = '#DEPLOYMENTCOUNT#'
 
 //commenting out the role assignment parameters as they are not used in this deployment
 //param addRoleAssignments = #{addRoleAssignments}#
