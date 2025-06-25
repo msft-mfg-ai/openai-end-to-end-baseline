@@ -243,8 +243,8 @@ module resourceNames 'resourcenames.bicep' = {
     environmentName: environmentName
     resourceToken: appendResourceTokens ? resourceToken : ''
     regionCode: regionCode
-    //instance: instanceNumber
-    instance: deploymentCount
+    instance: instanceNumber
+    //instance: deploymentCount
   }
 }
 
