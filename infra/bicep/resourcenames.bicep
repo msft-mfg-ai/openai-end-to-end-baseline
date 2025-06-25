@@ -102,7 +102,7 @@ output bastion_pip_name string         =    toLower('${resourceAbbreviations.net
 
 
 // ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-// Private Endpoint Names (sequential)
+// Private Endpoint Names (sequential) -- created for the customer need
 output peStorageAccountBlobName string = 'pep-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-001'
 output peStorageAccountTableName string = 'pep-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-002'
 output peStorageAccountQueueName string = 'pep-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-003'
@@ -117,3 +117,4 @@ output peAIHubName string = 'pep-${sanitizedAppName}-${sanitizedEnvironment}-${r
 output peAppInsightsName string = 'pep-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-012'
 output peMonitorName string = 'pep-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-013'
 
+output vnetNsgName string = '${resourceAbbreviations.networkNetworkSecurityGroups}-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-001
