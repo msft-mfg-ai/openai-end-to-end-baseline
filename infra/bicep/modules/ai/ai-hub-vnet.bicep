@@ -67,7 +67,9 @@ param systemDatastoresAuthMode string
 @allowed(['ApiKey','AAD'])
 param connectionAuthMode string
 
-var privateEndpointName = '${aiHubName}-AIHub-PE'
+@description('Private endpoint name to use')
+param privateEndpointName string
+
 var targetSubResource = ['amlworkspace']
 
 resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-04-01-preview' = {
@@ -90,7 +92,6 @@ resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-04-01-preview'
     containerRegistry: containerRegistryId
 
     // network settings
-    provisionNetworkNow: true
     publicNetworkAccess: 'Disabled'
     managedNetwork: {
       isolationMode: 'AllowInternetOutBound'

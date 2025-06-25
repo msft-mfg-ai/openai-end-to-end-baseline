@@ -345,9 +345,9 @@ module storage './modules/storage/storage-account.bicep' = {
     tags: tags
     // publicNetworkAccess: publicAccessEnabled
     privateEndpointSubnetId: vnet.outputs.subnetPeResourceID
-    privateEndpointBlobName: 'pe-blob-${resourceNames.outputs.storageAccountName}'
-    privateEndpointQueueName: 'pe-queue-${resourceNames.outputs.storageAccountName}'
-    privateEndpointTableName: 'pe-table-${resourceNames.outputs.storageAccountName}'
+    privateEndpointBlobName: resourceNames.outputs.peStorageAccountBlobName
+    privateEndpointTableName: resourceNames.outputs.peStorageAccountTableName
+    privateEndpointQueueName: resourceNames.outputs.peStorageAccountQueueName
     myIpAddress: myIpAddress
     containers: ['data', 'batch-input', 'batch-output']
   }
@@ -411,7 +411,7 @@ module keyVault './modules/security/keyvault.bicep' = {
     publicNetworkAccess: publicAccessEnabled ? 'Enabled' : 'Disabled'
     keyVaultOwnerIpAddress: myIpAddress
     createUserAssignedIdentity: false
-    privateEndpointName: 'pe-${resourceNames.outputs.keyVaultName}'
+    privateEndpointName: resourceNames.outputs.peKeyVaultName
     privateEndpointSubnetId: vnet.outputs.subnetPeResourceID
   }
 }
@@ -534,7 +534,7 @@ module searchService './modules/search/search-services.bicep' = {
     publicNetworkAccess: publicAccessEnabled ? 'enabled' : 'disabled'
     myIpAddress: myIpAddress
     privateEndpointSubnetId: vnet.outputs.subnetPeResourceID
-    privateEndpointName: 'pe-${resourceNames.outputs.searchServiceName}'
+    privateEndpointName: resourceNames.outputs.peSearchServiceName
     managedIdentityId: identity.outputs.managedIdentityId
     sku: {
       name: 'basic'
@@ -576,7 +576,7 @@ module openAI './modules/ai/cognitive-services.bicep' = {
     }
     publicNetworkAccess: publicAccessEnabled ? 'enabled' : 'disabled'
     privateEndpointSubnetId: vnet.outputs.subnetPeResourceID
-    privateEndpointName: 'pe-${resourceNames.outputs.cogServiceName}'
+    privateEndpointName: resourceNames.outputs.peOpenAIName
     myIpAddress: myIpAddress
   }
   dependsOn: [

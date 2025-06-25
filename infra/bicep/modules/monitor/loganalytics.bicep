@@ -63,10 +63,12 @@ resource azureMonitorPrivateLinkScope 'Microsoft.Insights/privateLinkScopes@2021
 module azureMonitorPrivateLinkScopePrivateEndpoint '../networking/private-endpoint.bicep' = if (!empty(privateEndpointSubnetId)) {
   name: 'azure-monitor-private-link-scope-private-endpoint'
   params: {
+    location: location
     privateEndpointName: privateEndpointName
     groupIds: ['azuremonitor']
     targetResourceId: azureMonitorPrivateLinkScope.id
     subnetId: privateEndpointSubnetId
+    tags: tags
   }
 }
 

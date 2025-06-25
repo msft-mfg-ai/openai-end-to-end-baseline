@@ -102,10 +102,15 @@ output bastion_pip_name string         =    toLower('${resourceAbbreviations.net
 
 // ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Private Endpoint Names (sequential)
-output peStorageAccountName string = 'pep-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-001'
-output peCosmosDbName string = 'pep-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-002'
-output peKeyVaultName string = 'pep-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-003'
-output peAcrName string = 'pep-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-004'
-output peSearchServiceName string = 'pep-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-005'
-output peOpenAIName string = 'pep-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-006'
-output peDocumentIntelligenceName string = 'pep-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-007'
+output peStorageAccountBlobName string = 'pep-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-001'
+output peStorageAccountTableName string = 'pep-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-002'
+output peStorageAccountQueueName string = 'pep-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-003'
+output peCosmosDbName string = 'pep-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-004'
+output peKeyVaultName string = 'pep-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-005'
+output peAcrName string = 'pep-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-006'
+output peSearchServiceName string = 'pep-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-007'
+output peOpenAIName string = 'pep-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-008'
+output peDocumentIntelligenceName string = 'pep-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-009'
+output peAIHubName string = 'pep-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-010'
+output peAppInsightsName string = 'pep-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-011'
+output peMonitorName string = 'pep-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-012'
