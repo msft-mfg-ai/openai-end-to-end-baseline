@@ -10,7 +10,7 @@
 //   INSTANCE_NUMBER     - GH Environment Variable
 //   OWNER_EMAIL         - GH Environment Variable - optional
 //   environmentName     - Runtime  - Environment Code (e.g., dev, qa, prod)
-// DEPLOYMENTCOUNT - number of the resource group that will be created
+// DEPLOYMENTCOUNT - number of the resource group that will be created  g
 // --------------------------------------------------------------------------------
 
 using './main-advanced.bicep'
