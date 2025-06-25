@@ -114,3 +114,4 @@ output peDocumentIntelligenceName string = 'pep-${sanitizedAppName}-${sanitizedE
 output peAIHubName string = 'pep-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-010'
 output peAppInsightsName string = 'pep-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-011'
 output peMonitorName string = 'pep-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-012'
+output peOpenAIServiceConnection string = 'pep-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-013'

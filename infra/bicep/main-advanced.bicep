@@ -577,6 +577,7 @@ module openAI './modules/ai/cognitive-services.bicep' = {
     publicNetworkAccess: publicAccessEnabled ? 'enabled' : 'disabled'
     privateEndpointSubnetId: vnet.outputs.subnetPeResourceID
     privateEndpointName: resourceNames.outputs.peOpenAIName
+    peOpenAIServiceConnection: resourceNames.outputs.peOpenAIServiceConnection
     myIpAddress: myIpAddress
   }
   dependsOn: [

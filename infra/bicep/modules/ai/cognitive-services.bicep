@@ -5,6 +5,7 @@ param location string = resourceGroup().location
 param pe_location string = location
 param tags object = {}
 param appInsightsName string
+param peOpenAIServiceConnection string
 
 //param deployments array = []
 @description('The Kind of AI Service, can be "OpenAI" or "AIServices"')
@@ -136,7 +137,7 @@ module privateEndpoint2 '../networking/private-endpoint.bicep' = if (deployInVNE
   params: {
     tags: tags
     location: pe_location
-    privateEndpointName: '${name}-openAi-private-link-service-connection'
+    privateEndpointName: peOpenAIServiceConnection
     groupIds: ['account']
     targetResourceId: account.id
     subnetId: privateEndpointSubnetId
