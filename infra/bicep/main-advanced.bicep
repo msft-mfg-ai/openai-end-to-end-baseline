@@ -255,6 +255,7 @@ module vnet './modules/networking/vnet.bicep' = {
     existingVnetResourceGroupName: existingVnetResourceGroupName
     newVirtualNetworkName: resourceNames.outputs.vnet_Name
     vnetAddressPrefix: vnetAddressPrefix
+    vnetNsgName: resourceNames.outputs.vnetNsgName
     subnetAppGwName: !empty(subnetAppGwName) ? subnetAppGwName  : resourceNames.outputs.subnetAppGwName
     subnetAppGwPrefix: subnetAppGwPrefix 
     subnetAppSeName: !empty(subnetAppSeName ) ? subnetAppSeName  : resourceNames.outputs.subnetAppSeName
