@@ -92,12 +92,13 @@ output subnetScoringName string           = toLower('snet-scoring')
 //param subnetScoringPrefix string = '10.183.7.128/25'
 
 output vm_name string                     = take(toLower('${sanitizedAppName}-${resourceAbbreviations.computeVirtualMachines}${dashInstance}-${sanitizedEnvironment}'),15)
-output vm_nic_name string                 = toLower('${sanitizedAppName}${resourceAbbreviations.networkNetworkInterfaces}${dashInstance}-${sanitizedEnvironment}')
-output vm_pip_name string                 = toLower('${sanitizedAppName}${resourceAbbreviations.networkPublicIPAddresses}${dashInstance}-${sanitizedEnvironment}')
-output vm_os_disk_name string             = toLower('${sanitizedAppName}-${resourceAbbreviations.computeDisks}${dashInstance}-${sanitizedEnvironment}')
-output vm_nsg_name string                 = toLower('${sanitizedAppName}${resourceAbbreviations.networkNetworkSecurityGroups}${dashInstance}-${sanitizedEnvironment}')
+output vm_nic_name string                 = toLower('${resourceAbbreviations.networkNetworkInterfaces}-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-001')
+output vm_pip_name string                 = toLower('${resourceAbbreviations.networkPublicIPAddresses}-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-001')
+output vm_os_disk_name string             = toLower('${resourceAbbreviations.computeDisks}-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-001')
+output vm_nsg_name string                 = toLower('${resourceAbbreviations.networkNetworkSecurityGroups}-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-001')
 output bastion_host_name string           = toLower('${resourceAbbreviations.networkBastionHosts}${sanitizedAppName}-${sanitizedEnvironment}${dashInstance}')
 output bastion_pip_name string         =    toLower('${resourceAbbreviations.networkPublicIPAddresses}${sanitizedAppName}-${resourceAbbreviations.bastionPip}-${sanitizedEnvironment}${dashInstance}')
+
 
 
 // ----------------------------------------------------------------------------------------------------------------------------------------------------------------
