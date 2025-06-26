@@ -38,7 +38,7 @@ param applicationPrefix string = ''
 @description('The environment code (i.e. dev, qa, prod)')
 param environmentName string = ''
 // @description('Environment name used by the azd command (optional)')
-// param azdEnvName string = ''
+//param azdEnvName string = ''
 
 @description('Primary location for all resources')
 param location string = resourceGroup().location
@@ -178,11 +178,11 @@ param appGatewaySslCertificateKeyVaultSecretId string = ''
 // --------------------------------------------------------------------------------------------------------------
 // External APIM Parameters
 // --------------------------------------------------------------------------------------------------------------
-@description('Base URL to facade API')
-param apimBaseUrl string = ''
-param apimAccessUrl string = ''
-@secure()
-param apimAccessKey string = ''
+//@description('Base URL to facade API')
+//param apimBaseUrl string = ''
+//param apimAccessUrl string = ''
+//@secure()
+//param apimAccessKey string = ''
 
 // --------------------------------------------------------------------------------------------------------------
 // Existing images
@@ -221,11 +221,11 @@ param instanceNumber string = '001' // used to differentiate multiple instances 
 // // --------------------------------------------------------------------------------------------------------------
 // // Additional Tags that may be included or not
 // // --------------------------------------------------------------------------------------------------------------
-// param costCenterTag string = ''
-// param ownerEmailTag string = ''
-// param requestorName string = 'UNKNOWN'
-// param applicationId string = ''
-// param primarySupportProviderTag string = ''
+//param costCenterTag string = ''
+//param ownerEmailTag string = ''
+param requestorName string = 'UNKNOWN'
+param applicationId string = ''
+param primarySupportProviderTag string = ''
 
 // --------------------------------------------------------------------------------------------------------------
 // A variable masquerading as a parameter to allow for dynamic value assignment in Bicep
@@ -258,7 +258,7 @@ var tags = {
   'request-number':    'not-applicable'
   'requestor-name':    'daniel.pahng_otis.com'
 }
-var commonTags = tags
+//var commonTags = tags
 
 // var commonTags = {
 //   'creation-date': take(runDateTime, 8)
@@ -279,17 +279,17 @@ var commonTags = {
   'requestor-name': requestorName
   'primary-support-provider': primarySupportProviderTag == '' ? 'UNKNOWN' : primarySupportProviderTag
 }
-var costCenterTagObject = costCenterTag == '' ? {} : { 'cost-center': costCenterTag }
-var ownerEmailTagObject = ownerEmailTag == ''
-  ? {}
-  : {
-  'application-owner': ownerEmailTag
-  'business-owner': ownerEmailTag
-  'point-of-contact': ownerEmailTag
-}
+//var costCenterTagObject = costCenterTag == '' ? {} : { 'cost-center': costCenterTag }
+//var ownerEmailTagObject = ownerEmailTag == ''
+//  ? {}
+//  : {
+//  'application-owner': ownerEmailTag
+//  'business-owner': ownerEmailTag
+//  'point-of-contact': ownerEmailTag
+//}
 // if this bicep was called from AZD, then it needs this tag added to the resource group (at a minimum) to deploy successfully...
-var azdTag = azdEnvName != '' ? { 'azd-env-name': azdEnvName } : {}
-var tags = union(commonTags, azdTag, costCenterTagObject, ownerEmailTagObject)
+//var azdTag = azdEnvName != '' ? { 'azd-env-name': azdEnvName } : {}
+//var tags = union(commonTags, azdTag, costCenterTagObject, ownerEmailTagObject)
 
 // Run a script to dedupe the KeyVault secrets -- this fails on private networks right now so turn if off for them
 var deduplicateKVSecrets = publicAccessEnabled ? deduplicateKeyVaultSecrets : false
