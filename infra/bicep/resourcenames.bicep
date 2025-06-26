@@ -118,3 +118,10 @@ output peAppInsightsName string = 'pep-${sanitizedAppName}-${sanitizedEnvironmen
 output peMonitorName string = 'pep-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-013'
 
 output vnetNsgName string = '${resourceAbbreviations.networkNetworkSecurityGroups}${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-001'
+
+// ----------------------------------------------------------------------------------------------------------------------------------------------------------------
+// Application Gateway resource names
+// ----------------------------------------------------------------------------------------------------------------------------------------------------------------
+output appGatewayName string = toLower('${resourceAbbreviations.networkApplicationGateways}${sanitizedAppName}-${sanitizedEnvironment}${resourceTokenWithDash}${dashRegionDashInstance}')
+output appGatewayWafPolicyName string = toLower('${resourceAbbreviations.networkFirewallPoliciesWebApplication}-${sanitizedAppName}-${sanitizedEnvironment}${resourceTokenWithDash}${dashRegionDashInstance}')
+output appGatewayPublicIpName string = toLower('${resourceAbbreviations.networkPublicIPAddresses}${sanitizedAppName}-agw-${sanitizedEnvironment}${resourceTokenWithDash}${dashRegionDashInstance}')

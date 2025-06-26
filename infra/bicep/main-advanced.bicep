@@ -134,6 +134,34 @@ param apimPublisherEmail string = 'somebody@somewhere.com'
 param adminPublisherName string = 'AI Agent Admin'
 
 // --------------------------------------------------------------------------------------------------------------
+// Application Gateway Parameters
+// --------------------------------------------------------------------------------------------------------------
+@description('Should we deploy an Application Gateway?')
+param deployApplicationGateway bool = false
+@description('Application Gateway SKU')
+@allowed(['Standard_v2', 'WAF_v2'])
+param appGatewaySkuName string = 'WAF_v2'
+@description('Application Gateway minimum capacity for autoscaling')
+@minValue(0)
+@maxValue(100)
+param appGatewayMinCapacity int = 1
+@description('Application Gateway maximum capacity for autoscaling')
+@minValue(2)
+@maxValue(100)
+param appGatewayMaxCapacity int = 10
+@description('Enable HTTP2 on Application Gateway')
+param appGatewayEnableHttp2 bool = true
+@description('Enable FIPS on Application Gateway')
+param appGatewayEnableFips bool = false
+@description('Backend address pools for Application Gateway (FQDNs or IP addresses)')
+param appGatewayBackendAddresses array = []
+@description('DNS label prefix for Application Gateway public IP')
+param appGatewayDnsLabelPrefix string = ''
+@description('SSL certificate Key Vault secret URI')
+@secure()
+param appGatewaySslCertificateKeyVaultSecretId string = ''
+
+// --------------------------------------------------------------------------------------------------------------
 // Existing images
 // --------------------------------------------------------------------------------------------------------------
 //param apiImageName string = ''
@@ -889,6 +917,258 @@ module bastion './modules/networking/bastion.bicep' = {
 }
 
 // --------------------------------------------------------------------------------------------------------------
+// -- Application Gateway --------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------
+
+// Deploy WAF Policy for Application Gateway
+module appGatewayWafPolicy './modules/networking/application-gateway-waf-policy.bicep' = if (deployApplicationGateway) {
+  name: 'appGatewayWafPolicy${deploymentSuffix}'
+  params: {
+    name: resourceNames.outputs.appGatewayWafPolicyName
+    location: location
+    tags: tags
+    managedRules: {
+      managedRuleSets: [
+        {
+          ruleSetType: 'OWASP'
+          ruleSetVersion: '3.2'
+          ruleGroupOverrides: []
+        }
+        {
+          ruleSetType: 'Microsoft_BotManagerRuleSet'
+          ruleSetVersion: '1.0'
+        }
+      ]
+      exclusions: []
+    }
+    policySettings: {
+      state: 'Enabled'
+      mode: 'Prevention'
+      requestBodyCheck: true
+      requestBodyInspectLimitInKB: 128
+      requestBodyEnforcement: true
+      maxRequestBodySizeInKb: 128
+      fileUploadEnforcement: true
+      fileUploadLimitInMb: 100
+      customBlockResponseStatusCode: 403
+      customBlockResponseBody: 'VGhpcyByZXF1ZXN0IGhhcyBiZWVuIGJsb2NrZWQgYnkgdGhlIFdlYiBBcHBsaWNhdGlvbiBGaXJld2FsbC4='
+    }
+  }
+}
+
+// Deploy Public IP for Application Gateway
+module appGatewayPublicIp './modules/networking/public-ip.bicep' = if (deployApplicationGateway) {
+  name: 'appGatewayPublicIp${deploymentSuffix}'
+  params: {
+    name: resourceNames.outputs.appGatewayPublicIpName
+    location: location
+    tags: tags
+    allocationMethod: 'Static'
+    sku: 'Standard'
+    tier: 'Regional'
+    dnsLabelPrefix: !empty(appGatewayDnsLabelPrefix) ? appGatewayDnsLabelPrefix : '${toLower(resourceNames.outputs.appGatewayName)}-${resourceToken}'
+    zones: [1, 2, 3]
+    diagnosticSettings: [
+      {
+        name: 'appGatewayPip-diagnostics'
+        workspaceResourceId: logAnalytics.outputs.logAnalyticsWorkspaceId
+        storageAccountResourceId: storage.outputs.id
+        metricCategories: [
+          {
+            category: 'AllMetrics'
+            enabled: true
+          }
+        ]
+        logCategoriesAndGroups: [
+          {
+            categoryGroup: 'allLogs'
+            enabled: true
+          }
+        ]
+      }
+    ]
+  }
+}
+
+// Deploy Application Gateway
+module applicationGateway './modules/networking/application-gateway.bicep' = if (deployApplicationGateway) {
+  name: 'applicationGateway${deploymentSuffix}'
+  params: {
+    name: resourceNames.outputs.appGatewayName
+    location: location
+    tags: tags
+    sku: appGatewaySkuName
+    autoscaleMinCapacity: appGatewayMinCapacity
+    autoscaleMaxCapacity: appGatewayMaxCapacity
+    enableHttp2: appGatewayEnableHttp2
+    enableFips: appGatewayEnableFips
+    zones: [1, 2, 3]
+    
+    // WAF Policy association
+    firewallPolicyResourceId: appGatewayWafPolicy.outputs.resourceId
+    
+    // Gateway IP Configuration (subnet association)
+    gatewayIPConfigurations: [
+      {
+        name: 'appGatewayIpConfig'
+        properties: {
+          subnet: {
+            id: vnet.outputs.subnetAppGwResourceID
+          }
+        }
+      }
+    ]
+    
+    // Frontend IP Configuration (public IP association)
+    frontendIPConfigurations: [
+      {
+        name: 'appGatewayFrontendIP'
+        properties: {
+          publicIPAddress: {
+            id: appGatewayPublicIp.outputs.resourceId
+          }
+        }
+      }
+    ]
+    
+    // Frontend Ports
+    frontendPorts: [
+      {
+        name: 'port_80'
+        properties: {
+          port: 80
+        }
+      }
+      {
+        name: 'port_443'
+        properties: {
+          port: 443
+        }
+      }
+    ]
+    
+    // Backend Address Pools
+    backendAddressPools: [
+      {
+        name: 'appServiceBackendPool'
+        properties: {
+          backendAddresses: appGatewayBackendAddresses
+        }
+      }
+    ]
+    
+    // Backend HTTP Settings
+    backendHttpSettingsCollection: [
+      {
+        name: 'appServiceBackendHttpSettings'
+        properties: {
+          port: 80
+          protocol: 'Http'
+          cookieBasedAffinity: 'Disabled'
+          pickHostNameFromBackendAddress: true
+          requestTimeout: 20
+          connectionDraining: {
+            enabled: true
+            drainTimeoutInSec: 60
+          }
+        }
+      }
+      {
+        name: 'appServiceBackendHttpsSettings'
+        properties: {
+          port: 443
+          protocol: 'Https'
+          cookieBasedAffinity: 'Disabled'
+          pickHostNameFromBackendAddress: true
+          requestTimeout: 20
+          connectionDraining: {
+            enabled: true
+            drainTimeoutInSec: 60
+          }
+        }
+      }
+    ]
+    
+    // HTTP Listeners
+    httpListeners: [
+      {
+        name: 'appServiceHttpListener'
+        properties: {
+          frontendIPConfiguration: {
+            id: resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations', resourceNames.outputs.appGatewayName, 'appGatewayFrontendIP')
+          }
+          frontendPort: {
+            id: resourceId('Microsoft.Network/applicationGateways/frontendPorts', resourceNames.outputs.appGatewayName, 'port_80')
+          }
+          protocol: 'Http'
+          requireServerNameIndication: false
+        }
+      }
+    ]
+    
+    // Request Routing Rules
+    requestRoutingRules: [
+      {
+        name: 'appServiceRule'
+        properties: {
+          ruleType: 'Basic'
+          priority: 100
+          httpListener: {
+            id: resourceId('Microsoft.Network/applicationGateways/httpListeners', resourceNames.outputs.appGatewayName, 'appServiceHttpListener')
+          }
+          backendAddressPool: {
+            id: resourceId('Microsoft.Network/applicationGateways/backendAddressPools', resourceNames.outputs.appGatewayName, 'appServiceBackendPool')
+          }
+          backendHttpSettings: {
+            id: resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', resourceNames.outputs.appGatewayName, 'appServiceBackendHttpSettings')
+          }
+        }
+      }
+    ]
+    
+    // SSL Certificates (if provided)
+    sslCertificates: !empty(appGatewaySslCertificateKeyVaultSecretId) ? [
+      {
+        name: 'appGatewaySslCert'
+        properties: {
+          keyVaultSecretId: appGatewaySslCertificateKeyVaultSecretId
+        }
+      }
+    ] : []
+    
+    // Managed Identity for Key Vault access
+    managedIdentities: {
+      userAssignedResourceIds: [
+        identity.outputs.managedIdentityId
+      ]
+    }
+    
+    // Diagnostic Settings for monitoring
+    diagnosticSettings: [
+      {
+        name: 'appGateway-diagnostics'
+        workspaceResourceId: logAnalytics.outputs.logAnalyticsWorkspaceId
+        storageAccountResourceId: storage.outputs.id
+        metricCategories: [
+          {
+            category: 'AllMetrics'
+            enabled: true
+          }
+        ]
+        logCategoriesAndGroups: [
+          {
+            categoryGroup: 'allLogs'
+            enabled: true
+          }
+        ]
+      }
+    ]
+  }
+  dependsOn: [
+  ]
+}
+
+// --------------------------------------------------------------------------------------------------------------
 // -- Outputs ---------------------------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------------------------------
 output SUBSCRIPTION_ID string = subscription().subscriptionId
@@ -932,3 +1212,10 @@ output VNET_CORE_PREFIX string = vnet.outputs.vnetAddressPrefix
 output VM_ID string = (!empty(admin_username) && !empty(vm_name)) ? virtualMachine.outputs.vm_id : ''
 output VM_PRIVATE_IP string = (!empty(admin_username) && !empty(vm_name)) ? virtualMachine.outputs.vm_private_ip : ''
 output VM_PUBLIC_IP string = (!empty(admin_username) && !empty(vm_name)) ? virtualMachine.outputs.vm_public_ip : ''
+
+// Application Gateway outputs (if deployed)
+output APPLICATION_GATEWAY_ID string = deployApplicationGateway ? applicationGateway.outputs.resourceId : ''
+output APPLICATION_GATEWAY_NAME string = deployApplicationGateway ? applicationGateway.outputs.name : ''
+output APPLICATION_GATEWAY_PUBLIC_IP string = deployApplicationGateway ? appGatewayPublicIp.outputs.ipAddress : ''
+output APPLICATION_GATEWAY_FQDN string = deployApplicationGateway ? appGatewayPublicIp.outputs.fqdn : ''
+output APPLICATION_GATEWAY_WAF_POLICY_ID string = deployApplicationGateway ? appGatewayWafPolicy.outputs.resourceId : ''
