@@ -70,6 +70,7 @@
   "insightsActionGroups": "ag-",
   "insightsComponents": "appi",
   "insightsComponents-prefix": "appi-",
+  "insightsSmartDetectorAlertRules": "sdar-",
   "keyVaultVaults": "kv",
   "keyVaultVaults-prefix": "kv-",
   "kubernetesConnectedClusters": "arck",
