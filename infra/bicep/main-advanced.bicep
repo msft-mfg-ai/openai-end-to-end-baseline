@@ -123,12 +123,12 @@ param deployAPIM bool = false
 // --------------------------------------------------------------------------------------------------------------
 // AI Models
 // --------------------------------------------------------------------------------------------------------------
-@description('The default GPT 4o model deployment name for the AI Agent')
-param gpt40_DeploymentName string = 'gpt-4o' 
-@description('The GPT 4o model version to use')
-param gpt40_ModelVersion string = '2024-11-20'
-@description('The GPT 4o model deployment capacity')
-param gpt40_DeploymentCapacity int = 10
+//@description('The default GPT 4o model deployment name for the AI Agent')
+//param gpt40_DeploymentName string = 'gpt-4o' 
+//@description('The GPT 4o model version to use')
+//param gpt40_ModelVersion string = '2024-11-20'
+//@description('The GPT 4o model deployment capacity')
+//param gpt40_DeploymentCapacity int = 10
 
 @description('The default GPT 4.1 model deployment name for the AI Agent')
 param gpt41_DeploymentName string = 'gpt-4o-mini'
