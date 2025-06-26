@@ -137,7 +137,7 @@ param adminPublisherName string = 'AI Agent Admin'
 // Application Gateway Parameters
 // --------------------------------------------------------------------------------------------------------------
 @description('Should we deploy an Application Gateway?')
-param deployApplicationGateway bool = false
+param deployApplicationGateway bool = true
 @description('Application Gateway SKU')
 @allowed(['Standard_v2', 'WAF_v2'])
 param appGatewaySkuName string = 'WAF_v2'
