@@ -968,25 +968,25 @@ module appGatewayPublicIp './modules/networking/public-ip.bicep' = if (deployApp
     tier: 'Regional'
     dnsLabelPrefix: !empty(appGatewayDnsLabelPrefix) ? appGatewayDnsLabelPrefix : '${toLower(resourceNames.outputs.appGatewayName)}-${resourceToken}'
     zones: [1, 2, 3]
-    diagnosticSettings: [
-      {
-        name: 'appGatewayPip-diagnostics'
-        workspaceResourceId: logAnalytics.outputs.logAnalyticsWorkspaceId
-        storageAccountResourceId: storage.outputs.id
-        metricCategories: [
-          {
-            category: 'AllMetrics'
-            enabled: true
-          }
-        ]
-        logCategoriesAndGroups: [
-          {
-            categoryGroup: 'allLogs'
-            enabled: true
-          }
-        ]
-      }
-    ]
+    // //diagnosticSettings: [
+    //   {
+    //     name: 'appGatewayPip-diagnostics'
+    //     workspaceResourceId: logAnalytics.outputs.logAnalyticsWorkspaceId
+    //     storageAccountResourceId: storage.outputs.id
+    //     metricCategories: [
+    //       {
+    //         category: 'AllMetrics'
+    //         enabled: true
+    //       }
+    //     ]
+    //     logCategoriesAndGroups: [
+    //       {
+    //         categoryGroup: 'allLogs'
+    //         enabled: true
+    //       }
+    //     ]
+    //   }
+    // //]
   }
 }
 

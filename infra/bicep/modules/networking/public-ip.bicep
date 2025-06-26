@@ -41,8 +41,8 @@ param zones array = [
   3
 ]
 
-@description('Optional. Diagnostic settings configuration.')
-param diagnosticSettings array = []
+//@description('Optional. Diagnostic settings configuration.')
+//param diagnosticSettings array = []
 
 // ================================================================================================
 // Public IP Resource
