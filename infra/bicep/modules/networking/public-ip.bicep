@@ -65,39 +65,39 @@ resource publicIp 'Microsoft.Network/publicIPAddresses@2024-05-01' = {
   }
 }
 
-// ================================================================================================
-// Diagnostic Settings (if provided)
-// ================================================================================================
-resource publicIp_diagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = [for (diagnosticSetting, index) in (diagnosticSettings ?? []): {
-  name: diagnosticSetting.?name ?? '${name}-diagnosticSettings'
-  properties: {
-    storageAccountId: diagnosticSetting.?storageAccountResourceId
-    workspaceId: diagnosticSetting.?workspaceResourceId
-    eventHubAuthorizationRuleId: diagnosticSetting.?eventHubAuthorizationRuleResourceId
-    eventHubName: diagnosticSetting.?eventHubName
-    logs: [
-      {
-        categoryGroup: 'allLogs'
-        enabled: true
-        retentionPolicy: {
-          enabled: true
-          days: 30
-        }
-      }
-    ]
-    metrics: [
-      {
-        category: 'AllMetrics'
-        enabled: true
-        retentionPolicy: {
-          enabled: true
-          days: 30
-        }
-      }
-    ]
-  }
-  scope: publicIp
-}]
+// // ================================================================================================
+// // Diagnostic Settings (if provided)
+// // ================================================================================================
+// resource publicIp_diagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = [for (diagnosticSetting, index) in (diagnosticSettings ?? []): {
+//   name: diagnosticSetting.?name ?? '${name}-diagnosticSettings'
+//   properties: {
+//     storageAccountId: diagnosticSetting.?storageAccountResourceId
+//     workspaceId: diagnosticSetting.?workspaceResourceId
+//     eventHubAuthorizationRuleId: diagnosticSetting.?eventHubAuthorizationRuleResourceId
+//     eventHubName: diagnosticSetting.?eventHubName
+//     logs: [
+//       {
+//         categoryGroup: 'allLogs'
+//         enabled: true
+//         retentionPolicy: {
+//           enabled: true
+//           days: 30
+//         }
+//       }
+//     ]
+//     metrics: [
+//       {
+//         category: 'AllMetrics'
+//         enabled: true
+//         retentionPolicy: {
+//           enabled: true
+//           days: 30
+//         }
+//       }
+//     ]
+//   }
+//   scope: publicIp
+// }]
 
 // ================================================================================================
 // Outputs
