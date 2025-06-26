@@ -72,7 +72,7 @@ var deployments = union(
       }
       sku: chatGpt_41.?sku ?? {
         name: 'GlobalStandard'
-        capacity: chatGpt_Premium.DeploymentCapacity
+        capacity: chatGpt_41.DeploymentCapacity
       }
     }
   ]

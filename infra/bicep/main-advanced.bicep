@@ -131,9 +131,9 @@ param gpt40_ModelVersion string = '2024-11-20'
 param gpt40_DeploymentCapacity int = 500
 
 @description('The default GPT 4.1 model deployment name for the AI Agent')
-param gpt41_DeploymentName string = 'gpt-4.1'
+param gpt41_DeploymentName string = 'gpt-4o-mini'
 @description('The GPT 4.1 model version to use')
-param gpt41_ModelVersion string = '2025-04-14'
+param gpt41_ModelVersion string = '2024-07-18'
 @description('The GPT 4.1 model deployment capacity')
 param gpt41_DeploymentCapacity int = 500
 
@@ -198,8 +198,8 @@ param publicAccessEnabled bool = true
 @description('Create DNS Zones?')
 param createDnsZones bool = true
 // commented out as roleassigments should be part of the application deployment not the LZ
-//@description('Add Role Assignments for the user assigned identity?')
-//param addRoleAssignments bool = true
+@description('Add Role Assignments for the user assigned identity?')
+param addRoleAssignments bool = true
 @description('Should we run a script to dedupe the KeyVault secrets? (this fails on private networks right now)')
 param deduplicateKeyVaultSecrets bool = false
 @description('Set this if you want to append all the resource names with a unique token')
@@ -374,19 +374,19 @@ module virtualMachine './modules/virtualMachine/virtualMachine.bicep' = if (!emp
 // --------------------------------------------------------------------------------------------------------------
 //commented as should be part of the app deployment not the LZ
 
-//module containerRegistry './modules/app/containerregistry.bicep' = {
-//  name: 'containerregistry${deploymentSuffix}'
-//  params: {
-//    newRegistryName: resourceNames.outputs.ACR_Name
-//    location: location
-//    acrSku: 'Premium'
-//    tags: tags
-//    publicAccessEnabled: publicAccessEnabled
-//    privateEndpointName: 'pe-${resourceNames.outputs.ACR_Name}'
-//    privateEndpointSubnetId: vnet.outputs.subnetPeResourceID
-//    myIpAddress: myIpAddress
-//  }
-// }
+module containerRegistry './modules/app/containerregistry.bicep' = {
+  name: 'containerregistry${deploymentSuffix}'
+  params: {
+   newRegistryName: resourceNames.outputs.ACR_Name
+   location: location
+   acrSku: 'Premium'
+   tags: tags
+   publicAccessEnabled: publicAccessEnabled
+   privateEndpointName: 'pe-${resourceNames.outputs.ACR_Name}'
+   privateEndpointSubnetId: vnet.outputs.subnetPeResourceID
+   myIpAddress: myIpAddress
+ }
+}
 
 // --------------------------------------------------------------------------------------------------------------
 // -- Log Analytics Workspace and App Insights ------------------------------------------------------------------
@@ -431,38 +431,36 @@ module identity './modules/iam/identity.bicep' = {
   }
 }
 
-// commented as it should be part of the application deployment not the LZ - and depends on the container Registry
-// module appIdentityRoleAssignments './modules/iam/role-assignments.bicep' = if (addRoleAssignments) {
-//   name: 'identity-roles${deploymentSuffix}'
-//   params: {
-//     identityPrincipalId: identity.outputs.managedIdentityPrincipalId
-//     principalType: 'ServicePrincipal'
-//     registryName: containerRegistry.outputs.name
-//     storageAccountName: storage.outputs.name
-//     aiSearchName: searchService.outputs.name
-//     aiServicesName: openAI.outputs.name
-//     cosmosName: cosmos.outputs.name
-//     keyVaultName: keyVault.outputs.name
-//     apimName: deployAPIM ? apim.outputs.name : ''
-//   }
-// }
+module appIdentityRoleAssignments './modules/iam/role-assignments.bicep' = if (addRoleAssignments) {
+  name: 'identity-roles${deploymentSuffix}'
+  params: {
+    identityPrincipalId: identity.outputs.managedIdentityPrincipalId
+    principalType: 'ServicePrincipal'
+    registryName: containerRegistry.outputs.name
+    storageAccountName: storage.outputs.name
+    aiSearchName: searchService.outputs.name
+    aiServicesName: openAI.outputs.name
+    cosmosName: cosmos.outputs.name
+    keyVaultName: keyVault.outputs.name
+    apimName: deployAPIM ? apim.outputs.name : ''
+  }
+}
 
 
-//commented as it should be part of the application deployment not the LZ and depends on container registry 
-// module adminUserRoleAssignments './modules/iam/role-assignments.bicep' = if (addRoleAssignments && !empty(principalId)) {
-//   name: 'user-roles${deploymentSuffix}'
-//   params: {
-//     identityPrincipalId: principalId
-//     principalType: 'User'
-//     registryName: containerRegistry.outputs.name
-//     storageAccountName: storage.outputs.name
-//     aiSearchName: searchService.outputs.name
-//     aiServicesName: openAI.outputs.name
-//     cosmosName: cosmos.outputs.name
-//     keyVaultName: keyVault.outputs.name
-//     apimName: deployAPIM ? apim.outputs.name : ''
-//   }
-// }
+module adminUserRoleAssignments './modules/iam/role-assignments.bicep' = if (addRoleAssignments && !empty(principalId)) {
+  name: 'user-roles${deploymentSuffix}'
+  params: {
+    identityPrincipalId: principalId
+    principalType: 'User'
+    registryName: containerRegistry.outputs.name
+    storageAccountName: storage.outputs.name
+    aiSearchName: searchService.outputs.name
+    aiServicesName: openAI.outputs.name
+    cosmosName: cosmos.outputs.name
+    keyVaultName: keyVault.outputs.name
+    apimName: deployAPIM ? apim.outputs.name : ''
+  }
+}
 
 // --------------------------------------------------------------------------------------------------------------
 // -- Key Vault Resources ---------------------------------------------------------------------------------------
