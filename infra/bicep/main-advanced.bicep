@@ -114,10 +114,10 @@ param vm_name string
 // AI Hub Parameters
 // --------------------------------------------------------------------------------------------------------------
 // if going to deploy ai Project uncomment this line
-//@description('Friendly name for your Azure AI resource')
-//param aiProjectFriendlyName string = 'Agents Project resource'
-//@description('Description of your Azure AI resource displayed in AI studio')
-//param aiProjectDescription string = 'This is an example AI Project resource for use in Azure AI Studio.'
+@description('Friendly name for your Azure AI resource')
+param aiProjectFriendlyName string = 'Agents Project resource'
+@description('Description of your Azure AI resource displayed in AI studio')
+param aiProjectDescription string = 'This is an example AI Project resource for use in Azure AI Studio.'
 @description('Should we deploy an AI Foundry Hub?')
 param deployAIHub bool
 @description('Should we deploy an APIM?')
@@ -469,16 +469,15 @@ module apiKeySecret './modules/security/keyvault-secret.bicep' = {
 }
 
 
-//commented as we commented container registry
-// module cosmosSecret './modules/security/keyvault-cosmos-secret.bicep' = {
-//   name: 'secret-cosmos${deploymentSuffix}'
-//   params: {
-//     keyVaultName: keyVault.outputs.name
-//     secretName: cosmos.outputs.keyVaultSecretName
-//     cosmosAccountName: cosmos.outputs.name
-//     existingSecretNames: deduplicateKVSecrets ? keyVaultSecretList.outputs.secretNameList : ''
-//   }
-// }
+ module cosmosSecret './modules/security/keyvault-cosmos-secret.bicep' = {
+   name: 'secret-cosmos${deploymentSuffix}'
+   params: {
+     keyVaultName: keyVault.outputs.name
+     secretName: cosmos.outputs.keyVaultSecretName
+     cosmosAccountName: cosmos.outputs.name
+     existingSecretNames: deduplicateKVSecrets ? keyVaultSecretList.outputs.secretNameList : ''
+   }
+ }
 
 module storageSecret './modules/security/keyvault-storage-secret.bicep' = {
   name: 'secret-storage${deploymentSuffix}'
@@ -527,33 +526,32 @@ module searchSecret './modules/security/keyvault-search-secret.bicep' = {
 // --------------------------------------------------------------------------------------------------------------
 // -- Cosmos Resources ------------------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------------------------------
-// commented as it should be part of the application
 
-// var uiDatabaseName = 'ChatHistory'
-// var uiChatContainerName = 'ChatTurn'
-// var uiChatContainerName2 = 'ChatHistory'
-// var cosmosContainerArray = [
-//   { name: 'AgentLog', partitionKey: '/requestId' }
-//   { name: 'UserDocuments', partitionKey: '/userId' }
-//   { name: uiChatContainerName, partitionKey: '/chatId' }
-//   { name: uiChatContainerName2, partitionKey: '/chatId' }
-// ]
-// module cosmos './modules/database/cosmosdb.bicep' = {
-//   name: 'cosmos${deploymentSuffix}'
-//   params: {
-//     accountName: resourceNames.outputs.cosmosName
-//     databaseName: uiDatabaseName
-//     containerArray: cosmosContainerArray
-//     location: location
-//     tags: tags
-//     privateEndpointSubnetId: vnet.outputs.subnetPeResourceID
-//     privateEndpointName: 'pe-${resourceNames.outputs.cosmosName}'
-//     managedIdentityPrincipalId: identity.outputs.managedIdentityPrincipalId
-//     userPrincipalId: principalId
-//     publicNetworkAccess: publicAccessEnabled ? 'enabled' : 'disabled'
-//     myIpAddress: myIpAddress
-//   }
-// }
+var uiDatabaseName = 'ChatHistory'
+var uiChatContainerName = 'ChatTurn'
+var uiChatContainerName2 = 'ChatHistory'
+var cosmosContainerArray = [
+  { name: 'AgentLog', partitionKey: '/requestId' }
+  { name: 'UserDocuments', partitionKey: '/userId' }
+  { name: uiChatContainerName, partitionKey: '/chatId' }
+  { name: uiChatContainerName2, partitionKey: '/chatId' }
+]
+module cosmos './modules/database/cosmosdb.bicep' = {
+  name: 'cosmos${deploymentSuffix}'
+  params: {
+    accountName: resourceNames.outputs.cosmosName
+    databaseName: uiDatabaseName
+    containerArray: cosmosContainerArray
+    location: location
+    tags: tags
+    privateEndpointSubnetId: vnet.outputs.subnetPeResourceID
+    privateEndpointName: 'pe-${resourceNames.outputs.cosmosName}'
+    managedIdentityPrincipalId: identity.outputs.managedIdentityPrincipalId
+    userPrincipalId: principalId
+    publicNetworkAccess: publicAccessEnabled ? 'enabled' : 'disabled'
+    myIpAddress: myIpAddress
+  }
+ }
 
 // --------------------------------------------------------------------------------------------------------------
 // -- Search Service Resource ------------------------------------------------------------------------------
@@ -669,43 +667,43 @@ module aiFoundryProject './modules/ai-foundry/ai-foundry-project.bicep' = {
     //aiServicesConnectionName: [aiFoundryHub.outputs.connection_aisvcName]
   }
 }
+
 // AI Project and Capability Host
-// Commenting out the AI Project and Capability Host as they are not part of the LZ deployment
 
-// module aiProject './modules/cognitive-services/ai-project.bicep' = {
-//   name: 'aiProject${deploymentSuffix}'
-//   params: {
-//     location: location
-//     accountName: openAI.outputs.name
-//     projectName:  resourceNames.outputs.aiHubProjectName
-//     projectDescription:aiProjectDescription
-//     displayName: aiProjectFriendlyName
-//     // Connect to existing resources
-//     aiSearchName: searchService.outputs.name
-//     aiSearchServiceResourceGroupName: resourceGroup().name
-//     aiSearchServiceSubscriptionId: subscription().subscriptionId
+module aiProject './modules/cognitive-services/ai-project.bicep' = {
+  name: 'aiProject${deploymentSuffix}'
+  params: {
+    location: location
+    accountName: openAI.outputs.name
+    projectName:  resourceNames.outputs.aiHubProjectName
+    projectDescription:aiProjectDescription
+    displayName: aiProjectFriendlyName
+    // Connect to existing resources
+    aiSearchName: searchService.outputs.name
+    aiSearchServiceResourceGroupName: resourceGroup().name
+    aiSearchServiceSubscriptionId: subscription().subscriptionId
 
-//     cosmosDBName: cosmos.outputs.name
-//     cosmosDBResourceGroupName: resourceGroup().name
-//     cosmosDBSubscriptionId: subscription().subscriptionId
+    cosmosDBName: cosmos.outputs.name
+    cosmosDBResourceGroupName: resourceGroup().name
+    cosmosDBSubscriptionId: subscription().subscriptionId
 
-//     azureStorageName: storage.outputs.name
-//     azureStorageResourceGroupName: resourceGroup().name
-//     azureStorageSubscriptionId: subscription().subscriptionId
+    azureStorageName: storage.outputs.name
+    azureStorageResourceGroupName: resourceGroup().name
+    azureStorageSubscriptionId: subscription().subscriptionId
 
-//     // // Connect to App Insights
-//     // appInsightsName: logAnalytics.outputs.applicationInsightsName
-//     // appInsightsResourceGroupName: resourceGroup().name
-//     // appInsightsSubscriptionId: subscription().subscriptionId
-//   }
-// }
+    // // Connect to App Insights
+    // appInsightsName: logAnalytics.outputs.applicationInsightsName
+    // appInsightsResourceGroupName: resourceGroup().name
+    // appInsightsSubscriptionId: subscription().subscriptionId
+  }
+}
 
-// module formatProjectWorkspaceId './modules/cognitive-services/format-project-workspace-id.bicep' = {
-//   name: 'aiProjectFormatWorkspaceId${deploymentSuffix}'
-//   params: {
-//     projectWorkspaceId: aiProject.outputs.projectWorkspaceId
-//   }
-// }
+module formatProjectWorkspaceId './modules/cognitive-services/format-project-workspace-id.bicep' = {
+  name: 'aiProjectFormatWorkspaceId${deploymentSuffix}'
+  params: {
+    projectWorkspaceId: aiProject.outputs.projectWorkspaceId
+  }
+}
 
 // --------------------------------------------------------------------------------------------------------------
 // AI Foundry Hub and Project V1
@@ -968,25 +966,7 @@ module appGatewayPublicIp './modules/networking/public-ip.bicep' = if (deployApp
     tier: 'Regional'
     dnsLabelPrefix: !empty(appGatewayDnsLabelPrefix) ? appGatewayDnsLabelPrefix : '${toLower(resourceNames.outputs.appGatewayName)}-${resourceToken}'
     zones: [1, 2, 3]
-    // //diagnosticSettings: [
-    //   {
-    //     name: 'appGatewayPip-diagnostics'
-    //     workspaceResourceId: logAnalytics.outputs.logAnalyticsWorkspaceId
-    //     storageAccountResourceId: storage.outputs.id
-    //     metricCategories: [
-    //       {
-    //         category: 'AllMetrics'
-    //         enabled: true
-    //       }
-    //     ]
-    //     logCategoriesAndGroups: [
-    //       {
-    //         categoryGroup: 'allLogs'
-    //         enabled: true
-    //       }
-    //     ]
-    //   }
-    // //]
+    
   }
 }
 
