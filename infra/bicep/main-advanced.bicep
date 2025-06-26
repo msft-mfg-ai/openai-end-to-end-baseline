@@ -638,13 +638,13 @@ module openAI './modules/ai/cognitive-services.bicep' = {
       ModelVersion: '0125'
       DeploymentCapacity: 10
     }
-    chatGpt_Premium: {
-      DeploymentName: gpt40_DeploymentName
-      ModelName: gpt40_DeploymentName
-      ModelVersion: gpt40_ModelVersion
-      DeploymentCapacity: gpt40_DeploymentCapacity
+    //chatGpt_Premium: {
+      //DeploymentName: gpt40_DeploymentName
+      //ModelName: gpt40_DeploymentName
+      //ModelVersion: gpt40_ModelVersion
+      //DeploymentCapacity: gpt40_DeploymentCapacity
 
-    }
+    //}
     chatGpt_41: {
       DeploymentName: gpt41_DeploymentName
       ModelName: gpt41_DeploymentName
