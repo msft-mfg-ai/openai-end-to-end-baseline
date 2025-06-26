@@ -736,9 +736,9 @@ module aiProject './modules/cognitive-services/ai-project.bicep' = {
     azureStorageSubscriptionId: subscription().subscriptionId
 
     // // Connect to App Insights
-    appInsightsName: logAnalytics.outputs.applicationInsightsName
-    appInsightsResourceGroupName: resourceGroup().name
-    appInsightsSubscriptionId: subscription().subscriptionId
+    //appInsightsName: logAnalytics.outputs.applicationInsightsName
+    //appInsightsResourceGroupName: resourceGroup().name
+    //appInsightsSubscriptionId: subscription().subscriptionId
   }
 }
 
