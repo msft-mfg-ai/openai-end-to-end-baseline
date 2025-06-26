@@ -85,12 +85,12 @@ param subnetScoringPrefix string = '10.183.7.128/25'
 // Virtual machine jumpbox
 // --------------------------------------------------------------------------------------------------------------
 @description('Admin username for the VM (optional - only deploy VM if provided)')
-param admin_username string
+param admin_username string = 'fewald'
 @secure()
 @description('Admin password for the VM (optional - only deploy VM if provided)')
-param admin_password string
+param admin_password string = 'P@ssw0rd123!' // This is a default password, you should change it to something more secure
 @description('VM name (optional - only deploy VM if provided)')
-param vm_name string
+param vm_name string ='jumpbox-vm'
 
 // --------------------------------------------------------------------------------------------------------------
 // Container App Environment
