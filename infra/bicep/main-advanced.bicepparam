@@ -10,7 +10,7 @@
 //   INSTANCE_NUMBER     - GH Environment Variable
 //   OWNER_EMAIL         - GH Environment Variable - optional
 //   environmentName     - Runtime  - Environment Code (e.g., dev, qa, prod)
-// DEPLOYMENTCOUNT - number of the resource group that will be created  g
+// DEPLOYMENTCOUNT - number of the resource group that will be created
 // --------------------------------------------------------------------------------
 
 using './main-advanced.bicep'
@@ -42,5 +42,5 @@ param deployAIHub = true
 //param deployAPIM = #{deployAPIM}#
 
 param deployAPIM = true
-param deployAPIApp = true  // Should we deploy the API app?
-param deployUIApp = true // Should we deploy the UI app?
+//param deployAPIApp = true  // Should we deploy the API app?
+//param deployUIApp = true // Should we deploy the UI app?

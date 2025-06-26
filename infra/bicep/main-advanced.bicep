@@ -113,10 +113,11 @@ param vm_name string
 // --------------------------------------------------------------------------------------------------------------
 // AI Hub Parameters
 // --------------------------------------------------------------------------------------------------------------
-@description('Friendly name for your Azure AI resource')
-param aiProjectFriendlyName string = 'Agents Project resource'
-@description('Description of your Azure AI resource displayed in AI studio')
-param aiProjectDescription string = 'This is an example AI Project resource for use in Azure AI Studio.'
+// if going to deploy ai Project uncomment this line
+//@description('Friendly name for your Azure AI resource')
+//param aiProjectFriendlyName string = 'Agents Project resource'
+//@description('Description of your Azure AI resource displayed in AI studio')
+//param aiProjectDescription string = 'This is an example AI Project resource for use in Azure AI Studio.'
 @description('Should we deploy an AI Foundry Hub?')
 param deployAIHub bool
 @description('Should we deploy an APIM?')
@@ -135,8 +136,8 @@ param adminPublisherName string = 'AI Agent Admin'
 // --------------------------------------------------------------------------------------------------------------
 // Existing images
 // --------------------------------------------------------------------------------------------------------------
-param apiImageName string = ''
-param UIImageName string = ''
+//param apiImageName string = ''
+//param UIImageName string = ''
 
 // --------------------------------------------------------------------------------------------------------------
 // Other deployment switches  
@@ -153,11 +154,11 @@ param deduplicateKeyVaultSecrets bool = false
 @description('Set this if you want to append all the resource names with a unique token')
 param appendResourceTokens bool = false
 
-@description('Should UI container app be deployed?')
-param deployUIApp bool 
+//@description('Should UI container app be deployed?')
+//param deployUIApp bool 
 //comented as we are not using container app
-@description('Should API container app be deployed?')
-param deployAPIApp bool
+//@description('Should API container app be deployed?')
+//param deployAPIApp bool
 
 
 @description('Global Region where the resources will be deployed, e.g. AM (America), EM (EMEA), AP (APAC), CH (China)')
