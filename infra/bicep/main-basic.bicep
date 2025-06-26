@@ -36,8 +36,8 @@ param applicationPrefix string = 'ai_doc'
 
 @description('The environment code (i.e. dev, qa, prod)')
 param environmentName string = 'dev'
-@description('Environment name used by the azd command (optional)')
-param azdEnvName string = ''
+// @description('Environment name used by the azd command (optional)')
+// param azdEnvName string = ''
 
 @description('Primary location for all resources')
 param location string = resourceGroup().location
@@ -70,6 +70,18 @@ param containerAppEnvironmentWorkloadProfiles array = [
 ]
 
 // --------------------------------------------------------------------------------------------------------------
+// Container App Entra Parameters
+// -------------------------------------------------------------------------------------------------------------`
+param entraTenantId string = tenant().tenantId
+param entraApiAudience string = ''
+param entraScopes string = ''
+param entraRedirectUri string = ''
+@secure()
+param entraClientId string = ''
+@secure()
+param entraClientSecret string = ''
+
+// --------------------------------------------------------------------------------------------------------------
 // AI Hub Parameters
 // --------------------------------------------------------------------------------------------------------------
 @description('Friendly name for your Azure AI resource')
@@ -82,6 +94,23 @@ param deployAIHub bool = true
 param deployAPIM bool = false
 
 // --------------------------------------------------------------------------------------------------------------
+// AI Models
+// --------------------------------------------------------------------------------------------------------------
+@description('The default GPT 4o model deployment name for the AI Agent')
+param gpt40_DeploymentName string = 'gpt-4o' 
+@description('The GPT 4o model version to use')
+param gpt40_ModelVersion string = '2024-11-20'
+@description('The GPT 4o model deployment capacity')
+param gpt40_DeploymentCapacity int = 500
+
+@description('The default GPT 4.1 model deployment name for the AI Agent')
+param gpt41_DeploymentName string = 'gpt-4.1'
+@description('The GPT 4.1 model version to use')
+param gpt41_ModelVersion string = '2025-04-14'
+@description('The GPT 4.1 model deployment capacity')
+param gpt41_DeploymentCapacity int = 500
+
+// --------------------------------------------------------------------------------------------------------------
 // APIM Parameters
 // --------------------------------------------------------------------------------------------------------------
 @description('Name of the APIM Subscription. Defaults to aiagent-subscription')
@@ -90,6 +119,15 @@ param apimSubscriptionName string = 'aiagent-subscription'
 param apimPublisherEmail string = 'somebody@somewhere.com'
 @description('Name of the APIM Publisher')
 param adminPublisherName string = 'AI Agent Admin'
+
+// --------------------------------------------------------------------------------------------------------------
+// External APIM Parameters
+// --------------------------------------------------------------------------------------------------------------
+@description('Base URL to facade API')
+param apimBaseUrl string = ''
+param apimAccessUrl string = ''
+@secure()
+param apimAccessKey string = ''
 
 // --------------------------------------------------------------------------------------------------------------
 // Existing images
@@ -123,14 +161,14 @@ param regionCode string = 'NAA'
 @description('Instance number for the application, e.g. 001, 002, etc. This is used to differentiate multiple instances of the same application in the same environment.')
 param instanceNumber string = '001' // used to differentiate multiple instances of the same application in the same environment
 
-// --------------------------------------------------------------------------------------------------------------
-// Additional Tags that may be included or not
-// --------------------------------------------------------------------------------------------------------------
-param costCenterTag string = ''
-param ownerEmailTag string = ''
-param requestorName string = 'UNKNOWN'
-param applicationId string = ''
-param primarySupportProviderTag string = ''
+// // --------------------------------------------------------------------------------------------------------------
+// // Additional Tags that may be included or not
+// // --------------------------------------------------------------------------------------------------------------
+// param costCenterTag string = ''
+// param ownerEmailTag string = ''
+// param requestorName string = 'UNKNOWN'
+// param applicationId string = ''
+// param primarySupportProviderTag string = ''
 
 // --------------------------------------------------------------------------------------------------------------
 // A variable masquerading as a parameter to allow for dynamic value assignment in Bicep
@@ -148,18 +186,32 @@ var appName = applicationName != '' ? applicationName : '${applicationPrefix}_${
 
 var deploymentSuffix = '-${runDateTime}'
 
-// var tags = {
+var tags = {
+  'creation-date': take(runDateTime, 8)
+  'application-name':  'otisone-ooai'
+  'application-id':    'not-applicable'
+  'application-owner': 'sanjithraj.rao_otis.com'
+  'business-owner':    'sanjithraj.rao_otis.com'
+  'cost-center':       '90090143'
+  'created-by':        'pavan.gajavalli_otis.com'
+  'environment-name':  'dev'
+  'lti-service-class': 'bronge'
+  'otis-region':       'amer'
+  'primary-support-provider': 'ltim'
+  'request-number':    'not-applicable'
+  'requestor-name':    'daniel.pahng_otis.com'
+}
+var commonTags = tags
+
+// var commonTags = {
 //   'creation-date': take(runDateTime, 8)
-//   'application-name':  'oai'
-//   'application-id':    'not-applicable'
-//   'application-owner': 'me.somedomain.com'
-//   'business-owner':    'me.somedomain.com'
-//   'cost-center':       '999999'
-//   'created-by':        'me.somedomain.com'
-//   'environment-name':  'dev'
-//   'requestor-name':    'me.somedomain.com'
+//   'application-name': appName
+//   'application-id': applicationId
+//   'environment-name': environmentName
+//   'global-region': regionCode
+//   'requestor-name': requestorName
+//   'primary-support-provider': primarySupportProviderTag == '' ? 'UNKNOWN' : primarySupportProviderTag
 // }
-// var commonTags = tags
 
 var commonTags = {
   'creation-date': take(runDateTime, 8)
@@ -170,18 +222,23 @@ var commonTags = {
   'requestor-name': requestorName
   'primary-support-provider': primarySupportProviderTag == '' ? 'UNKNOWN' : primarySupportProviderTag
 }
-var costCenterTagObject = costCenterTag == '' ? {} :  { 'cost-center': costCenterTag }
-var ownerEmailTagObject = ownerEmailTag == '' ? {} :  { 
-  'application-owner': ownerEmailTag
-  'business-owner': ownerEmailTag
-  'point-of-contact': ownerEmailTag
-}
+var costCenterTagObject = costCenterTag == '' ? {} : { 'cost-center': costCenterTag }
+var ownerEmailTagObject = ownerEmailTag == ''
+  ? {}
+  : {
+      'application-owner': ownerEmailTag
+      'business-owner': ownerEmailTag
+      'point-of-contact': ownerEmailTag
+    }
 // if this bicep was called from AZD, then it needs this tag added to the resource group (at a minimum) to deploy successfully...
 var azdTag = azdEnvName != '' ? { 'azd-env-name': azdEnvName } : {}
 var tags = union(commonTags, azdTag, costCenterTagObject, ownerEmailTagObject)
 
 // Run a script to dedupe the KeyVault secrets -- this fails on private networks right now so turn if off for them
 var deduplicateKVSecrets = publicAccessEnabled ? deduplicateKeyVaultSecrets : false
+
+// if either of these are empty or the value is set to string 'null', then we will not deploy the Entra client secrets
+var deployEntraClientSecrets = !(empty(entraClientId) || empty(entraClientSecret) || toLower(entraClientId) == 'null' || toLower(entraClientSecret) == 'null')
 
 // --------------------------------------------------------------------------------------------------------------
 // -- Generate Resource Names -----------------------------------------------------------------------------------
@@ -369,23 +426,62 @@ module searchSecret './modules/security/keyvault-search-secret.bicep' = {
   }
 }
 
+module apimSecret './modules/security/keyvault-secret.bicep' = {
+  name: 'apim-search${deploymentSuffix}'
+  params: {
+    keyVaultName: keyVault.outputs.name
+    secretName: 'apimkey'
+    secretValue: apimAccessKey
+    existingSecretNames: deduplicateKVSecrets ? keyVaultSecretList.outputs.secretNameList : ''
+  }
+  dependsOn: [ apim ]
+}
+
+module entraClientIdSecret './modules/security/keyvault-secret.bicep' = if (deployEntraClientSecrets) {
+  name: 'entraClientId-search${deploymentSuffix}'
+  params: {
+    keyVaultName: keyVault.outputs.name
+    secretName: 'entraclientid'
+    secretValue: entraClientId
+    existingSecretNames: deduplicateKVSecrets ? keyVaultSecretList.outputs.secretNameList : ''
+  }
+}
+module entraClientSecretSecret './modules/security/keyvault-secret.bicep' = if (deployEntraClientSecrets) {
+  name: 'entraClientSecret-search${deploymentSuffix}'
+  params: {
+    keyVaultName: keyVault.outputs.name
+    secretName: 'entraclientsecret'
+    secretValue: entraClientSecret
+    existingSecretNames: deduplicateKVSecrets ? keyVaultSecretList.outputs.secretNameList : ''
+  }
+}
+
 // --------------------------------------------------------------------------------------------------------------
 // -- Cosmos Resources ------------------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------------------------------
 var uiDatabaseName = 'ChatHistory'
+var sessionsDatabaseName = 'Sessions'
 var uiChatContainerName = 'ChatTurn'
 var uiChatContainerName2 = 'ChatHistory'
+var apiSessionsContainerName = 'apisessions'
+var sessionsContainerName = 'sessions'
 var cosmosContainerArray = [
   { name: 'AgentLog', partitionKey: '/requestId' }
   { name: 'UserDocuments', partitionKey: '/userId' }
   { name: uiChatContainerName, partitionKey: '/chatId' }
   { name: uiChatContainerName2, partitionKey: '/chatId' }
 ]
+var sessionsContainerArray = [
+  { name: apiSessionsContainerName, partitionKey: '/id' }
+  { name: sessionsContainerName, partitionKey: '/id' }
+]
 module cosmos './modules/database/cosmosdb.bicep' = {
   name: 'cosmos${deploymentSuffix}'
   params: {
     accountName: resourceNames.outputs.cosmosName
     databaseName: uiDatabaseName
+    sessionsDatabaseName: sessionsDatabaseName
+    sessionContainerArray: sessionsContainerArray
     containerArray: cosmosContainerArray
     location: location
     tags: tags
@@ -425,14 +521,16 @@ module openAI './modules/ai/cognitive-services.bicep' = {
     pe_location: location
     appInsightsName: logAnalytics.outputs.applicationInsightsName
     tags: tags
-    textEmbeddings: [{
-      name: 'text-embedding'
-      model: {
-        format: 'OpenAI'
-        name: 'text-embedding-ada-002'
-        version: '2'
+    textEmbeddings: [
+      {
+        name: 'text-embedding'
+        model: {
+          format: 'OpenAI'
+          name: 'text-embedding-ada-002'
+          version: '2'
+        }
       }
-    }]
+    ]
     chatGpt_Standard: {
       DeploymentName: 'gpt-35-turbo'
       ModelName: 'gpt-35-turbo'
@@ -440,10 +538,17 @@ module openAI './modules/ai/cognitive-services.bicep' = {
       DeploymentCapacity: 10
     }
     chatGpt_Premium: {
-      DeploymentName: 'gpt-4o'
-      ModelName: 'gpt-4o'
-      ModelVersion: '2024-08-06'
-      DeploymentCapacity: 10
+      DeploymentName: gpt40_DeploymentName
+      ModelName: gpt40_DeploymentName
+      ModelVersion: gpt40_ModelVersion
+      DeploymentCapacity: gpt40_DeploymentCapacity
+
+    }
+    chatGpt_41: {
+      DeploymentName: gpt41_DeploymentName
+      ModelName: gpt41_DeploymentName
+      ModelVersion: gpt41_ModelVersion
+      DeploymentCapacity: gpt41_DeploymentCapacity
     }
     publicNetworkAccess: publicAccessEnabled ? 'enabled' : 'disabled'
     myIpAddress: myIpAddress
@@ -473,7 +578,7 @@ module documentIntelligence './modules/ai/document-intelligence.bicep' = {
 // Imported from https://github.com/adamhockemeyer/ai-agent-experience
 // --------------------------------------------------------------------------------------------------------------
 module aiFoundryHub './modules/ai-foundry/ai-foundry-hub.bicep' = {
-  name:  'aiHub${deploymentSuffix}'
+  name: 'aiHub${deploymentSuffix}'
   params: {
     location: location
     name: resourceNames.outputs.aiHubName
@@ -505,8 +610,8 @@ module aiProject './modules/cognitive-services/ai-project.bicep' = {
   params: {
     location: location
     accountName: openAI.outputs.name
-    projectName:  resourceNames.outputs.aiHubProjectName
-    projectDescription:aiProjectDescription
+    projectName: resourceNames.outputs.aiHubProjectName
+    projectDescription: aiProjectDescription
     displayName: aiProjectFriendlyName
     // Connect to existing resources
     aiSearchName: searchService.outputs.name
@@ -576,22 +681,56 @@ module managedEnvironment './modules/app/managedEnvironment.bicep' = {
   }
 }
 
-var apiTargetPort = 8080
+var apiTargetPort = 8000
 var apiSettings = [
-  { name: 'AnalysisApiEndpoint', value: 'https://${resourceNames.outputs.containerAppAPIName}.${managedEnvironment.outputs.defaultDomain}' }
-  { name: 'AnalysisApiKey', secretRef: 'apikey' }
-  { name: 'AOAIStandardServiceEndpoint', value: openAI.outputs.endpoint }
-  { name: 'AOAIStandardChatGptDeployment', value: 'gpt-4o' }
-  { name: 'ApiKey', secretRef: 'apikey' }
-  { name: 'PORT', value: '${apiTargetPort}' }
+  {
+    name: 'API_URL'
+    value: 'https://${resourceNames.outputs.containerAppAPIName}.${managedEnvironment.outputs.defaultDomain}/agent'
+  }
+  { name: 'API_KEY', secretRef: 'apikey' }
   { name: 'APPLICATIONINSIGHTS_CONNECTION_STRING', value: logAnalytics.outputs.appInsightsConnectionString }
+
+  { name: 'SEMANTICKERNEL_EXPERIMENTAL_GENAI_ENABLE_OTEL_DIAGNOSTICS', value: 'true' }
+  { name: 'SEMANTICKERNEL_EXPERIMENTAL_GENAI_ENABLE_OTEL_DIAGNOSTICS_SENSITIVE', value: 'true' }
+
+  { name: 'AZURE_AI_AGENT_ENDPOINT', value: aiProject.outputs.projectEndpoint }
+  { name: 'AZURE_AI_AGENT_MODEL_DEPLOYMENT_NAME', value: gpt41_DeploymentName }
+
+  { name: 'COSMOS_DB_ENDPOINT', value: cosmos.outputs.endpoint }
+  { name: 'COSMOS_DB_API_SESSIONS_DATABASE_NAME', value: sessionsDatabaseName }
+  { name: 'COSMOS_DB_API_SESSIONS_CONTAINER_NAME', value: sessionsContainerArray[0].name }
+
+  { name: 'APIM_BASE_URL', value: apimBaseUrl }
+  { name: 'APIM_ACCESS_URL', value: apimAccessUrl }
+  { name: 'APIM_KEY', secretRef: 'apimkey' }
+
   { name: 'AZURE_CLIENT_ID', value: identity.outputs.managedIdentityClientId }
-  { name: 'AzureDocumentIntelligenceEndpoint', value: documentIntelligence.outputs.endpoint }
-  { name: 'AzureAISearchEndpoint', value: searchService.outputs.endpoint }
-  { name: 'ContentStorageContainer', value: storage.outputs.containerNames[0].name }
-  { name: 'CosmosDbEndpoint', value: cosmos.outputs.endpoint }
-  { name: 'StorageAccountName', value: storage.outputs.name }
+
+  { name: 'AZURE_SDK_TRACING_IMPLEMENTATION', value: 'opentelemetry' }
+  { name: 'AZURE_TRACING_GEN_AI_CONTENT_RECORDING_ENABLED', value: 'true' }
+
 ]
+var entraSecuritySettings = deployEntraClientSecrets ? [
+  { name: 'ENTRA_TENANT_ID', value: entraTenantId }
+  { name: 'ENTRA_API_AUDIENCE', value: entraApiAudience }
+  { name: 'ENTRA_SCOPES', value: entraScopes }
+  { name: 'ENTRA_REDIRECT_URI', value: entraRedirectUri }
+  { name: 'ENTRA_CLIENT_ID', secretRef: 'entraclientid' }
+  { name: 'ENTRA_CLIENT_SECRET',secretRef: 'entraclientsecret' }
+] : []
+
+var baseSecrets = {
+  cosmos: cosmosSecret.outputs.secretUri
+  aikey: openAISecret.outputs.secretUri
+  docintellikey: documentIntelligenceSecret.outputs.secretUri
+  searchkey: searchSecret.outputs.secretUri
+  apikey: apiKeySecret.outputs.secretUri
+  apimkey: apimSecret.outputs.secretUri
+}
+var entraSecrets = deployEntraClientSecrets ? {
+  entraclientid: entraClientIdSecret.outputs.secretUri
+  entraclientsecret: entraClientSecretSecret.outputs.secretUri
+} : {}
 
 module containerAppAPI './modules/app/containerappstub.bicep' = if (deployAPIApp) {
   name: 'ca-api-stub${deploymentSuffix}'
@@ -605,30 +744,20 @@ module containerAppAPI './modules/app/containerappstub.bicep' = if (deployAPIApp
     userAssignedIdentityName: identity.outputs.managedIdentityName
     location: location
     imageName: apiImageName
+    
     tags: union(tags, { 'azd-service-name': 'api' })
     deploymentSuffix: deploymentSuffix
-    secrets: {
-      cosmos: cosmosSecret.outputs.secretUri
-      aikey: openAISecret.outputs.secretUri
-      docintellikey: documentIntelligenceSecret.outputs.secretUri
-      searchkey: searchSecret.outputs.secretUri
-      apikey: apiKeySecret.outputs.secretUri
-    }
-    env: apiSettings
+    secrets: union(baseSecrets, entraSecrets) 
+    env: union(apiSettings, entraSecuritySettings)
   }
-  dependsOn: [containerRegistry]
+  dependsOn: [containerRegistry, apim]
 }
 
-var UITargetPort = 8080
+var UITargetPort = 8001
 var UISettings = union(apiSettings, [
-  { name: 'FUNCTIONS_WORKER_RUNTIME', value: 'dotnet-isolated' }
-  // see: https://learn.microsoft.com/en-us/azure/azure-functions/durable/durable-functions-configure-managed-identity
-  { name: 'AzureWebJobsStorage__accountName', value: storage.outputs.name }
-  { name: 'AzureWebJobsStorage__credential', value: 'managedidentity' }
-  { name: 'AzureWebJobsStorage__clientId', value: identity.outputs.managedIdentityClientId }
-  { name: 'CosmosDbDatabaseName', value: cosmos.outputs.databaseName }
-  { name: 'CosmosDbContainerName', value: uiChatContainerName }
+  { name: 'API_URL', value: 'https://${resourceNames.outputs.containerAppAPIName}.${managedEnvironment.outputs.defaultDomain}/agent' }
 ])
+
 module containerAppUI './modules/app/containerappstub.bicep' = if (deployUIApp) {
   name: 'ca-UI-stub${deploymentSuffix}'
   params: {
@@ -643,16 +772,10 @@ module containerAppUI './modules/app/containerappstub.bicep' = if (deployUIApp) 
     imageName: UIImageName
     tags: union(tags, { 'azd-service-name': 'UI' })
     deploymentSuffix: deploymentSuffix
-    secrets: {
-      cosmos: cosmosSecret.outputs.secretUri
-      aikey: openAISecret.outputs.secretUri
-      docintellikey: documentIntelligenceSecret.outputs.secretUri
-      searchkey: searchSecret.outputs.secretUri
-      apikey: apiKeySecret.outputs.secretUri
-    }
-    env: UISettings
+    secrets: union(baseSecrets, entraSecrets) 
+    env: union(UISettings, entraSecuritySettings)
   }
-  dependsOn: [containerRegistry]
+  dependsOn: [containerRegistry, apim]
 }
 
 // --------------------------------------------------------------------------------------------------------------

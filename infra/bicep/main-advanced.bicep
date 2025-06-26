@@ -33,14 +33,12 @@ targetScope = 'resourceGroup'
 @description('Full Application Name (supply this or use default of prefix+token)')
 param applicationName string = ''
 @description('If you do not supply Application Name, this prefix will be combined with a token to create a unique applicationName')
-//param applicationPrefix string = 'ai_doc'
 param applicationPrefix string = ''
 
 @description('The environment code (i.e. dev, qa, prod)')
-//param environmentName string = 'dev'
 param environmentName string = ''
-@description('Environment name used by the azd command (optional)')
-param azdEnvName string = ''
+// @description('Environment name used by the azd command (optional)')
+// param azdEnvName string = ''
 
 @description('Primary location for all resources')
 param location string = resourceGroup().location
@@ -113,15 +111,31 @@ param vm_name string
 // --------------------------------------------------------------------------------------------------------------
 // AI Hub Parameters
 // --------------------------------------------------------------------------------------------------------------
-// if going to deploy ai Project uncomment this line
 @description('Friendly name for your Azure AI resource')
 param aiProjectFriendlyName string = 'Agents Project resource'
 @description('Description of your Azure AI resource displayed in AI studio')
 param aiProjectDescription string = 'This is an example AI Project resource for use in Azure AI Studio.'
 @description('Should we deploy an AI Foundry Hub?')
-param deployAIHub bool
+param deployAIHub bool = true
 @description('Should we deploy an APIM?')
-param deployAPIM bool
+param deployAPIM bool = false
+
+// --------------------------------------------------------------------------------------------------------------
+// AI Models
+// --------------------------------------------------------------------------------------------------------------
+@description('The default GPT 4o model deployment name for the AI Agent')
+param gpt40_DeploymentName string = 'gpt-4o' 
+@description('The GPT 4o model version to use')
+param gpt40_ModelVersion string = '2024-11-20'
+@description('The GPT 4o model deployment capacity')
+param gpt40_DeploymentCapacity int = 500
+
+@description('The default GPT 4.1 model deployment name for the AI Agent')
+param gpt41_DeploymentName string = 'gpt-4.1'
+@description('The GPT 4.1 model version to use')
+param gpt41_ModelVersion string = '2025-04-14'
+@description('The GPT 4.1 model deployment capacity')
+param gpt41_DeploymentCapacity int = 500
 
 // --------------------------------------------------------------------------------------------------------------
 // APIM Parameters
@@ -162,6 +176,15 @@ param appGatewayDnsLabelPrefix string = ''
 param appGatewaySslCertificateKeyVaultSecretId string = ''
 
 // --------------------------------------------------------------------------------------------------------------
+// External APIM Parameters
+// --------------------------------------------------------------------------------------------------------------
+@description('Base URL to facade API')
+param apimBaseUrl string = ''
+param apimAccessUrl string = ''
+@secure()
+param apimAccessKey string = ''
+
+// --------------------------------------------------------------------------------------------------------------
 // Existing images
 // --------------------------------------------------------------------------------------------------------------
 //param apiImageName string = ''
@@ -174,7 +197,7 @@ param appGatewaySslCertificateKeyVaultSecretId string = ''
 param publicAccessEnabled bool = true
 @description('Create DNS Zones?')
 param createDnsZones bool = true
-// commented aout as roleassigments should be part of the application deployment not the LZ
+// commented out as roleassigments should be part of the application deployment not the LZ
 //@description('Add Role Assignments for the user assigned identity?')
 //param addRoleAssignments bool = true
 @description('Should we run a script to dedupe the KeyVault secrets? (this fails on private networks right now)')
@@ -182,29 +205,27 @@ param deduplicateKeyVaultSecrets bool = false
 @description('Set this if you want to append all the resource names with a unique token')
 param appendResourceTokens bool = false
 
-//@description('Should UI container app be deployed?')
-//param deployUIApp bool 
 //comented as we are not using container app
 //@description('Should API container app be deployed?')
-//param deployAPIApp bool
-
+//param deployAPIApp bool = false
+//@description('Should UI container app be deployed?')
+//param deployUIApp bool = false
 
 @description('Global Region where the resources will be deployed, e.g. AM (America), EM (EMEA), AP (APAC), CH (China)')
 //@allowed(['AM', 'EM', 'AP', 'CH', 'NAA'])
-//param regionCode string = 'NAA'
 param regionCode string = ''
 
 @description('Instance number for the application, e.g. 001, 002, etc. This is used to differentiate multiple instances of the same application in the same environment.')
 param instanceNumber string = '001' // used to differentiate multiple instances of the same application in the same environment
 
-// --------------------------------------------------------------------------------------------------------------
-// Additional Tags that may be included or not
-// --------------------------------------------------------------------------------------------------------------
-param costCenterTag string = ''
-param ownerEmailTag string = ''
-param requestorName string = 'UNKNOWN'
-param applicationId string = ''
-param primarySupportProviderTag string = ''
+// // --------------------------------------------------------------------------------------------------------------
+// // Additional Tags that may be included or not
+// // --------------------------------------------------------------------------------------------------------------
+// param costCenterTag string = ''
+// param ownerEmailTag string = ''
+// param requestorName string = 'UNKNOWN'
+// param applicationId string = ''
+// param primarySupportProviderTag string = ''
 
 // --------------------------------------------------------------------------------------------------------------
 // A variable masquerading as a parameter to allow for dynamic value assignment in Bicep
@@ -215,7 +236,6 @@ param runDateTime string = utcNow()
 // -- Variables -------------------------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------------------------------
 var resourceToken = toLower(uniqueString(resourceGroup().id, location))
-//var resourceGroupName = resourceGroup().name
 var resourceGroupName = resourceGroup().name
 
 // if user supplied a full application name, use that, otherwise use default prefix and a unique token
@@ -223,18 +243,32 @@ var appName = applicationName != '' ? applicationName : '${applicationPrefix}_${
 
 var deploymentSuffix = '-${runDateTime}'
 
-// var tags = {
+var tags = {
+  'creation-date': take(runDateTime, 8)
+  'application-name':  'otisone-ooai'
+  'application-id':    'not-applicable'
+  'application-owner': 'sanjithraj.rao_otis.com'
+  'business-owner':    'sanjithraj.rao_otis.com'
+  'cost-center':       '90090143'
+  'created-by':        'pavan.gajavalli_otis.com'
+  'environment-name':  'dev'
+  'lti-service-class': 'bronge'
+  'otis-region':       'amer'
+  'primary-support-provider': 'ltim'
+  'request-number':    'not-applicable'
+  'requestor-name':    'daniel.pahng_otis.com'
+}
+var commonTags = tags
+
+// var commonTags = {
 //   'creation-date': take(runDateTime, 8)
-//   'application-name':  'oai'
-//   'application-id':    'not-applicable'
-//   'application-owner': 'me.somedomain.com'
-//   'business-owner':    'me.somedomain.com'
-//   'cost-center':       '999999'
-//   'created-by':        'me.somedomain.com'
-//   'environment-name':  'dev'
-//   'requestor-name':    'me.somedomain.com'
+//   'application-name': appName
+//   'application-id': applicationId
+//   'environment-name': environmentName
+//   'global-region': regionCode
+//   'requestor-name': requestorName
+//   'primary-support-provider': primarySupportProviderTag == '' ? 'UNKNOWN' : primarySupportProviderTag
 // }
-// var commonTags = tags
 
 var commonTags = {
   'creation-date': take(runDateTime, 8)
@@ -245,8 +279,10 @@ var commonTags = {
   'requestor-name': requestorName
   'primary-support-provider': primarySupportProviderTag == '' ? 'UNKNOWN' : primarySupportProviderTag
 }
-var costCenterTagObject = costCenterTag == '' ? {} :  { 'cost-center': costCenterTag }
-var ownerEmailTagObject = ownerEmailTag == '' ? {} :  { 
+var costCenterTagObject = costCenterTag == '' ? {} : { 'cost-center': costCenterTag }
+var ownerEmailTagObject = ownerEmailTag == ''
+  ? {}
+  : {
   'application-owner': ownerEmailTag
   'business-owner': ownerEmailTag
   'point-of-contact': ownerEmailTag
@@ -271,7 +307,6 @@ module resourceNames 'resourcenames.bicep' = {
     resourceToken: appendResourceTokens ? resourceToken : ''
     regionCode: regionCode
     instance: instanceNumber
-    //instance: deploymentCount
   }
 }
 
@@ -468,7 +503,6 @@ module apiKeySecret './modules/security/keyvault-secret.bicep' = {
   }
 }
 
-
  module cosmosSecret './modules/security/keyvault-cosmos-secret.bicep' = {
    name: 'secret-cosmos${deploymentSuffix}'
    params: {
@@ -526,26 +560,32 @@ module searchSecret './modules/security/keyvault-search-secret.bicep' = {
 // --------------------------------------------------------------------------------------------------------------
 // -- Cosmos Resources ------------------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------------------------------
-
 var uiDatabaseName = 'ChatHistory'
+var sessionsDatabaseName = 'Sessions'
 var uiChatContainerName = 'ChatTurn'
 var uiChatContainerName2 = 'ChatHistory'
+var apiSessionsContainerName = 'apisessions'
+var sessionsContainerName = 'sessions'
 var cosmosContainerArray = [
   { name: 'AgentLog', partitionKey: '/requestId' }
   { name: 'UserDocuments', partitionKey: '/userId' }
   { name: uiChatContainerName, partitionKey: '/chatId' }
   { name: uiChatContainerName2, partitionKey: '/chatId' }
 ]
+var sessionsContainerArray = [
+  { name: apiSessionsContainerName, partitionKey: '/id' }
+  { name: sessionsContainerName, partitionKey: '/id' }
+]
 module cosmos './modules/database/cosmosdb.bicep' = {
   name: 'cosmos${deploymentSuffix}'
   params: {
     accountName: resourceNames.outputs.cosmosName
     databaseName: uiDatabaseName
+    sessionsDatabaseName: sessionsDatabaseName
+    sessionContainerArray: sessionsContainerArray
     containerArray: cosmosContainerArray
     location: location
     tags: tags
-    privateEndpointSubnetId: vnet.outputs.subnetPeResourceID
-    privateEndpointName: 'pe-${resourceNames.outputs.cosmosName}'
     managedIdentityPrincipalId: identity.outputs.managedIdentityPrincipalId
     userPrincipalId: principalId
     publicNetworkAccess: publicAccessEnabled ? 'enabled' : 'disabled'
@@ -584,14 +624,16 @@ module openAI './modules/ai/cognitive-services.bicep' = {
     pe_location: location
     appInsightsName: logAnalytics.outputs.applicationInsightsName
     tags: tags
-    textEmbeddings: [{
+    textEmbeddings: [
+      {
       name: 'text-embedding'
       model: {
         format: 'OpenAI'
         name: 'text-embedding-ada-002'
         version: '2'
       }
-    }]
+      }
+    ]
     chatGpt_Standard: {
       DeploymentName: 'gpt-35-turbo'
       ModelName: 'gpt-35-turbo'
@@ -599,10 +641,17 @@ module openAI './modules/ai/cognitive-services.bicep' = {
       DeploymentCapacity: 10
     }
     chatGpt_Premium: {
-      DeploymentName: 'gpt-4o'
-      ModelName: 'gpt-4o'
-      ModelVersion: '2024-08-06'
-      DeploymentCapacity: 10
+      DeploymentName: gpt40_DeploymentName
+      ModelName: gpt40_DeploymentName
+      ModelVersion: gpt40_ModelVersion
+      DeploymentCapacity: gpt40_DeploymentCapacity
+
+    }
+    chatGpt_41: {
+      DeploymentName: gpt41_DeploymentName
+      ModelName: gpt41_DeploymentName
+      ModelVersion: gpt41_ModelVersion
+      DeploymentCapacity: gpt41_DeploymentCapacity
     }
     publicNetworkAccess: publicAccessEnabled ? 'enabled' : 'disabled'
     privateEndpointSubnetId: vnet.outputs.subnetPeResourceID
@@ -639,7 +688,7 @@ module openAI './modules/ai/cognitive-services.bicep' = {
 // Imported from https://github.com/adamhockemeyer/ai-agent-experience
 // --------------------------------------------------------------------------------------------------------------
 module aiFoundryHub './modules/ai-foundry/ai-foundry-hub.bicep' = {
-  name:  'aiHub${deploymentSuffix}'
+  name: 'aiHub${deploymentSuffix}'
   params: {
     location: location
     name: resourceNames.outputs.aiHubName
@@ -650,7 +699,6 @@ module aiFoundryHub './modules/ai-foundry/ai-foundry-hub.bicep' = {
     aiServicesId: openAI.outputs.id
     aiServicesName: openAI.outputs.name
     aiServicesTarget: openAI.outputs.endpoint
-    //aoaiModelDeployments: openAI.outputs.deployments
     aiSearchId: searchService.outputs.id
     aiSearchName: searchService.outputs.name
   }
@@ -663,8 +711,6 @@ module aiFoundryProject './modules/ai-foundry/ai-foundry-project.bicep' = {
     name: resourceNames.outputs.aiHubFoundryProjectName
     tags: commonTags
     hubId: aiFoundryHub.outputs.id
-    //hubName: aiFoundryHub.outputs.name
-    //aiServicesConnectionName: [aiFoundryHub.outputs.connection_aisvcName]
   }
 }
 
@@ -704,47 +750,6 @@ module formatProjectWorkspaceId './modules/cognitive-services/format-project-wor
     projectWorkspaceId: aiProject.outputs.projectWorkspaceId
   }
 }
-
-// --------------------------------------------------------------------------------------------------------------
-// AI Foundry Hub and Project V1
-// Imported from https://github.com/msft-mfg-ai/smart-flow-public
-// --------------------------------------------------------------------------------------------------------------
-// module aiHub_v1 './modules/ai/ai-hub-secure.bicep' = if (deployAIHub) {
-//   name: 'aiHub${deploymentSuffix}'
-//   params: {
-//     aiHubName: resourceNames.outputs.aiHubName
-//     location: location
-//     tags: tags
-
-//     // dependent resources
-//     aiServicesId: openAI.outputs.id
-//     aiServicesTarget: openAI.outputs.endpoint
-//     aiSearchName: searchService.outputs.name
-//     applicationInsightsId: logAnalytics.outputs.applicationInsightsId
-//     containerRegistryId: containerRegistry.outputs.id
-//     keyVaultId: keyVault.outputs.id
-//     storageAccountId: storage.outputs.id
-
-//     // add data scientist role to user and application
-//     addRoleAssignments: addRoleAssignments
-//     userObjectId: principalId
-//     userObjectType: 'User'
-//     managedIdentityPrincipalId: identity.outputs.managedIdentityPrincipalId
-//     managedIdentityType: 'ServicePrincipal'
-//   }
-// }
-
-// module aiProject_v1 './modules/ai/ai-hub-project.bicep' = if (deployAIHub) {
-//   name: 'aiProject${deploymentSuffix}'
-//   params: {
-//     aiProjectName: resourceNames.outputs.aiHubProjectName
-//     aiProjectFriendlyName: aiProjectFriendlyName
-//     aiProjectDescription: aiProjectDescription
-//     location: location
-//     tags: tags
-//     aiHubId: aiHub.outputs.id
-//   }
-// }
 
 // --------------------------------------------------------------------------------------------------------------
 // -- APIM ------------------------------------------------------------------------------------------------------
@@ -798,103 +803,6 @@ module allDnsZones './modules/networking/all-zones.bicep' = if (createDnsZones) 
     //acaStaticIp: managedEnvironment.outputs.staticIp
   }
 }
-
-// --------------------------------------------------------------------------------------------------------------
-// -- Container App Environment ---------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------------------------------------
-// commented as it should be part of the application deployment not the LZ
-// module managedEnvironment './modules/app/managedEnvironment.bicep' = {
-//   name: 'caenv${deploymentSuffix}'
-//   params: {
-//     newEnvironmentName: resourceNames.outputs.caManagedEnvName
-//     location: location
-//     logAnalyticsWorkspaceName: logAnalytics.outputs.logAnalyticsWorkspaceName
-//     logAnalyticsRgName: resourceGroupName
-//     appSubnetId: vnet.outputs.subnetAppSeResourceID
-//     tags: tags
-//     publicAccessEnabled: publicAccessEnabled
-//     containerAppEnvironmentWorkloadProfiles: containerAppEnvironmentWorkloadProfiles
-//   }
-// }
-
-// var apiTargetPort = 8080
-// var apiSettings = [
-//   { name: 'AnalysisApiEndpoint', value: 'https://${resourceNames.outputs.containerAppAPIName}.${managedEnvironment.outputs.defaultDomain}' }
-//   { name: 'AnalysisApiKey', secretRef: 'apikey' }
-//   { name: 'AOAIStandardServiceEndpoint', value: openAI.outputs.endpoint }
-//   { name: 'AOAIStandardChatGptDeployment', value: 'gpt-4o' }
-//   { name: 'ApiKey', secretRef: 'apikey' }
-//   { name: 'PORT', value: '${apiTargetPort}' }
-//   { name: 'APPLICATIONINSIGHTS_CONNECTION_STRING', value: logAnalytics.outputs.appInsightsConnectionString }
-//   { name: 'AZURE_CLIENT_ID', value: identity.outputs.managedIdentityClientId }
-//   { name: 'AzureDocumentIntelligenceEndpoint', value: documentIntelligence.outputs.endpoint }
-//   { name: 'AzureAISearchEndpoint', value: searchService.outputs.endpoint }
-//   { name: 'ContentStorageContainer', value: storage.outputs.containerNames[0].name }
-//   { name: 'CosmosDbEndpoint', value: cosmos.outputs.endpoint }
-//   { name: 'StorageAccountName', value: storage.outputs.name }
-// ]
-
-// module containerAppAPI './modules/app/containerappstub.bicep' = if (deployAPIApp) {
-//   name: 'ca-api-stub${deploymentSuffix}'
-//   params: {
-//     appName: resourceNames.outputs.containerAppAPIName
-//     managedEnvironmentName: managedEnvironment.outputs.name
-//     managedEnvironmentRg: managedEnvironment.outputs.resourceGroupName
-//     workloadProfileName: appContainerAppEnvironmentWorkloadProfileName
-//     registryName: resourceNames.outputs.ACR_Name
-//     targetPort: apiTargetPort
-//     userAssignedIdentityName: identity.outputs.managedIdentityName
-//     location: location
-//     imageName: apiImageName
-//     tags: union(tags, { 'azd-service-name': 'api' })
-//     deploymentSuffix: deploymentSuffix
-//     secrets: {
-//       cosmos: cosmosSecret.outputs.secretUri
-//       aikey: openAISecret.outputs.secretUri
-//       docintellikey: documentIntelligenceSecret.outputs.secretUri
-//       searchkey: searchSecret.outputs.secretUri
-//       apikey: apiKeySecret.outputs.secretUri
-//     }
-//     env: apiSettings
-//   }
-//   dependsOn: createDnsZones ? [allDnsZones, containerRegistry] : [containerRegistry]
-// }
-
-// var UITargetPort = 8080
-// var UISettings = union(apiSettings, [
-//   { name: 'FUNCTIONS_WORKER_RUNTIME', value: 'dotnet-isolated' }
-//   // see: https://learn.microsoft.com/en-us/azure/azure-functions/durable/durable-functions-configure-managed-identity
-//   { name: 'AzureWebJobsStorage__accountName', value: storage.outputs.name }
-//   { name: 'AzureWebJobsStorage__credential', value: 'managedidentity' }
-//   { name: 'AzureWebJobsStorage__clientId', value: identity.outputs.managedIdentityClientId }
-//   { name: 'CosmosDbDatabaseName', value: cosmos.outputs.databaseName }
-//   { name: 'CosmosDbContainerName', value: uiChatContainerName }
-// ])
-// module containerAppUI './modules/app/containerappstub.bicep' = if (deployUIApp) {
-//   name: 'ca-UI-stub${deploymentSuffix}'
-//   params: {
-//     appName: resourceNames.outputs.containerAppUIName
-//     managedEnvironmentName: managedEnvironment.outputs.name
-//     managedEnvironmentRg: managedEnvironment.outputs.resourceGroupName
-//     workloadProfileName: appContainerAppEnvironmentWorkloadProfileName
-//     registryName: resourceNames.outputs.ACR_Name
-//     targetPort: UITargetPort
-//     userAssignedIdentityName: identity.outputs.managedIdentityName
-//     location: location
-//     imageName: UIImageName
-//     tags: union(tags, { 'azd-service-name': 'UI' })
-//     deploymentSuffix: deploymentSuffix
-//     secrets: {
-//       cosmos: cosmosSecret.outputs.secretUri
-//       aikey: openAISecret.outputs.secretUri
-//       docintellikey: documentIntelligenceSecret.outputs.secretUri
-//       searchkey: searchSecret.outputs.secretUri
-//       apikey: apiKeySecret.outputs.secretUri
-//     }
-//     env: UISettings
-//   }
-//   dependsOn: createDnsZones ? [allDnsZones, containerRegistry] : [containerRegistry]
-// }
 
 // --------------------------------------------------------------------------------------------------------------
 // -- Bastion Host ----------------------------------------------------------------------------------------------
@@ -966,7 +874,6 @@ module appGatewayPublicIp './modules/networking/public-ip.bicep' = if (deployApp
     tier: 'Regional'
     dnsLabelPrefix: !empty(appGatewayDnsLabelPrefix) ? appGatewayDnsLabelPrefix : '${toLower(resourceNames.outputs.appGatewayName)}-${resourceToken}'
     zones: [1, 2, 3]
-    
   }
 }
 

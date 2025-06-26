@@ -10,20 +10,20 @@
 //   INSTANCE_NUMBER     - GH Environment Variable
 //   OWNER_EMAIL         - GH Environment Variable - optional
 //   environmentName     - Runtime  - Environment Code (e.g., dev, qa, prod)
-// DEPLOYMENTCOUNT - number of the resource group that will be created
+//   DEPLOYMENTCOUNT     - number of the resource group that will be created
 // --------------------------------------------------------------------------------
 
 using './main-advanced.bicep'
 
 param applicationName = '#{APP_NAME}#'
-param applicationId = '#{APP_ID}#'
 param environmentName = '#{envCode}#'
 param principalId = '#{USER_PRINCIPAL_ID}#'
 param instanceNumber = '#{INSTANCE_NUMBER}#'
-param ownerEmailTag = '#{OWNER_EMAIL}#' 
-param requestorName= '#{requestorName}#'
 param regionCode = '#{GLOBAL_REGION_CODE}#' 
-param costCenterTag = 'CC'
+// param applicationId = '#{APP_ID}#'
+// param ownerEmailTag = '#{OWNER_EMAIL}#' 
+// param requestorName= '#{requestorName}#'
+// param costCenterTag = 'CC'
 
 
 //commenting out the role assignment parameters as they are not used in this deployment

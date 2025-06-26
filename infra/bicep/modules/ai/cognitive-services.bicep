@@ -27,6 +27,7 @@ param managedIdentityId string
 param textEmbeddings array = []
 param chatGpt_Standard object = {}
 param chatGpt_Premium object = {}
+param chatGpt_41 object = {}
 
 // --------------------------------------------------------------------------------------------------------------
 // Variables
@@ -59,6 +60,18 @@ var deployments = union(
       }
       sku: chatGpt_Premium.?sku ?? {
         name: 'Standard'
+        capacity: chatGpt_Premium.DeploymentCapacity
+      }
+    }
+    {
+      name: chatGpt_41.DeploymentName
+      model: {
+        format: 'OpenAI'
+        name: chatGpt_41.ModelName
+        version: chatGpt_41.ModelVersion
+      }
+      sku: chatGpt_41.?sku ?? {
+        name: 'GlobalStandard'
         capacity: chatGpt_Premium.DeploymentCapacity
       }
     }

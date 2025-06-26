@@ -131,3 +131,5 @@ output projectWorkspaceId string = project.properties.internalId
 output cosmosDBConnection string = cosmosDBName
 output azureStorageConnection string = azureStorageName
 output aiSearchConnection string = aiSearchName
+output projectConnectionString string = 'https://${accountName}.services.ai.azure.com/api/projects/${projectName}'
+
