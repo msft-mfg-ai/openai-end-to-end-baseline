@@ -574,36 +574,40 @@ module documentIntelligence './modules/ai/document-intelligence.bicep' = {
 }
 
 // --------------------------------------------------------------------------------------------------------------
+// I thought these were the new ones but they are not....
+// do not use the Foundry files in /modules/ai-foundry....
+// use the foundry in /modules/cognitive-services/ai-project.bicep
+// --------------------------------------------------------------------------------------------------------------
+// module aiFoundryHub './modules/ai-foundry/ai-foundry-hub.bicep' = {
+//   name: 'aiHub${deploymentSuffix}'
+//   params: {
+//     location: location
+//     name: resourceNames.outputs.aiHubName
+//     tags: commonTags
+//     applicationInsightsId: logAnalytics.outputs.applicationInsightsId
+//     storageAccountId: storage.outputs.id
+//     aiServiceKind: openAI.outputs.kind
+//     aiServicesId: openAI.outputs.id
+//     aiServicesName: openAI.outputs.name
+//     aiServicesTarget: openAI.outputs.endpoint
+//     aiSearchId: searchService.outputs.id
+//     aiSearchName: searchService.outputs.name
+//   }
+// }
+// module aiFoundryProject './modules/ai-foundry/ai-foundry-project.bicep' = {
+//   name: 'aiFoundryProject${deploymentSuffix}'
+//   params: {
+//     location: location
+//     name: resourceNames.outputs.aiHubFoundryProjectName
+//     tags: commonTags
+//     hubId: aiFoundryHub.outputs.id
+//   }
+// }
+
+// --------------------------------------------------------------------------------------------------------------
 // AI Foundry Hub and Project V2
 // Imported from https://github.com/adamhockemeyer/ai-agent-experience
 // --------------------------------------------------------------------------------------------------------------
-module aiFoundryHub './modules/ai-foundry/ai-foundry-hub.bicep' = {
-  name: 'aiHub${deploymentSuffix}'
-  params: {
-    location: location
-    name: resourceNames.outputs.aiHubName
-    tags: commonTags
-    applicationInsightsId: logAnalytics.outputs.applicationInsightsId
-    storageAccountId: storage.outputs.id
-    aiServiceKind: openAI.outputs.kind
-    aiServicesId: openAI.outputs.id
-    aiServicesName: openAI.outputs.name
-    aiServicesTarget: openAI.outputs.endpoint
-    aiSearchId: searchService.outputs.id
-    aiSearchName: searchService.outputs.name
-  }
-}
-
-module aiFoundryProject './modules/ai-foundry/ai-foundry-project.bicep' = {
-  name: 'aiFoundryProject${deploymentSuffix}'
-  params: {
-    location: location
-    name: resourceNames.outputs.aiHubFoundryProjectName
-    tags: commonTags
-    hubId: aiFoundryHub.outputs.id
-  }
-}
-
 // AI Project and Capability Host
 module aiProject './modules/cognitive-services/ai-project.bicep' = {
   name: 'aiProject${deploymentSuffix}'

@@ -68,7 +68,7 @@ param systemDatastoresAuthMode string
 param connectionAuthMode string
 
 @description('Private endpoint name to use')
-param privateEndpointName string
+param privateEndpointName string = '${aiHubName}-AIHub-PE'
 
 var targetSubResource = ['amlworkspace']
 
@@ -92,6 +92,7 @@ resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-04-01-preview'
     containerRegistry: containerRegistryId
 
     // network settings
+    provisionNetworkNow: true
     publicNetworkAccess: 'Disabled'
     managedNetwork: {
       isolationMode: 'AllowInternetOutBound'

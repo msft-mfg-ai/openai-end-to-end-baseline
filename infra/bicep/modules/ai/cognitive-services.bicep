@@ -5,7 +5,7 @@ param location string = resourceGroup().location
 param pe_location string = location
 param tags object = {}
 param appInsightsName string
-param peOpenAIServiceConnection string
+param peOpenAIServiceConnection string = '${name}-openAi-private-link-service-connection'
 
 //param deployments array = []
 @description('The Kind of AI Service, can be "OpenAI" or "AIServices"')
