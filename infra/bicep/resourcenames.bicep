@@ -88,3 +88,32 @@ output vm_os_disk_name string             = toLower('${sanitizedAppName}-${resou
 output vm_nsg_name string                 = toLower('${sanitizedAppName}${resourceAbbreviations.networkNetworkSecurityGroups}${dashInstance}-${sanitizedEnvironment}')
 output bastion_host_name string           = toLower('${sanitizedAppName}${resourceAbbreviations.networkBastionHosts}${dashInstance}-${sanitizedEnvironment}')
 output bastion_pip_name string         =    toLower('${sanitizedAppName}${resourceAbbreviations.networkPublicIPAddresses}${resourceAbbreviations.bastionPip}${dashInstance}-${sanitizedEnvironment}')
+
+// ----------------------------------------------------------------------------------------------------------------------------------------------------------------
+// Private Endpoint Names (sequential) -- created for the customer need
+output peStorageAccountBlobName string = 'pep-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-001'
+output peStorageAccountTableName string = 'pep-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-002'
+output peStorageAccountQueueName string = 'pep-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-003'
+output peCosmosDbName string = 'pep-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-004'
+output peKeyVaultName string = 'pep-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-005'
+output peAcrName string = 'pep-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-006'
+output peSearchServiceName string = 'pep-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-007'
+output peOpenAIName string = 'pep-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-008'
+output peOpenAIServiceConnection string = 'pep-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-009'
+output peDocumentIntelligenceName string = 'pep-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-010'
+output peAIHubName string = 'pep-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-011'
+output peAppInsightsName string = 'pep-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-012'
+output peMonitorName string = 'pep-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-013'
+
+output vnetNsgName string = '${resourceAbbreviations.networkNetworkSecurityGroups}${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-001'
+
+// ----------------------------------------------------------------------------------------------------------------------------------------------------------------
+// Application Gateway resource names
+// ----------------------------------------------------------------------------------------------------------------------------------------------------------------
+output appGatewayName string = toLower('${resourceAbbreviations.networkApplicationGateways}${sanitizedAppName}-${sanitizedEnvironment}${resourceTokenWithDash}${dashRegionDashInstance}')
+output appGatewayWafPolicyName string = toLower('${resourceAbbreviations.networkFirewallPoliciesWebApplication}-${sanitizedAppName}-${sanitizedEnvironment}${resourceTokenWithDash}${dashRegionDashInstance}')
+output appGatewayPublicIpName string = toLower('${resourceAbbreviations.networkPublicIPAddresses}${sanitizedAppName}-agw-${sanitizedEnvironment}${resourceTokenWithDash}${dashRegionDashInstance}')
+
+// Monitoring and Alerting resource names
+output actionGroupName string             = toLower('${resourceAbbreviations.insightsActionGroups}${sanitizedAppName}-${sanitizedEnvironment}${resourceTokenWithDash}${dashRegionDashInstance}')
+output smartDetectorAlertRuleName string  = toLower('${resourceAbbreviations.insightsSmartDetectorAlertRules}${sanitizedAppName}-${sanitizedEnvironment}${resourceTokenWithDash}${dashRegionDashInstance}')
