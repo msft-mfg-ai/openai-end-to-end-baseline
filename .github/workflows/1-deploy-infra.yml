@@ -11,19 +11,7 @@ on:
         description: Environment
         required: true
         default: 'dev'
-        type: choice
-        options:
-          - dev
-          - qa
-          - stage
-          - prod
-          - lyle
-          - scott
-          - piotr
-          - fernando
-          - preston
-          - chris
-          - matt
+        type: environment
       bicepVersion:
         description: Version - Basic=public, Advanced=VNET
         required: true
@@ -51,7 +39,7 @@ on:
       createResourceGroup:
         description: Create Resource Group?
         type: boolean
-        default: true
+        default: false
       addRoleAssignments:
         description: Add Role Assignments?
         type: boolean
@@ -60,9 +48,40 @@ on:
         description: Deploy APIM?
         type: boolean
         default: true
+      runSecurityScan:
+        description: Run MS DevSecOps Security Scan
+        required: false
+        default: false
+        type: boolean
+      runGHASSecurityScan:
+        description: Run GHAS Scan
+        required: false
+        default: false
+        type: boolean
+
 
 # ------------------------------------------------------------------------------------------------------------------------
 jobs:
+  scan-code:
+    name: Scan Source Code
+    uses: ./.github/workflows/template-scan-code.yml
+    if: inputs.runSecurityScan
+    secrets: inherit
+    permissions:
+      id-token: write
+      contents: write
+      actions: read
+      pages: write
+      security-events: write
+      checks: write
+      issues: read
+      pull-requests: read
+      packages: read
+    with:
+      runMSDevSecOpsScan: ${{ inputs.runSecurityScan }}
+      runGHASScan: ${{ inputs.runSecurityScan }}
+
+# ------------------------------------------------------------------------------------------------------------------------
   Deploy_Bicep:
     name: Deploy ${{ inputs.deployEnvironment }} Bicep (${{ inputs.bicepDeploymentMode }})
     uses: ./.github/workflows/template-create-infra.yml

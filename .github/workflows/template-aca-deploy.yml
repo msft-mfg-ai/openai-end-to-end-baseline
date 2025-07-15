@@ -59,12 +59,16 @@ jobs:
           echo "##[endgroup]"
         continue-on-error: true
 
-      - name: OIDC Login to Azure
-        uses: azure/login@v2
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Azure Login (Reusable Action)
+        uses: ./.github/actions/login-action
         with:
           client-id: ${{ secrets.CICD_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          client-secret: ${{ secrets.CICD_CLIENT_SECRET }}
 
       - name: Deploy Container App
         run: |
