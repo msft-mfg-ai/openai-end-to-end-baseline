@@ -35,10 +35,10 @@ on:
         required: false
         default: false
         type: boolean
-      runSecurityScan:
+      runMSSecurityScan:
         description: Run MS DevSecOps Security Scan
         required: false
-        default: false
+        default: true
         type: boolean
       runGHASSecurityScan:
         description: Run GHAS Scan
@@ -159,8 +159,8 @@ jobs:
     if: inputs.runSecurityScan
     secrets: inherit
     with:
-      runMSDevSecOpsScan: ${{ inputs.runSecurityScan }}
-      runGHASScan: ${{ inputs.runSecurityScan }}
+      runMSDevSecOpsScan: ${{ inputs.runMSSecurityScan }}
+      runGHASScan: ${{ inputs.runGHASSecurityScan }}
 
   # ------------------------------------------------------------------------------------------------------------------------
   build-api:
