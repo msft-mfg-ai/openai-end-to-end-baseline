@@ -32,10 +32,10 @@ targetScope = 'resourceGroup'
 @description('Full Application Name (supply this or use default of prefix+token)')
 param applicationName string = ''
 @description('If you do not supply Application Name, this prefix will be combined with a token to create a unique applicationName')
-param applicationPrefix string = 'ai_doc'
+param applicationPrefix string = ''
 
 @description('The environment code (i.e. dev, qa, prod)')
-param environmentName string = 'dev'
+param environmentName string = ''
 // @description('Environment name used by the azd command (optional)')
 // param azdEnvName string = ''
 
@@ -90,8 +90,6 @@ param aiProjectFriendlyName string = 'Agents Project resource'
 param aiProjectDescription string = 'This is an example AI Project resource for use in Azure AI Studio.'
 @description('Should we deploy an AI Foundry Hub?')
 param deployAIHub bool = true
-@description('Should we deploy an APIM?')
-param deployAPIM bool = false
 
 // --------------------------------------------------------------------------------------------------------------
 // AI Models
@@ -113,6 +111,8 @@ param gpt41_DeploymentCapacity int = 500
 // --------------------------------------------------------------------------------------------------------------
 // APIM Parameters
 // --------------------------------------------------------------------------------------------------------------
+@description('Should we deploy an APIM?')
+param deployAPIM bool = false
 @description('Name of the APIM Subscription. Defaults to aiagent-subscription')
 param apimSubscriptionName string = 'aiagent-subscription'
 @description('Email of the APIM Publisher')
@@ -140,6 +140,8 @@ param UIImageName string = ''
 // --------------------------------------------------------------------------------------------------------------
 @description('Should resources be created with public access?')
 param publicAccessEnabled bool = true
+@description('Create DNS Zones?')
+param createDnsZones bool = false
 @description('Add Role Assignments for the user assigned identity?')
 param addRoleAssignments bool = true
 @description('Should we run a script to dedupe the KeyVault secrets? (this fails on private networks right now)')
@@ -147,8 +149,6 @@ param deduplicateKeyVaultSecrets bool = false
 @description('Set this if you want to append all the resource names with a unique token')
 param appendResourceTokens bool = false
 
-// @description('Should UI container app be deployed?')
-// param deployUIApp bool = false
 @description('Should API container app be deployed?')
 param deployAPIApp bool = false
 @description('Should UI container app be deployed?')
@@ -212,27 +212,18 @@ var commonTags = tags
 //   'requestor-name': requestorName
 //   'primary-support-provider': primarySupportProviderTag == '' ? 'UNKNOWN' : primarySupportProviderTag
 // }
-
-var commonTags = {
-  'creation-date': take(runDateTime, 8)
-  'application-name': appName
-  'application-id': applicationId
-  'environment-name': environmentName
-  'global-region': regionCode
-  'requestor-name': requestorName
-  'primary-support-provider': primarySupportProviderTag == '' ? 'UNKNOWN' : primarySupportProviderTag
-}
-var costCenterTagObject = costCenterTag == '' ? {} : { 'cost-center': costCenterTag }
-var ownerEmailTagObject = ownerEmailTag == ''
-  ? {}
-  : {
-      'application-owner': ownerEmailTag
-      'business-owner': ownerEmailTag
-      'point-of-contact': ownerEmailTag
-    }
+// var costCenterTagObject = costCenterTag == '' ? {} :  { 'cost-center': costCenterTag }
+// var ownerEmailTagObject = ownerEmailTag == '' ? {} :  { 
+//   'application-owner': ownerEmailTag
+//   'business-owner': ownerEmailTag
+//   'point-of-contact': ownerEmailTag
+// }
+// // if this bicep was called from AZD, then it needs this tag added to the resource group (at a minimum) to deploy successfully...
+// var azdTag = azdEnvName != '' ? { 'azd-env-name': azdEnvName } : {}
+// var tags = union(commonTags, azdTag, costCenterTagObject, ownerEmailTagObject)
 // if this bicep was called from AZD, then it needs this tag added to the resource group (at a minimum) to deploy successfully...
-var azdTag = azdEnvName != '' ? { 'azd-env-name': azdEnvName } : {}
-var tags = union(commonTags, azdTag, costCenterTagObject, ownerEmailTagObject)
+// var azdTag = azdEnvName != '' ? { 'azd-env-name': azdEnvName } : {}
+// var tags = union(commonTags, azdTag, costCenterTagObject, ownerEmailTagObject)
 
 // Run a script to dedupe the KeyVault secrets -- this fails on private networks right now so turn if off for them
 var deduplicateKVSecrets = publicAccessEnabled ? deduplicateKeyVaultSecrets : false
@@ -306,6 +297,7 @@ module identity './modules/iam/identity.bicep' = {
     location: location
   }
 }
+
 module appIdentityRoleAssignments './modules/iam/role-assignments.bicep' = if (addRoleAssignments) {
   name: 'identity-roles${deploymentSuffix}'
   params: {
@@ -800,16 +792,16 @@ output UI_CONTAINER_APP_NAME string = deployUIApp ? containerAppUI.outputs.name 
 output API_KEY string = apiKeyValue
 output API_MANAGEMENT_ID string = deployAPIM ? apim.outputs.id : ''
 output API_MANAGEMENT_NAME string = deployAPIM ? apim.outputs.name : ''
-output AZURE_CONTAINER_ENVIRONMENT_NAME string = managedEnvironment.outputs.name
-output AZURE_CONTAINER_REGISTRY_ENDPOINT string = containerRegistry.outputs.loginServer
-output AZURE_CONTAINER_REGISTRY_NAME string = containerRegistry.outputs.name
+output AZURE_CONTAINER_ENVIRONMENT_NAME string = deployAPIApp ? managedEnvironment.outputs.name : ''
+output AZURE_CONTAINER_REGISTRY_ENDPOINT string = deployAPIApp ? containerRegistry.outputs.loginServer : ''
+output AZURE_CONTAINER_REGISTRY_NAME string = deployAPIApp ? containerRegistry.outputs.name : ''
 output AZURE_RESOURCE_GROUP string = resourceGroupName
 output COSMOS_CONTAINER_NAME string = uiChatContainerName
 output COSMOS_DATABASE_NAME string = cosmos.outputs.databaseName
 output COSMOS_ENDPOINT string = cosmos.outputs.endpoint
 output DOCUMENT_INTELLIGENCE_ENDPOINT string = documentIntelligence.outputs.endpoint
-output MANAGED_ENVIRONMENT_ID string = managedEnvironment.outputs.id
-output MANAGED_ENVIRONMENT_NAME string = managedEnvironment.outputs.name
+output MANAGED_ENVIRONMENT_ID string = deployAPIApp ? managedEnvironment.outputs.id : ''
+output MANAGED_ENVIRONMENT_NAME string = deployAPIApp ? managedEnvironment.outputs.name : ''
 output RESOURCE_TOKEN string = resourceToken
 output STORAGE_ACCOUNT_BATCH_IN_CONTAINER string = storage.outputs.containerNames[1].name
 output STORAGE_ACCOUNT_BATCH_OUT_CONTAINER string = storage.outputs.containerNames[2].name
