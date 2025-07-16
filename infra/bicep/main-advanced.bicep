@@ -441,7 +441,7 @@ module appIdentityRoleAssignments './modules/iam/role-assignments.bicep' = if (a
   params: {
     identityPrincipalId: identity.outputs.managedIdentityPrincipalId
     principalType: 'ServicePrincipal'
-    registryName: containerRegistry.outputs.name
+    registryName: deployContainerRegistry ? containerRegistry.outputs.name : ''
     storageAccountName: storage.outputs.name
     aiSearchName: searchService.outputs.name
     aiServicesName: openAI.outputs.name
@@ -456,7 +456,7 @@ module adminUserRoleAssignments './modules/iam/role-assignments.bicep' = if (add
   params: {
     identityPrincipalId: principalId
     principalType: 'User'
-    registryName: containerRegistry.outputs.name
+    registryName: deployContainerRegistry ? containerRegistry.outputs.name : ''
     storageAccountName: storage.outputs.name
     aiSearchName: searchService.outputs.name
     aiServicesName: openAI.outputs.name
@@ -1146,7 +1146,7 @@ var entraSecuritySettings = deployEntraClientSecrets ? [
 var baseSecrets = {
   cosmos: cosmosSecret.outputs.secretUri
   aikey: openAISecret.outputs.secretUri
-  docintellikey: documentIntelligenceSecret.outputs.secretUri
+  docintellikey: deployDocumentIntelligence ? documentIntelligenceSecret.outputs.secretUri : 'NA'
   searchkey: searchSecret.outputs.secretUri
   apikey: apiKeySecret.outputs.secretUri
   apimkey: apimSecret.outputs.secretUri
