@@ -300,8 +300,7 @@ var deduplicateKVSecrets = publicAccessEnabled ? deduplicateKeyVaultSecrets : fa
 var deployEntraClientSecrets = !(empty(entraClientId) || empty(entraClientSecret) || toLower(entraClientId) == 'null' || toLower(entraClientSecret) == 'null')
 
 var deployContainerRegistry = deployAPIApp || deployUIApp
-
-var vnetAddressPrefix = vnetPrefix
+var deployCAEnvironment = deployAPIApp || deployUIApp
 
 // --------------------------------------------------------------------------------------------------------------
 // -- Generate Resource Names -----------------------------------------------------------------------------------
@@ -327,7 +326,7 @@ module vnet './modules/networking/vnet.bicep' = {
     existingVirtualNetworkName: existingVnetName
     existingVnetResourceGroupName: existingVnetResourceGroupName
     newVirtualNetworkName: resourceNames.outputs.vnet_Name
-    vnetAddressPrefix: vnetAddressPrefix
+    vnetAddressPrefix: vnetPrefix
     vnetNsgName: resourceNames.outputs.vnetNsgName
     subnetAppGwName: !empty(subnetAppGwName) ? subnetAppGwName  : resourceNames.outputs.subnetAppGwName
     subnetAppGwPrefix: subnetAppGwPrefix 
@@ -1091,7 +1090,7 @@ module applicationGateway './modules/networking/application-gateway.bicep' = if 
 // --------------------------------------------------------------------------------------------------------------
 // -- Container App Environment ---------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------------------------------
-module managedEnvironment './modules/app/managedEnvironment.bicep' = {
+module managedEnvironment './modules/app/managedEnvironment.bicep' = if (deployCAEnvironment) {
   name: 'caenv${deploymentSuffix}'
   params: {
     newEnvironmentName: resourceNames.outputs.caManagedEnvName
@@ -1109,7 +1108,7 @@ var apiTargetPort = 8000
 var apiSettings = [
   {
     name: 'API_URL'
-    value: 'https://${resourceNames.outputs.containerAppAPIName}.${managedEnvironment.outputs.defaultDomain}/agent'
+    value: deployCAEnvironment ? 'https://${resourceNames.outputs.containerAppAPIName}.${managedEnvironment.outputs.defaultDomain}/agent' : ''
   }
   { name: 'API_KEY', secretRef: 'apikey' }
   { name: 'APPLICATIONINSIGHTS_CONNECTION_STRING', value: logAnalytics.outputs.appInsightsConnectionString }
@@ -1181,7 +1180,7 @@ module containerAppAPI './modules/app/containerappstub.bicep' = if (deployAPIApp
 
 var UITargetPort = 8001
 var UISettings = union(apiSettings, [
-  { name: 'API_URL', value: 'https://${resourceNames.outputs.containerAppAPIName}.${managedEnvironment.outputs.defaultDomain}/agent' }
+  { name: 'API_URL', value: deployCAEnvironment ? 'https://${resourceNames.outputs.containerAppAPIName}.${managedEnvironment.outputs.defaultDomain}/agent' : '' }
 ])
 
 module containerAppUI './modules/app/containerappstub.bicep' = if (deployUIApp) {
@@ -1222,7 +1221,7 @@ output UI_CONTAINER_APP_NAME string = deployUIApp ? containerAppUI.outputs.name 
 output API_KEY string = apiKeyValue
 output API_MANAGEMENT_ID string = deployAPIM ? apim.outputs.id : ''
 output API_MANAGEMENT_NAME string = deployAPIM ? apim.outputs.name : ''
-output AZURE_CONTAINER_ENVIRONMENT_NAME string = deployAPIApp ? managedEnvironment.outputs.name : ''
+output AZURE_CONTAINER_ENVIRONMENT_NAME string = deployCAEnvironment ? managedEnvironment.outputs.name : ''
 output AZURE_CONTAINER_REGISTRY_ENDPOINT string = deployContainerRegistry ? containerRegistry.outputs.loginServer : ''
 output AZURE_CONTAINER_REGISTRY_NAME string = deployContainerRegistry ? containerRegistry.outputs.name : ''
 output AZURE_RESOURCE_GROUP string = resourceGroupName
@@ -1230,13 +1229,14 @@ output COSMOS_CONTAINER_NAME string = uiChatContainerName
 output COSMOS_DATABASE_NAME string = cosmos.outputs.databaseName
 output COSMOS_ENDPOINT string = cosmos.outputs.endpoint
 output DOCUMENT_INTELLIGENCE_ENDPOINT string = deployDocumentIntelligence ? documentIntelligence.outputs.endpoint : ''
-output MANAGED_ENVIRONMENT_ID string = deployAPIApp ? managedEnvironment.outputs.id : ''
-output MANAGED_ENVIRONMENT_NAME string = deployAPIApp ? managedEnvironment.outputs.name : ''
+output MANAGED_ENVIRONMENT_ID string = deployCAEnvironment ? managedEnvironment.outputs.id : ''
+output MANAGED_ENVIRONMENT_NAME string = deployCAEnvironment ? managedEnvironment.outputs.name : ''
 output RESOURCE_TOKEN string = resourceToken
 output STORAGE_ACCOUNT_BATCH_IN_CONTAINER string = storage.outputs.containerNames[1].name
 output STORAGE_ACCOUNT_BATCH_OUT_CONTAINER string = storage.outputs.containerNames[2].name
 output STORAGE_ACCOUNT_CONTAINER string = storage.outputs.containerNames[0].name
 output STORAGE_ACCOUNT_NAME string = storage.outputs.name
+
 output VNET_CORE_ID string = vnet.outputs.vnetResourceId
 output VNET_CORE_NAME string = vnet.outputs.vnetName
 output VNET_CORE_PREFIX string = vnet.outputs.vnetAddressPrefix

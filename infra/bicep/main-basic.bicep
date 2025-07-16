@@ -153,6 +153,8 @@ param appendResourceTokens bool = false
 param deployAPIApp bool = false
 @description('Should UI container app be deployed?')
 param deployUIApp bool = false
+@description('Should we deploy a Document Intelligence?')
+param deployDocumentIntelligence bool = false
 
 @description('Global Region where the resources will be deployed, e.g. AM (America), EM (EMEA), AP (APAC), CH (China)')
 //@allowed(['AM', 'EM', 'AP', 'CH', 'NAA'])
@@ -231,6 +233,9 @@ var deduplicateKVSecrets = publicAccessEnabled ? deduplicateKeyVaultSecrets : fa
 // if either of these are empty or the value is set to string 'null', then we will not deploy the Entra client secrets
 var deployEntraClientSecrets = !(empty(entraClientId) || empty(entraClientSecret) || toLower(entraClientId) == 'null' || toLower(entraClientSecret) == 'null')
 
+var deployContainerRegistry = deployAPIApp || deployUIApp
+var deployCAEnvironment = deployAPIApp || deployUIApp
+
 // --------------------------------------------------------------------------------------------------------------
 // -- Generate Resource Names -----------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------------------------------
@@ -248,7 +253,7 @@ module resourceNames 'resourcenames.bicep' = {
 // --------------------------------------------------------------------------------------------------------------
 // -- Container Registry ----------------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------------------------------
-module containerRegistry './modules/app/containerregistry.bicep' = {
+module containerRegistry './modules/app/containerregistry.bicep' = if (deployContainerRegistry) {
   name: 'containerregistry${deploymentSuffix}'
   params: {
     newRegistryName: resourceNames.outputs.ACR_Name
@@ -303,7 +308,7 @@ module appIdentityRoleAssignments './modules/iam/role-assignments.bicep' = if (a
   params: {
     identityPrincipalId: identity.outputs.managedIdentityPrincipalId
     principalType: 'ServicePrincipal'
-    registryName: containerRegistry.outputs.name
+    registryName: deployContainerRegistry ? containerRegistry.outputs.name : ''
     storageAccountName: storage.outputs.name
     aiSearchName: searchService.outputs.name
     aiServicesName: openAI.outputs.name
@@ -318,7 +323,7 @@ module adminUserRoleAssignments './modules/iam/role-assignments.bicep' = if (add
   params: {
     identityPrincipalId: principalId
     principalType: 'User'
-    registryName: containerRegistry.outputs.name
+    registryName: deployContainerRegistry ? containerRegistry.outputs.name : ''
     storageAccountName: storage.outputs.name
     aiSearchName: searchService.outputs.name
     aiServicesName: openAI.outputs.name
@@ -396,7 +401,7 @@ module openAISecret './modules/security/keyvault-cognitive-secret.bicep' = {
   }
 }
 
-module documentIntelligenceSecret './modules/security/keyvault-cognitive-secret.bicep' = {
+module documentIntelligenceSecret './modules/security/keyvault-cognitive-secret.bicep' = if (deployDocumentIntelligence) {
   name: 'secret-doc-intelligence${deploymentSuffix}'
   params: {
     keyVaultName: keyVault.outputs.name
@@ -418,7 +423,7 @@ module searchSecret './modules/security/keyvault-search-secret.bicep' = {
   }
 }
 
-module apimSecret './modules/security/keyvault-secret.bicep' = {
+module apimSecret './modules/security/keyvault-secret.bicep' = if (deployAPIM) {
   name: 'apim-search${deploymentSuffix}'
   params: {
     keyVaultName: keyVault.outputs.name
@@ -550,7 +555,7 @@ module openAI './modules/ai/cognitive-services.bicep' = {
   ]
 }
 
-module documentIntelligence './modules/ai/document-intelligence.bicep' = {
+module documentIntelligence './modules/ai/document-intelligence.bicep' = if (deployDocumentIntelligence) {
   name: 'doc-intelligence${deploymentSuffix}'
   params: {
     name: resourceNames.outputs.documentIntelligenceName
@@ -664,7 +669,7 @@ module apimConfiguration './modules/api-management/apim-oai-config.bicep' = if (
 // --------------------------------------------------------------------------------------------------------------
 // -- Container App Environment ---------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------------------------------
-module managedEnvironment './modules/app/managedEnvironment.bicep' = {
+module managedEnvironment './modules/app/managedEnvironment.bicep' = if (deployCAEnvironment) {
   name: 'caenv${deploymentSuffix}'
   params: {
     newEnvironmentName: resourceNames.outputs.caManagedEnvName
@@ -681,7 +686,7 @@ var apiTargetPort = 8000
 var apiSettings = [
   {
     name: 'API_URL'
-    value: 'https://${resourceNames.outputs.containerAppAPIName}.${managedEnvironment.outputs.defaultDomain}/agent'
+    value: deployCAEnvironment ? 'https://${resourceNames.outputs.containerAppAPIName}.${managedEnvironment.outputs.defaultDomain}/agent' : ''
   }
   { name: 'API_KEY', secretRef: 'apikey' }
   { name: 'APPLICATIONINSIGHTS_CONNECTION_STRING', value: logAnalytics.outputs.appInsightsConnectionString }
@@ -718,11 +723,13 @@ var entraSecuritySettings = deployEntraClientSecrets ? [
 var baseSecrets = {
   cosmos: cosmosSecret.outputs.secretUri
   aikey: openAISecret.outputs.secretUri
-  docintellikey: documentIntelligenceSecret.outputs.secretUri
   searchkey: searchSecret.outputs.secretUri
   apikey: apiKeySecret.outputs.secretUri
   apimkey: apimSecret.outputs.secretUri
 }
+var docIntelliSecrets = deployDocumentIntelligence ? {
+  docintellikey: documentIntelligenceSecret.outputs.secretUri
+} : {}
 var entraSecrets = deployEntraClientSecrets ? {
   entraclientid: entraClientIdSecret.outputs.secretUri
   entraclientsecret: entraClientSecretSecret.outputs.secretUri
@@ -743,15 +750,15 @@ module containerAppAPI './modules/app/containerappstub.bicep' = if (deployAPIApp
     
     tags: union(tags, { 'azd-service-name': 'api' })
     deploymentSuffix: deploymentSuffix
-    secrets: union(baseSecrets, entraSecrets) 
+    secrets: union(baseSecrets, docIntelliSecrets, entraSecrets) 
     env: union(apiSettings, entraSecuritySettings)
   }
-  dependsOn: [containerRegistry, apim]
+  dependsOn: deployAPIM ? [containerRegistry, apim] : [containerRegistry]
 }
 
 var UITargetPort = 8001
 var UISettings = union(apiSettings, [
-  { name: 'API_URL', value: 'https://${resourceNames.outputs.containerAppAPIName}.${managedEnvironment.outputs.defaultDomain}/agent' }
+  { name: 'API_URL', value: deployCAEnvironment ? 'https://${resourceNames.outputs.containerAppAPIName}.${managedEnvironment.outputs.defaultDomain}/agent' : '' }
 ])
 
 module containerAppUI './modules/app/containerappstub.bicep' = if (deployUIApp) {
@@ -768,18 +775,18 @@ module containerAppUI './modules/app/containerappstub.bicep' = if (deployUIApp) 
     imageName: UIImageName
     tags: union(tags, { 'azd-service-name': 'UI' })
     deploymentSuffix: deploymentSuffix
-    secrets: union(baseSecrets, entraSecrets) 
+    secrets: union(baseSecrets, docIntelliSecrets, entraSecrets) 
     env: union(UISettings, entraSecuritySettings)
   }
-  dependsOn: [containerRegistry, apim]
+  dependsOn: deployAPIM ? [containerRegistry, apim] : [containerRegistry]
 }
 
 // --------------------------------------------------------------------------------------------------------------
 // -- Outputs ---------------------------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------------------------------
 output SUBSCRIPTION_ID string = subscription().subscriptionId
-output ACR_NAME string = containerRegistry.outputs.name
-output ACR_URL string = containerRegistry.outputs.loginServer
+output ACR_NAME string = deployContainerRegistry ? containerRegistry.outputs.name : ''
+output ACR_URL string = deployContainerRegistry ? containerRegistry.outputs.loginServer : ''
 output AI_ENDPOINT string = openAI.outputs.endpoint
 output AI_HUB_ID string = deployAIHub ? aiProject.outputs.projectId : ''
 output AI_HUB_NAME string = deployAIHub ? aiProject.outputs.projectName : ''
@@ -792,16 +799,16 @@ output UI_CONTAINER_APP_NAME string = deployUIApp ? containerAppUI.outputs.name 
 output API_KEY string = apiKeyValue
 output API_MANAGEMENT_ID string = deployAPIM ? apim.outputs.id : ''
 output API_MANAGEMENT_NAME string = deployAPIM ? apim.outputs.name : ''
-output AZURE_CONTAINER_ENVIRONMENT_NAME string = deployAPIApp ? managedEnvironment.outputs.name : ''
-output AZURE_CONTAINER_REGISTRY_ENDPOINT string = deployAPIApp ? containerRegistry.outputs.loginServer : ''
-output AZURE_CONTAINER_REGISTRY_NAME string = deployAPIApp ? containerRegistry.outputs.name : ''
+output AZURE_CONTAINER_ENVIRONMENT_NAME string = deployCAEnvironment ? managedEnvironment.outputs.name : ''
+output AZURE_CONTAINER_REGISTRY_ENDPOINT string = deployContainerRegistry ? containerRegistry.outputs.loginServer : ''
+output AZURE_CONTAINER_REGISTRY_NAME string = deployContainerRegistry ? containerRegistry.outputs.name : ''
 output AZURE_RESOURCE_GROUP string = resourceGroupName
 output COSMOS_CONTAINER_NAME string = uiChatContainerName
 output COSMOS_DATABASE_NAME string = cosmos.outputs.databaseName
 output COSMOS_ENDPOINT string = cosmos.outputs.endpoint
-output DOCUMENT_INTELLIGENCE_ENDPOINT string = documentIntelligence.outputs.endpoint
-output MANAGED_ENVIRONMENT_ID string = deployAPIApp ? managedEnvironment.outputs.id : ''
-output MANAGED_ENVIRONMENT_NAME string = deployAPIApp ? managedEnvironment.outputs.name : ''
+output DOCUMENT_INTELLIGENCE_ENDPOINT string = deployDocumentIntelligence ? documentIntelligence.outputs.endpoint : ''
+output MANAGED_ENVIRONMENT_ID string = deployCAEnvironment ? managedEnvironment.outputs.id : ''
+output MANAGED_ENVIRONMENT_NAME string = deployCAEnvironment ? managedEnvironment.outputs.name : ''
 output RESOURCE_TOKEN string = resourceToken
 output STORAGE_ACCOUNT_BATCH_IN_CONTAINER string = storage.outputs.containerNames[1].name
 output STORAGE_ACCOUNT_BATCH_OUT_CONTAINER string = storage.outputs.containerNames[2].name

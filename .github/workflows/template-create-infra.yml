@@ -189,7 +189,7 @@ jobs:
 
       - name: Create Resource Group
         if: ${{ inputs.runCreateInfra && inputs.deployInResourceGroup }}
-        run: az group create --name ${{ env.generatedResourceGroupName }} --location ${{ vars.RESOURCEGROUP_LOCATION }} --tags Environment=${{ inputs.envCode }}
+        run: az group create --name ${{ env.generatedResourceGroupName }} --location ${{ vars.RESOURCEGROUP_LOCATION }} --tags Environment=${{ inputs.envCode }} Template=${{ inputs.templateFile }} Instance=${{ vars.INSTANCE_NUMBER }} Requestor=${{ inputs.requestorName }}
 
       - name: What-If Analysis (RG)
         if: ${{ inputs.runCreateInfra && inputs.deployInResourceGroup && inputs.bicepDeploymentMode == 'whatIf' }}
