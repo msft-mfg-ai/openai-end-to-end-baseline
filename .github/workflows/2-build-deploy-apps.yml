@@ -156,7 +156,7 @@ jobs:
   scan-code:
     name: Scan Source Code
     uses: ./.github/workflows/template-scan-code.yml
-    if: inputs.runSecurityScan
+    if: inputs.runMSSecurityScan || inputs.runGHASSecurityScan
     secrets: inherit
     with:
       runMSDevSecOpsScan: ${{ inputs.runMSSecurityScan }}

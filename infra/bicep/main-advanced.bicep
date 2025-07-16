@@ -1140,7 +1140,7 @@ var entraSecuritySettings = deployEntraClientSecrets ? [
   { name: 'ENTRA_SCOPES', value: entraScopes }
   { name: 'ENTRA_REDIRECT_URI', value: entraRedirectUri }
   { name: 'ENTRA_CLIENT_ID', secretRef: 'entraclientid' }
-  { name: 'ENTRA_CLIENT_SECRET',secretRef: 'entraclientsecret' }
+  { name: 'ENTRA_CLIENT_SECRET', secretRef: 'entraclientsecret' }
 ] : []
 
 var baseSecretSet = {
