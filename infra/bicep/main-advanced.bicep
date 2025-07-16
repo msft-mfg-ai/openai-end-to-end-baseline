@@ -219,8 +219,6 @@ param appendResourceTokens bool = false
 param deployAPIApp bool = false
 @description('Should UI container app be deployed?')
 param deployUIApp bool = false
-@description('Should we deploy a Container Registry?')
-param deployContainerRegistry bool = false
 @description('Should we deploy a Document Intelligence?')
 param deployDocumentIntelligence bool = false
 
@@ -300,6 +298,8 @@ var deduplicateKVSecrets = publicAccessEnabled ? deduplicateKeyVaultSecrets : fa
 
 // if either of these are empty or the value is set to string 'null', then we will not deploy the Entra client secrets
 var deployEntraClientSecrets = !(empty(entraClientId) || empty(entraClientSecret) || toLower(entraClientId) == 'null' || toLower(entraClientSecret) == 'null')
+
+var deployContainerRegistry = deployAPIApp || deployUIApp
 
 var vnetAddressPrefix = vnetPrefix
 
@@ -1146,11 +1146,13 @@ var entraSecuritySettings = deployEntraClientSecrets ? [
 var baseSecrets = {
   cosmos: cosmosSecret.outputs.secretUri
   aikey: openAISecret.outputs.secretUri
-  docintellikey: deployDocumentIntelligence ? documentIntelligenceSecret.outputs.secretUri : 'NA'
   searchkey: searchSecret.outputs.secretUri
   apikey: apiKeySecret.outputs.secretUri
   apimkey: apimSecret.outputs.secretUri
 }
+var docIntelliSecrets = deployDocumentIntelligence ? {
+  docintellikey: documentIntelligenceSecret.outputs.secretUri
+} : {}
 var entraSecrets = deployEntraClientSecrets ? {
   entraclientid: entraClientIdSecret.outputs.secretUri
   entraclientsecret: entraClientSecretSecret.outputs.secretUri
@@ -1171,10 +1173,10 @@ module containerAppAPI './modules/app/containerappstub.bicep' = if (deployAPIApp
     
     tags: union(tags, { 'azd-service-name': 'api' })
     deploymentSuffix: deploymentSuffix
-    secrets: union(baseSecrets, entraSecrets) 
+    secrets: union(baseSecrets, docIntelliSecrets, entraSecrets) 
     env: union(apiSettings, entraSecuritySettings)
   }
-  dependsOn: createDnsZones ? [allDnsZones, containerRegistry, apim] : [containerRegistry, apim]
+  dependsOn: createDnsZones && deployContainerRegistry ? [allDnsZones, containerRegistry, apim] : (createDnsZones && !deployContainerRegistry) ? [allDnsZones, apim] : (!createDnsZones && deployContainerRegistry) ? [containerRegistry, apim] : [apim]
 }
 
 var UITargetPort = 8001
@@ -1196,10 +1198,10 @@ module containerAppUI './modules/app/containerappstub.bicep' = if (deployUIApp) 
     imageName: UIImageName
     tags: union(tags, { 'azd-service-name': 'UI' })
     deploymentSuffix: deploymentSuffix
-    secrets: union(baseSecrets, entraSecrets) 
+    secrets: union(baseSecrets, docIntelliSecrets, entraSecrets) 
     env: union(UISettings, entraSecuritySettings)
   }
-  dependsOn: createDnsZones ? [allDnsZones, containerRegistry, apim] : [containerRegistry, apim]
+  dependsOn: createDnsZones && deployContainerRegistry ? [allDnsZones, containerRegistry, apim] : (createDnsZones && !deployContainerRegistry) ? [allDnsZones, apim] : (!createDnsZones && deployContainerRegistry) ? [containerRegistry, apim] : [apim]
 }
 
 // --------------------------------------------------------------------------------------------------------------
@@ -1221,8 +1223,8 @@ output API_KEY string = apiKeyValue
 output API_MANAGEMENT_ID string = deployAPIM ? apim.outputs.id : ''
 output API_MANAGEMENT_NAME string = deployAPIM ? apim.outputs.name : ''
 output AZURE_CONTAINER_ENVIRONMENT_NAME string = deployAPIApp ? managedEnvironment.outputs.name : ''
-output AZURE_CONTAINER_REGISTRY_ENDPOINT string = deployAPIApp ? containerRegistry.outputs.loginServer : ''
-output AZURE_CONTAINER_REGISTRY_NAME string = deployAPIApp ? containerRegistry.outputs.name : ''
+output AZURE_CONTAINER_REGISTRY_ENDPOINT string = deployContainerRegistry ? containerRegistry.outputs.loginServer : ''
+output AZURE_CONTAINER_REGISTRY_NAME string = deployContainerRegistry ? containerRegistry.outputs.name : ''
 output AZURE_RESOURCE_GROUP string = resourceGroupName
 output COSMOS_CONTAINER_NAME string = uiChatContainerName
 output COSMOS_DATABASE_NAME string = cosmos.outputs.databaseName
