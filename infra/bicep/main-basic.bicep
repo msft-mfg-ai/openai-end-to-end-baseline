@@ -701,16 +701,17 @@ var apiSettings = [
   { name: 'COSMOS_DB_API_SESSIONS_DATABASE_NAME', value: sessionsDatabaseName }
   { name: 'COSMOS_DB_API_SESSIONS_CONTAINER_NAME', value: sessionsContainerArray[0].name }
 
-  { name: 'APIM_BASE_URL', value: apimBaseUrl }
-  { name: 'APIM_ACCESS_URL', value: apimAccessUrl }
-  { name: 'APIM_KEY', secretRef: 'apimkey' }
-
   { name: 'AZURE_CLIENT_ID', value: identity.outputs.managedIdentityClientId }
 
   { name: 'AZURE_SDK_TRACING_IMPLEMENTATION', value: 'opentelemetry' }
   { name: 'AZURE_TRACING_GEN_AI_CONTENT_RECORDING_ENABLED', value: 'true' }
 
 ]
+var apimSettings = deployAPIM ? [
+  { name: 'API_MANAGEMENT_NAME', value: apim.outputs.name }
+  { name: 'API_MANAGEMENT_ID', value: apim.outputs.id }
+  { name: 'API_MANAGEMENT_ENDPOINT', value: apim.outputs.gatewayUrl }
+] : []
 var entraSecuritySettings = deployEntraClientSecrets ? [
   { name: 'ENTRA_TENANT_ID', value: entraTenantId }
   { name: 'ENTRA_API_AUDIENCE', value: entraApiAudience }
@@ -720,17 +721,19 @@ var entraSecuritySettings = deployEntraClientSecrets ? [
   { name: 'ENTRA_CLIENT_SECRET',secretRef: 'entraclientsecret' }
 ] : []
 
-var baseSecrets = {
+var baseSecretSet = {
   cosmos: cosmosSecret.outputs.secretUri
   aikey: openAISecret.outputs.secretUri
   searchkey: searchSecret.outputs.secretUri
   apikey: apiKeySecret.outputs.secretUri
-  apimkey: apimSecret.outputs.secretUri
 }
-var docIntelliSecrets = deployDocumentIntelligence ? {
+var apimSecretSet = deployAPIM ? {
+  apimkey: apimSecret.outputs.secretUri
+} : {}
+var docIntelliSecretSet = deployDocumentIntelligence ? {
   docintellikey: documentIntelligenceSecret.outputs.secretUri
 } : {}
-var entraSecrets = deployEntraClientSecrets ? {
+var entraSecretSet = deployEntraClientSecrets ? {
   entraclientid: entraClientIdSecret.outputs.secretUri
   entraclientsecret: entraClientSecretSecret.outputs.secretUri
 } : {}
@@ -750,8 +753,8 @@ module containerAppAPI './modules/app/containerappstub.bicep' = if (deployAPIApp
     
     tags: union(tags, { 'azd-service-name': 'api' })
     deploymentSuffix: deploymentSuffix
-    secrets: union(baseSecrets, docIntelliSecrets, entraSecrets) 
-    env: union(apiSettings, entraSecuritySettings)
+    secrets: union(baseSecretSet, apimSecretSet, docIntelliSecretSet, entraSecretSet) 
+    env: union(apiSettings, apimSettings, entraSecuritySettings)
   }
   dependsOn: deployAPIM ? [containerRegistry, apim] : [containerRegistry]
 }
@@ -775,8 +778,8 @@ module containerAppUI './modules/app/containerappstub.bicep' = if (deployUIApp) 
     imageName: UIImageName
     tags: union(tags, { 'azd-service-name': 'UI' })
     deploymentSuffix: deploymentSuffix
-    secrets: union(baseSecrets, docIntelliSecrets, entraSecrets) 
-    env: union(UISettings, entraSecuritySettings)
+    secrets: union(baseSecretSet, apimSecretSet, docIntelliSecretSet, entraSecretSet) 
+    env: union(UISettings, apimSettings, entraSecuritySettings)
   }
   dependsOn: deployAPIM ? [containerRegistry, apim] : [containerRegistry]
 }
