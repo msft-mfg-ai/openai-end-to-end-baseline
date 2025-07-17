@@ -81,13 +81,13 @@ output subnetJumpboxName string           = toLower('snet-jumpbox')
 output subnetTrainingName string          = toLower('snet-training')
 output subnetScoringName string           = toLower('snet-scoring')
 
-output vm_name string                     = take(toLower('${sanitizedAppName}-${resourceAbbreviations.computeVirtualMachines}${dashInstance}-${sanitizedEnvironment}'),12)
-output vm_nic_name string                 = toLower('${sanitizedAppName}${resourceAbbreviations.networkNetworkInterfaces}${dashInstance}-${sanitizedEnvironment}')
-output vm_pip_name string                 = toLower('${sanitizedAppName}${resourceAbbreviations.networkPublicIPAddresses}${dashInstance}-${sanitizedEnvironment}')
-output vm_os_disk_name string             = toLower('${sanitizedAppName}-${resourceAbbreviations.computeDisks}${dashInstance}-${sanitizedEnvironment}')
-output vm_nsg_name string                 = toLower('${sanitizedAppName}${resourceAbbreviations.networkNetworkSecurityGroups}${dashInstance}-${sanitizedEnvironment}')
-output bastion_host_name string           = toLower('${sanitizedAppName}${resourceAbbreviations.networkBastionHosts}${dashInstance}-${sanitizedEnvironment}')
-output bastion_pip_name string         =    toLower('${sanitizedAppName}${resourceAbbreviations.networkPublicIPAddresses}${resourceAbbreviations.bastionPip}${dashInstance}-${sanitizedEnvironment}')
+output vm_name string                     = take(toLower('${resourceAbbreviations.computeVirtualMachines}${sanitizedAppName}${dashInstance}-${sanitizedEnvironment}'),12)
+output vm_nic_name string                 = toLower('${resourceAbbreviations.networkNetworkInterfaces}${sanitizedAppName}${dashInstance}-${sanitizedEnvironment}')
+output vm_pip_name string                 = toLower('${resourceAbbreviations.networkPublicIPAddresses}${sanitizedAppName}${dashInstance}-${sanitizedEnvironment}')
+output vm_os_disk_name string             = toLower('${resourceAbbreviations.computeDisks}${sanitizedAppName}${dashInstance}-${sanitizedEnvironment}')
+output vm_nsg_name string                 = toLower('${resourceAbbreviations.networkNetworkSecurityGroups}${sanitizedAppName}${dashInstance}${sanitizedEnvironment}')
+output bastion_host_name string           = toLower('${resourceAbbreviations.networkBastionHosts}${sanitizedAppName}${dashInstance}-${sanitizedEnvironment}')
+output bastion_pip_name string         =    toLower('${resourceAbbreviations.networkPublicIPAddresses}${sanitizedAppName}${resourceAbbreviations.bastionPip}${dashInstance}-${sanitizedEnvironment}')
 
 // ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Private Endpoint Names (sequential) -- created for the customer need
