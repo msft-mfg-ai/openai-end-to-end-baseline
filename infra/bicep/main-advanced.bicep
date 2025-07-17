@@ -440,13 +440,13 @@ module appIdentityRoleAssignments './modules/iam/role-assignments.bicep' = if (a
   params: {
     identityPrincipalId: identity.outputs.managedIdentityPrincipalId
     principalType: 'ServicePrincipal'
-    registryName: deployContainerRegistry ? containerRegistry.outputs.name : ''
+    registryName: deployContainerRegistry ? containerRegistry!.outputs.name : ''
     storageAccountName: storage.outputs.name
     aiSearchName: searchService.outputs.name
     aiServicesName: openAI.outputs.name
     cosmosName: cosmos.outputs.name
     keyVaultName: keyVault.outputs.name
-    apimName: deployAPIM ? apim.outputs.name : ''
+    apimName: deployAPIM ? apim!.outputs.name : ''
   }
 }
 
@@ -455,13 +455,13 @@ module adminUserRoleAssignments './modules/iam/role-assignments.bicep' = if (add
   params: {
     identityPrincipalId: principalId
     principalType: 'User'
-    registryName: deployContainerRegistry ? containerRegistry.outputs.name : ''
+    registryName: deployContainerRegistry ? containerRegistry!.outputs.name : ''
     storageAccountName: storage.outputs.name
     aiSearchName: searchService.outputs.name
     aiServicesName: openAI.outputs.name
     cosmosName: cosmos.outputs.name
     keyVaultName: keyVault.outputs.name
-    apimName: deployAPIM ? apim.outputs.name : ''
+    apimName: deployAPIM ? apim!.outputs.name : ''
   }
 }
 
@@ -499,7 +499,7 @@ module apiKeySecret './modules/security/keyvault-secret.bicep' = {
   params: {
     keyVaultName: keyVault.outputs.name
     secretName: 'api-key'
-    existingSecretNames: deduplicateKVSecrets ? keyVaultSecretList.outputs.secretNameList : ''
+    existingSecretNames: deduplicateKVSecrets ? keyVaultSecretList!.outputs.secretNameList : ''
     secretValue: apiKeyValue
   }
 }
@@ -510,7 +510,7 @@ module apiKeySecret './modules/security/keyvault-secret.bicep' = {
      keyVaultName: keyVault.outputs.name
      secretName: cosmos.outputs.keyVaultSecretName
      cosmosAccountName: cosmos.outputs.name
-     existingSecretNames: deduplicateKVSecrets ? keyVaultSecretList.outputs.secretNameList : ''
+     existingSecretNames: deduplicateKVSecrets ? keyVaultSecretList!.outputs.secretNameList : ''
    }
  }
 
@@ -520,7 +520,7 @@ module storageSecret './modules/security/keyvault-storage-secret.bicep' = {
     keyVaultName: keyVault.outputs.name
     secretName: storage.outputs.storageAccountConnectionStringSecretName
     storageAccountName: storage.outputs.name
-    existingSecretNames: deduplicateKVSecrets ? keyVaultSecretList.outputs.secretNameList : ''
+    existingSecretNames: deduplicateKVSecrets ? keyVaultSecretList!.outputs.secretNameList : ''
   }
 }
 
@@ -531,7 +531,7 @@ module openAISecret './modules/security/keyvault-cognitive-secret.bicep' = {
     secretName: openAI.outputs.cognitiveServicesKeySecretName
     cognitiveServiceName: openAI.outputs.name
     cognitiveServiceResourceGroup: openAI.outputs.resourceGroupName
-    existingSecretNames: deduplicateKVSecrets ? keyVaultSecretList.outputs.secretNameList : ''
+    existingSecretNames: deduplicateKVSecrets ? keyVaultSecretList!.outputs.secretNameList : ''
   }
 }
 
@@ -539,10 +539,10 @@ module documentIntelligenceSecret './modules/security/keyvault-cognitive-secret.
   name: 'secret-doc-intelligence${deploymentSuffix}'
   params: {
     keyVaultName: keyVault.outputs.name
-    secretName: documentIntelligence.outputs.keyVaultSecretName
-    cognitiveServiceName: documentIntelligence.outputs.name
-    cognitiveServiceResourceGroup: documentIntelligence.outputs.resourceGroupName
-    existingSecretNames: deduplicateKVSecrets ? keyVaultSecretList.outputs.secretNameList : ''
+    secretName: documentIntelligence!.outputs.keyVaultSecretName
+    cognitiveServiceName: documentIntelligence!.outputs.name
+    cognitiveServiceResourceGroup: documentIntelligence!.outputs.resourceGroupName
+    existingSecretNames: deduplicateKVSecrets ? keyVaultSecretList!.outputs.secretNameList : ''
   }
 }
 
@@ -553,7 +553,7 @@ module searchSecret './modules/security/keyvault-search-secret.bicep' = {
     secretName: searchService.outputs.keyVaultSecretName
     searchServiceName: searchService.outputs.name
     searchServiceResourceGroup: searchService.outputs.resourceGroupName
-    existingSecretNames: deduplicateKVSecrets ? keyVaultSecretList.outputs.secretNameList : ''
+    existingSecretNames: deduplicateKVSecrets ? keyVaultSecretList!.outputs.secretNameList : ''
   }
 }
 
@@ -563,7 +563,7 @@ module apimSecret './modules/security/keyvault-secret.bicep' = if (deployAPIM) {
     keyVaultName: keyVault.outputs.name
     secretName: 'apimkey'
     secretValue: apimAccessKey
-    existingSecretNames: deduplicateKVSecrets ? keyVaultSecretList.outputs.secretNameList : ''
+    existingSecretNames: deduplicateKVSecrets ? keyVaultSecretList!.outputs.secretNameList : ''
   }
   dependsOn: [ apim ]
 }
@@ -574,7 +574,7 @@ module entraClientIdSecret './modules/security/keyvault-secret.bicep' = if (depl
     keyVaultName: keyVault.outputs.name
     secretName: 'entraclientid'
     secretValue: entraClientId
-    existingSecretNames: deduplicateKVSecrets ? keyVaultSecretList.outputs.secretNameList : ''
+    existingSecretNames: deduplicateKVSecrets ? keyVaultSecretList!.outputs.secretNameList : ''
   }
 }
 module entraClientSecretSecret './modules/security/keyvault-secret.bicep' = if (deployEntraClientSecrets) {
@@ -583,7 +583,7 @@ module entraClientSecretSecret './modules/security/keyvault-secret.bicep' = if (
     keyVaultName: keyVault.outputs.name
     secretName: 'entraclientsecret'
     secretValue: entraClientSecret
-    existingSecretNames: deduplicateKVSecrets ? keyVaultSecretList.outputs.secretNameList : ''
+    existingSecretNames: deduplicateKVSecrets ? keyVaultSecretList!.outputs.secretNameList : ''
   }
 }
 
@@ -803,8 +803,8 @@ module apim './modules/api-management/apim.bicep' = if (deployAPIM) {
 module apimConfiguration './modules/api-management/apim-oai-config.bicep' = if (deployAPIM) {
   name: 'apimConfig${deploymentSuffix}'
   params: {
-    apimName: apim.outputs.name
-    apimLoggerName: apim.outputs.loggerName
+    apimName: apim!.outputs.name
+    apimLoggerName: apim!.outputs.loggerName
     cognitiveServicesName: openAI.outputs.name
   }
 }
@@ -825,13 +825,13 @@ module allDnsZones './modules/networking/all-zones.bicep' = if (createDnsZones) 
     storageQueuePrivateEndpointName: storage.outputs.privateEndpointQueueName
     storageTablePrivateEndpointName: storage.outputs.privateEndpointTableName
 
-    documentIntelligencePrivateEndpointName: deployDocumentIntelligence ? documentIntelligence.outputs.privateEndpointName : ''
-    acrPrivateEndpointName: deployContainerRegistry ? containerRegistry.outputs.privateEndpointName : ''
+    documentIntelligencePrivateEndpointName: deployDocumentIntelligence ? documentIntelligence!.outputs.privateEndpointName : ''
+    acrPrivateEndpointName: deployContainerRegistry ? containerRegistry!.outputs.privateEndpointName : ''
 
-    //commenting as we are not deploying the maanged environment in the LZ
-    //cosmosPrivateEndpointName: cosmos.outputs.privateEndpointName
-    //defaultAcaDomain: managedEnvironment.outputs.defaultDomain
-    //acaStaticIp: managedEnvironment.outputs.staticIp
+    //commenting as we are not deploying the managed environment in the LZ
+    cosmosPrivateEndpointName: cosmos.outputs.privateEndpointName
+    defaultAcaDomain: managedEnvironment!.outputs.defaultDomain
+    acaStaticIp: managedEnvironment!.outputs.staticIp
   }
 }
 
@@ -923,7 +923,7 @@ module applicationGateway './modules/networking/application-gateway.bicep' = if 
     zones: [1, 2, 3]
     
     // WAF Policy association
-    firewallPolicyResourceId: appGatewayWafPolicy.outputs.resourceId
+    firewallPolicyResourceId: appGatewayWafPolicy!.outputs.resourceId
     
     // Gateway IP Configuration (subnet association)
     gatewayIPConfigurations: [
@@ -943,7 +943,7 @@ module applicationGateway './modules/networking/application-gateway.bicep' = if 
         name: 'appGatewayFrontendIP'
         properties: {
           publicIPAddress: {
-            id: appGatewayPublicIp.outputs.resourceId
+            id: appGatewayPublicIp!.outputs.resourceId
           }
         }
       }
@@ -1108,7 +1108,7 @@ var apiTargetPort = 8000
 var apiSettings = [
   {
     name: 'API_URL'
-    value: deployCAEnvironment ? 'https://${resourceNames.outputs.containerAppAPIName}.${managedEnvironment.outputs.defaultDomain}/agent' : ''
+    value: deployCAEnvironment ? 'https://${resourceNames.outputs.containerAppAPIName}.${managedEnvironment!.outputs.defaultDomain}/agent' : ''
   }
   { name: 'API_KEY', secretRef: 'apikey' }
   { name: 'APPLICATIONINSIGHTS_CONNECTION_STRING', value: logAnalytics.outputs.appInsightsConnectionString }
@@ -1130,9 +1130,9 @@ var apiSettings = [
 
 ]
 var apimSettings = deployAPIM ? [
-  { name: 'API_MANAGEMENT_NAME', value: apim.outputs.name }
-  { name: 'API_MANAGEMENT_ID', value: apim.outputs.id }
-  { name: 'API_MANAGEMENT_ENDPOINT', value: apim.outputs.gatewayUrl }
+  { name: 'API_MANAGEMENT_NAME', value: apim!.outputs.name }
+  { name: 'API_MANAGEMENT_ID', value: apim!.outputs.id }
+  { name: 'API_MANAGEMENT_ENDPOINT', value: apim!.outputs.gatewayUrl }
 ] : []
 var entraSecuritySettings = deployEntraClientSecrets ? [
   { name: 'ENTRA_TENANT_ID', value: entraTenantId }
@@ -1150,22 +1150,22 @@ var baseSecretSet = {
   apikey: apiKeySecret.outputs.secretUri
 }
 var apimSecretSet = deployAPIM ? {
-  apimkey: apimSecret.outputs.secretUri
+  apimkey: apimSecret!.outputs.secretUri
 } : {}
 var docIntelliSecretSet = deployDocumentIntelligence ? {
-  docintellikey: documentIntelligenceSecret.outputs.secretUri
+  docintellikey: documentIntelligenceSecret!.outputs.secretUri
 } : {}
 var entraSecretSet = deployEntraClientSecrets ? {
-  entraclientid: entraClientIdSecret.outputs.secretUri
-  entraclientsecret: entraClientSecretSecret.outputs.secretUri
+  entraclientid: entraClientIdSecret!.outputs.secretUri
+  entraclientsecret: entraClientSecretSecret!.outputs.secretUri
 } : {}
 
 module containerAppAPI './modules/app/containerappstub.bicep' = if (deployAPIApp) {
   name: 'ca-api-stub${deploymentSuffix}'
   params: {
     appName: resourceNames.outputs.containerAppAPIName
-    managedEnvironmentName: managedEnvironment.outputs.name
-    managedEnvironmentRg: managedEnvironment.outputs.resourceGroupName
+    managedEnvironmentName: managedEnvironment!.outputs.name
+    managedEnvironmentRg: managedEnvironment!.outputs.resourceGroupName
     workloadProfileName: appContainerAppEnvironmentWorkloadProfileName
     registryName: resourceNames.outputs.ACR_Name
     targetPort: apiTargetPort
@@ -1183,15 +1183,15 @@ module containerAppAPI './modules/app/containerappstub.bicep' = if (deployAPIApp
 
 var UITargetPort = 8001
 var UISettings = union(apiSettings, [
-  { name: 'API_URL', value: deployCAEnvironment ? 'https://${resourceNames.outputs.containerAppAPIName}.${managedEnvironment.outputs.defaultDomain}/agent' : '' }
+  { name: 'API_URL', value: deployCAEnvironment ? 'https://${resourceNames.outputs.containerAppAPIName}.${managedEnvironment!.outputs.defaultDomain}/agent' : '' }
 ])
 
 module containerAppUI './modules/app/containerappstub.bicep' = if (deployUIApp) {
   name: 'ca-UI-stub${deploymentSuffix}'
   params: {
     appName: resourceNames.outputs.containerAppUIName
-    managedEnvironmentName: managedEnvironment.outputs.name
-    managedEnvironmentRg: managedEnvironment.outputs.resourceGroupName
+    managedEnvironmentName: managedEnvironment!.outputs.name
+    managedEnvironmentRg: managedEnvironment!.outputs.resourceGroupName
     workloadProfileName: appContainerAppEnvironmentWorkloadProfileName
     registryName: resourceNames.outputs.ACR_Name
     targetPort: UITargetPort
@@ -1210,30 +1210,30 @@ module containerAppUI './modules/app/containerappstub.bicep' = if (deployUIApp) 
 // -- Outputs ---------------------------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------------------------------
 output SUBSCRIPTION_ID string = subscription().subscriptionId
-output ACR_NAME string = deployContainerRegistry ? containerRegistry.outputs.name : ''
-output ACR_URL string = deployContainerRegistry ? containerRegistry.outputs.loginServer : ''
+output ACR_NAME string = deployContainerRegistry ? containerRegistry!.outputs.name : ''
+output ACR_URL string = deployContainerRegistry ? containerRegistry!.outputs.loginServer : ''
 output AI_ENDPOINT string = openAI.outputs.endpoint
 output AI_HUB_ID string = deployAIHub ? aiProject.outputs.projectId : ''
 output AI_HUB_NAME string = deployAIHub ? aiProject.outputs.projectName : ''
 output AI_PROJECT_NAME string = resourceNames.outputs.aiHubProjectName
 output AI_SEARCH_ENDPOINT string = searchService.outputs.endpoint
-output API_CONTAINER_APP_FQDN string = deployAPIApp ? containerAppAPI.outputs.fqdn : ''
-output API_CONTAINER_APP_NAME string = deployAPIApp ? containerAppAPI.outputs.name : ''
-output UI_CONTAINER_APP_FQDN string = deployUIApp ? containerAppUI.outputs.fqdn : ''
-output UI_CONTAINER_APP_NAME string = deployUIApp ? containerAppUI.outputs.name : ''
+output API_CONTAINER_APP_FQDN string = deployAPIApp ? containerAppAPI!.outputs.fqdn : ''
+output API_CONTAINER_APP_NAME string = deployAPIApp ? containerAppAPI!.outputs.name : ''
+output UI_CONTAINER_APP_FQDN string = deployUIApp ? containerAppUI!.outputs.fqdn : ''
+output UI_CONTAINER_APP_NAME string = deployUIApp ? containerAppUI!.outputs.name : ''
 output API_KEY string = apiKeyValue
-output API_MANAGEMENT_ID string = deployAPIM ? apim.outputs.id : ''
-output API_MANAGEMENT_NAME string = deployAPIM ? apim.outputs.name : ''
-output AZURE_CONTAINER_ENVIRONMENT_NAME string = deployCAEnvironment ? managedEnvironment.outputs.name : ''
-output AZURE_CONTAINER_REGISTRY_ENDPOINT string = deployContainerRegistry ? containerRegistry.outputs.loginServer : ''
-output AZURE_CONTAINER_REGISTRY_NAME string = deployContainerRegistry ? containerRegistry.outputs.name : ''
+output API_MANAGEMENT_ID string = deployAPIM ? apim!.outputs.id : ''
+output API_MANAGEMENT_NAME string = deployAPIM ? apim!.outputs.name : ''
+output AZURE_CONTAINER_ENVIRONMENT_NAME string = deployCAEnvironment ? managedEnvironment!.outputs.name : ''
+output AZURE_CONTAINER_REGISTRY_ENDPOINT string = deployContainerRegistry ? containerRegistry!.outputs.loginServer : ''
+output AZURE_CONTAINER_REGISTRY_NAME string = deployContainerRegistry ? containerRegistry!.outputs.name : ''
 output AZURE_RESOURCE_GROUP string = resourceGroupName
 output COSMOS_CONTAINER_NAME string = uiChatContainerName
 output COSMOS_DATABASE_NAME string = cosmos.outputs.databaseName
 output COSMOS_ENDPOINT string = cosmos.outputs.endpoint
-output DOCUMENT_INTELLIGENCE_ENDPOINT string = deployDocumentIntelligence ? documentIntelligence.outputs.endpoint : ''
-output MANAGED_ENVIRONMENT_ID string = deployCAEnvironment ? managedEnvironment.outputs.id : ''
-output MANAGED_ENVIRONMENT_NAME string = deployCAEnvironment ? managedEnvironment.outputs.name : ''
+output DOCUMENT_INTELLIGENCE_ENDPOINT string = deployDocumentIntelligence ? documentIntelligence!.outputs.endpoint : ''
+output MANAGED_ENVIRONMENT_ID string = deployCAEnvironment ? managedEnvironment!.outputs.id : ''
+output MANAGED_ENVIRONMENT_NAME string = deployCAEnvironment ? managedEnvironment!.outputs.name : ''
 output RESOURCE_TOKEN string = resourceToken
 output STORAGE_ACCOUNT_BATCH_IN_CONTAINER string = storage.outputs.containerNames[1].name
 output STORAGE_ACCOUNT_BATCH_OUT_CONTAINER string = storage.outputs.containerNames[2].name
@@ -1245,13 +1245,13 @@ output VNET_CORE_NAME string = vnet.outputs.vnetName
 output VNET_CORE_PREFIX string = vnet.outputs.vnetAddressPrefix
 
 // Virtual Machine outputs (if deployed)
-output VM_ID string = (!empty(admin_username) && !empty(vm_name)) ? virtualMachine.outputs.vm_id : ''
-output VM_PRIVATE_IP string = (!empty(admin_username) && !empty(vm_name)) ? virtualMachine.outputs.vm_private_ip : ''
-output VM_PUBLIC_IP string = (!empty(admin_username) && !empty(vm_name)) ? virtualMachine.outputs.vm_public_ip : ''
+output VM_ID string = (!empty(admin_username) && !empty(vm_name)) ? virtualMachine!.outputs.vm_id : ''
+output VM_PRIVATE_IP string = (!empty(admin_username) && !empty(vm_name)) ? virtualMachine!.outputs.vm_private_ip : ''
+output VM_PUBLIC_IP string = (!empty(admin_username) && !empty(vm_name)) ? virtualMachine!.outputs.vm_public_ip : ''
 
 // Application Gateway outputs (if deployed)
-output APPLICATION_GATEWAY_ID string = deployApplicationGateway ? applicationGateway.outputs.resourceId : ''
-output APPLICATION_GATEWAY_NAME string = deployApplicationGateway ? applicationGateway.outputs.name : ''
-output APPLICATION_GATEWAY_PUBLIC_IP string = deployApplicationGateway ? appGatewayPublicIp.outputs.ipAddress : ''
-output APPLICATION_GATEWAY_FQDN string = deployApplicationGateway ? appGatewayPublicIp.outputs.fqdn : ''
-output APPLICATION_GATEWAY_WAF_POLICY_ID string = deployApplicationGateway ? appGatewayWafPolicy.outputs.resourceId : ''
+output APPLICATION_GATEWAY_ID string = deployApplicationGateway ? applicationGateway!.outputs.resourceId : ''
+output APPLICATION_GATEWAY_NAME string = deployApplicationGateway ? applicationGateway!.outputs.name : ''
+output APPLICATION_GATEWAY_PUBLIC_IP string = deployApplicationGateway ? appGatewayPublicIp!.outputs.ipAddress : ''
+output APPLICATION_GATEWAY_FQDN string = deployApplicationGateway ? appGatewayPublicIp!.outputs.fqdn : ''
+output APPLICATION_GATEWAY_WAF_POLICY_ID string = deployApplicationGateway ? appGatewayWafPolicy!.outputs.resourceId : ''
