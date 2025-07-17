@@ -81,7 +81,7 @@ output subnetJumpboxName string           = toLower('snet-jumpbox')
 output subnetTrainingName string          = toLower('snet-training')
 output subnetScoringName string           = toLower('snet-scoring')
 
-output vm_name string                     = take(toLower('${resourceAbbreviations.computeVirtualMachines}${sanitizedAppName}${dashInstance}-${sanitizedEnvironment}'),12)
+output vm_name string                     = take(toLower('${resourceAbbreviations.computeVirtualMachines}-${sanitizedAppName}${dashInstance}-${sanitizedEnvironment}'),14)
 output vm_nic_name string                 = toLower('${resourceAbbreviations.networkNetworkInterfaces}${sanitizedAppName}${dashInstance}-${sanitizedEnvironment}')
 output vm_pip_name string                 = toLower('${resourceAbbreviations.networkPublicIPAddresses}${sanitizedAppName}${dashInstance}-${sanitizedEnvironment}')
 output vm_os_disk_name string             = toLower('${resourceAbbreviations.computeDisks}${sanitizedAppName}${dashInstance}-${sanitizedEnvironment}')
