@@ -216,9 +216,9 @@ param deduplicateKeyVaultSecrets bool = false
 param appendResourceTokens bool = false
 
 @description('Should API container app be deployed?')
-param deployAPIApp bool = false
+param deployAPIApp bool = true
 @description('Should UI container app be deployed?')
-param deployUIApp bool = false
+param deployUIApp bool = true
 @description('Should we deploy a Document Intelligence?')
 param deployDocumentIntelligence bool = false
 
