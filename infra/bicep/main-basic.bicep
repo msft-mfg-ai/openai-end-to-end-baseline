@@ -32,10 +32,10 @@ targetScope = 'resourceGroup'
 @description('Full Application Name (supply this or use default of prefix+token)')
 param applicationName string = ''
 @description('If you do not supply Application Name, this prefix will be combined with a token to create a unique applicationName')
-param applicationPrefix string = 'ai_doc'
+param applicationPrefix string = ''
 
 @description('The environment code (i.e. dev, qa, prod)')
-param environmentName string = 'dev'
+param environmentName string = ''
 // @description('Environment name used by the azd command (optional)')
 // param azdEnvName string = ''
 
@@ -90,8 +90,6 @@ param aiProjectFriendlyName string = 'Agents Project resource'
 param aiProjectDescription string = 'This is an example AI Project resource for use in Azure AI Studio.'
 @description('Should we deploy an AI Foundry Hub?')
 param deployAIHub bool = true
-@description('Should we deploy an APIM?')
-param deployAPIM bool = false
 
 // --------------------------------------------------------------------------------------------------------------
 // AI Models
@@ -113,6 +111,8 @@ param gpt41_DeploymentCapacity int = 500
 // --------------------------------------------------------------------------------------------------------------
 // APIM Parameters
 // --------------------------------------------------------------------------------------------------------------
+@description('Should we deploy an APIM?')
+param deployAPIM bool = false
 @description('Name of the APIM Subscription. Defaults to aiagent-subscription')
 param apimSubscriptionName string = 'aiagent-subscription'
 @description('Email of the APIM Publisher')
@@ -140,6 +140,8 @@ param UIImageName string = ''
 // --------------------------------------------------------------------------------------------------------------
 @description('Should resources be created with public access?')
 param publicAccessEnabled bool = true
+@description('Create DNS Zones?')
+param createDnsZones bool = false
 @description('Add Role Assignments for the user assigned identity?')
 param addRoleAssignments bool = true
 @description('Should we run a script to dedupe the KeyVault secrets? (this fails on private networks right now)')
@@ -147,12 +149,12 @@ param deduplicateKeyVaultSecrets bool = false
 @description('Set this if you want to append all the resource names with a unique token')
 param appendResourceTokens bool = false
 
-// @description('Should UI container app be deployed?')
-// param deployUIApp bool = false
 @description('Should API container app be deployed?')
 param deployAPIApp bool = false
 @description('Should UI container app be deployed?')
 param deployUIApp bool = false
+@description('Should we deploy a Document Intelligence?')
+param deployDocumentIntelligence bool = false
 
 @description('Global Region where the resources will be deployed, e.g. AM (America), EM (EMEA), AP (APAC), CH (China)')
 //@allowed(['AM', 'EM', 'AP', 'CH', 'NAA'])
@@ -212,33 +214,27 @@ var commonTags = tags
 //   'requestor-name': requestorName
 //   'primary-support-provider': primarySupportProviderTag == '' ? 'UNKNOWN' : primarySupportProviderTag
 // }
-
-var commonTags = {
-  'creation-date': take(runDateTime, 8)
-  'application-name': appName
-  'application-id': applicationId
-  'environment-name': environmentName
-  'global-region': regionCode
-  'requestor-name': requestorName
-  'primary-support-provider': primarySupportProviderTag == '' ? 'UNKNOWN' : primarySupportProviderTag
-}
-var costCenterTagObject = costCenterTag == '' ? {} : { 'cost-center': costCenterTag }
-var ownerEmailTagObject = ownerEmailTag == ''
-  ? {}
-  : {
-      'application-owner': ownerEmailTag
-      'business-owner': ownerEmailTag
-      'point-of-contact': ownerEmailTag
-    }
+// var costCenterTagObject = costCenterTag == '' ? {} :  { 'cost-center': costCenterTag }
+// var ownerEmailTagObject = ownerEmailTag == '' ? {} :  { 
+//   'application-owner': ownerEmailTag
+//   'business-owner': ownerEmailTag
+//   'point-of-contact': ownerEmailTag
+// }
+// // if this bicep was called from AZD, then it needs this tag added to the resource group (at a minimum) to deploy successfully...
+// var azdTag = azdEnvName != '' ? { 'azd-env-name': azdEnvName } : {}
+// var tags = union(commonTags, azdTag, costCenterTagObject, ownerEmailTagObject)
 // if this bicep was called from AZD, then it needs this tag added to the resource group (at a minimum) to deploy successfully...
-var azdTag = azdEnvName != '' ? { 'azd-env-name': azdEnvName } : {}
-var tags = union(commonTags, azdTag, costCenterTagObject, ownerEmailTagObject)
+// var azdTag = azdEnvName != '' ? { 'azd-env-name': azdEnvName } : {}
+// var tags = union(commonTags, azdTag, costCenterTagObject, ownerEmailTagObject)
 
 // Run a script to dedupe the KeyVault secrets -- this fails on private networks right now so turn if off for them
 var deduplicateKVSecrets = publicAccessEnabled ? deduplicateKeyVaultSecrets : false
 
 // if either of these are empty or the value is set to string 'null', then we will not deploy the Entra client secrets
 var deployEntraClientSecrets = !(empty(entraClientId) || empty(entraClientSecret) || toLower(entraClientId) == 'null' || toLower(entraClientSecret) == 'null')
+
+var deployContainerRegistry = deployAPIApp || deployUIApp
+var deployCAEnvironment = deployAPIApp || deployUIApp
 
 // --------------------------------------------------------------------------------------------------------------
 // -- Generate Resource Names -----------------------------------------------------------------------------------
@@ -257,7 +253,7 @@ module resourceNames 'resourcenames.bicep' = {
 // --------------------------------------------------------------------------------------------------------------
 // -- Container Registry ----------------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------------------------------
-module containerRegistry './modules/app/containerregistry.bicep' = {
+module containerRegistry './modules/app/containerregistry.bicep' = if (deployContainerRegistry) {
   name: 'containerregistry${deploymentSuffix}'
   params: {
     newRegistryName: resourceNames.outputs.ACR_Name
@@ -306,12 +302,13 @@ module identity './modules/iam/identity.bicep' = {
     location: location
   }
 }
+
 module appIdentityRoleAssignments './modules/iam/role-assignments.bicep' = if (addRoleAssignments) {
   name: 'identity-roles${deploymentSuffix}'
   params: {
     identityPrincipalId: identity.outputs.managedIdentityPrincipalId
     principalType: 'ServicePrincipal'
-    registryName: containerRegistry.outputs.name
+    registryName: deployContainerRegistry ? containerRegistry.outputs.name : ''
     storageAccountName: storage.outputs.name
     aiSearchName: searchService.outputs.name
     aiServicesName: openAI.outputs.name
@@ -326,7 +323,7 @@ module adminUserRoleAssignments './modules/iam/role-assignments.bicep' = if (add
   params: {
     identityPrincipalId: principalId
     principalType: 'User'
-    registryName: containerRegistry.outputs.name
+    registryName: deployContainerRegistry ? containerRegistry.outputs.name : ''
     storageAccountName: storage.outputs.name
     aiSearchName: searchService.outputs.name
     aiServicesName: openAI.outputs.name
@@ -404,7 +401,7 @@ module openAISecret './modules/security/keyvault-cognitive-secret.bicep' = {
   }
 }
 
-module documentIntelligenceSecret './modules/security/keyvault-cognitive-secret.bicep' = {
+module documentIntelligenceSecret './modules/security/keyvault-cognitive-secret.bicep' = if (deployDocumentIntelligence) {
   name: 'secret-doc-intelligence${deploymentSuffix}'
   params: {
     keyVaultName: keyVault.outputs.name
@@ -426,7 +423,7 @@ module searchSecret './modules/security/keyvault-search-secret.bicep' = {
   }
 }
 
-module apimSecret './modules/security/keyvault-secret.bicep' = {
+module apimSecret './modules/security/keyvault-secret.bicep' = if (deployAPIM) {
   name: 'apim-search${deploymentSuffix}'
   params: {
     keyVaultName: keyVault.outputs.name
@@ -558,7 +555,7 @@ module openAI './modules/ai/cognitive-services.bicep' = {
   ]
 }
 
-module documentIntelligence './modules/ai/document-intelligence.bicep' = {
+module documentIntelligence './modules/ai/document-intelligence.bicep' = if (deployDocumentIntelligence) {
   name: 'doc-intelligence${deploymentSuffix}'
   params: {
     name: resourceNames.outputs.documentIntelligenceName
@@ -574,36 +571,40 @@ module documentIntelligence './modules/ai/document-intelligence.bicep' = {
 }
 
 // --------------------------------------------------------------------------------------------------------------
+// I thought these were the new ones but they are not....
+// do not use the Foundry files in /modules/ai-foundry....
+// use the foundry in /modules/cognitive-services/ai-project.bicep
+// --------------------------------------------------------------------------------------------------------------
+// module aiFoundryHub './modules/ai-foundry/ai-foundry-hub.bicep' = {
+//   name: 'aiHub${deploymentSuffix}'
+//   params: {
+//     location: location
+//     name: resourceNames.outputs.aiHubName
+//     tags: commonTags
+//     applicationInsightsId: logAnalytics.outputs.applicationInsightsId
+//     storageAccountId: storage.outputs.id
+//     aiServiceKind: openAI.outputs.kind
+//     aiServicesId: openAI.outputs.id
+//     aiServicesName: openAI.outputs.name
+//     aiServicesTarget: openAI.outputs.endpoint
+//     aiSearchId: searchService.outputs.id
+//     aiSearchName: searchService.outputs.name
+//   }
+// }
+// module aiFoundryProject './modules/ai-foundry/ai-foundry-project.bicep' = {
+//   name: 'aiFoundryProject${deploymentSuffix}'
+//   params: {
+//     location: location
+//     name: resourceNames.outputs.aiHubFoundryProjectName
+//     tags: commonTags
+//     hubId: aiFoundryHub.outputs.id
+//   }
+// }
+
+// --------------------------------------------------------------------------------------------------------------
 // AI Foundry Hub and Project V2
 // Imported from https://github.com/adamhockemeyer/ai-agent-experience
 // --------------------------------------------------------------------------------------------------------------
-module aiFoundryHub './modules/ai-foundry/ai-foundry-hub.bicep' = {
-  name: 'aiHub${deploymentSuffix}'
-  params: {
-    location: location
-    name: resourceNames.outputs.aiHubName
-    tags: commonTags
-    applicationInsightsId: logAnalytics.outputs.applicationInsightsId
-    storageAccountId: storage.outputs.id
-    aiServiceKind: openAI.outputs.kind
-    aiServicesId: openAI.outputs.id
-    aiServicesName: openAI.outputs.name
-    aiServicesTarget: openAI.outputs.endpoint
-    aiSearchId: searchService.outputs.id
-    aiSearchName: searchService.outputs.name
-  }
-}
-
-module aiFoundryProject './modules/ai-foundry/ai-foundry-project.bicep' = {
-  name: 'aiFoundryProject${deploymentSuffix}'
-  params: {
-    location: location
-    name: resourceNames.outputs.aiHubFoundryProjectName
-    tags: commonTags
-    hubId: aiFoundryHub.outputs.id
-  }
-}
-
 // AI Project and Capability Host
 module aiProject './modules/cognitive-services/ai-project.bicep' = {
   name: 'aiProject${deploymentSuffix}'
@@ -668,7 +669,7 @@ module apimConfiguration './modules/api-management/apim-oai-config.bicep' = if (
 // --------------------------------------------------------------------------------------------------------------
 // -- Container App Environment ---------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------------------------------
-module managedEnvironment './modules/app/managedEnvironment.bicep' = {
+module managedEnvironment './modules/app/managedEnvironment.bicep' = if (deployCAEnvironment) {
   name: 'caenv${deploymentSuffix}'
   params: {
     newEnvironmentName: resourceNames.outputs.caManagedEnvName
@@ -685,7 +686,7 @@ var apiTargetPort = 8000
 var apiSettings = [
   {
     name: 'API_URL'
-    value: 'https://${resourceNames.outputs.containerAppAPIName}.${managedEnvironment.outputs.defaultDomain}/agent'
+    value: deployCAEnvironment ? 'https://${resourceNames.outputs.containerAppAPIName}.${managedEnvironment.outputs.defaultDomain}/agent' : ''
   }
   { name: 'API_KEY', secretRef: 'apikey' }
   { name: 'APPLICATIONINSIGHTS_CONNECTION_STRING', value: logAnalytics.outputs.appInsightsConnectionString }
@@ -700,16 +701,17 @@ var apiSettings = [
   { name: 'COSMOS_DB_API_SESSIONS_DATABASE_NAME', value: sessionsDatabaseName }
   { name: 'COSMOS_DB_API_SESSIONS_CONTAINER_NAME', value: sessionsContainerArray[0].name }
 
-  { name: 'APIM_BASE_URL', value: apimBaseUrl }
-  { name: 'APIM_ACCESS_URL', value: apimAccessUrl }
-  { name: 'APIM_KEY', secretRef: 'apimkey' }
-
   { name: 'AZURE_CLIENT_ID', value: identity.outputs.managedIdentityClientId }
 
   { name: 'AZURE_SDK_TRACING_IMPLEMENTATION', value: 'opentelemetry' }
   { name: 'AZURE_TRACING_GEN_AI_CONTENT_RECORDING_ENABLED', value: 'true' }
 
 ]
+var apimSettings = deployAPIM ? [
+  { name: 'API_MANAGEMENT_NAME', value: apim.outputs.name }
+  { name: 'API_MANAGEMENT_ID', value: apim.outputs.id }
+  { name: 'API_MANAGEMENT_ENDPOINT', value: apim.outputs.gatewayUrl }
+] : []
 var entraSecuritySettings = deployEntraClientSecrets ? [
   { name: 'ENTRA_TENANT_ID', value: entraTenantId }
   { name: 'ENTRA_API_AUDIENCE', value: entraApiAudience }
@@ -719,15 +721,19 @@ var entraSecuritySettings = deployEntraClientSecrets ? [
   { name: 'ENTRA_CLIENT_SECRET',secretRef: 'entraclientsecret' }
 ] : []
 
-var baseSecrets = {
+var baseSecretSet = {
   cosmos: cosmosSecret.outputs.secretUri
   aikey: openAISecret.outputs.secretUri
-  docintellikey: documentIntelligenceSecret.outputs.secretUri
   searchkey: searchSecret.outputs.secretUri
   apikey: apiKeySecret.outputs.secretUri
-  apimkey: apimSecret.outputs.secretUri
 }
-var entraSecrets = deployEntraClientSecrets ? {
+var apimSecretSet = deployAPIM ? {
+  apimkey: apimSecret.outputs.secretUri
+} : {}
+var docIntelliSecretSet = deployDocumentIntelligence ? {
+  docintellikey: documentIntelligenceSecret.outputs.secretUri
+} : {}
+var entraSecretSet = deployEntraClientSecrets ? {
   entraclientid: entraClientIdSecret.outputs.secretUri
   entraclientsecret: entraClientSecretSecret.outputs.secretUri
 } : {}
@@ -747,15 +753,15 @@ module containerAppAPI './modules/app/containerappstub.bicep' = if (deployAPIApp
     
     tags: union(tags, { 'azd-service-name': 'api' })
     deploymentSuffix: deploymentSuffix
-    secrets: union(baseSecrets, entraSecrets) 
-    env: union(apiSettings, entraSecuritySettings)
+    secrets: union(baseSecretSet, apimSecretSet, docIntelliSecretSet, entraSecretSet) 
+    env: union(apiSettings, apimSettings, entraSecuritySettings)
   }
-  dependsOn: [containerRegistry, apim]
+  dependsOn: deployAPIM ? [containerRegistry, apim] : [containerRegistry]
 }
 
 var UITargetPort = 8001
 var UISettings = union(apiSettings, [
-  { name: 'API_URL', value: 'https://${resourceNames.outputs.containerAppAPIName}.${managedEnvironment.outputs.defaultDomain}/agent' }
+  { name: 'API_URL', value: deployCAEnvironment ? 'https://${resourceNames.outputs.containerAppAPIName}.${managedEnvironment.outputs.defaultDomain}/agent' : '' }
 ])
 
 module containerAppUI './modules/app/containerappstub.bicep' = if (deployUIApp) {
@@ -772,21 +778,21 @@ module containerAppUI './modules/app/containerappstub.bicep' = if (deployUIApp) 
     imageName: UIImageName
     tags: union(tags, { 'azd-service-name': 'UI' })
     deploymentSuffix: deploymentSuffix
-    secrets: union(baseSecrets, entraSecrets) 
-    env: union(UISettings, entraSecuritySettings)
+    secrets: union(baseSecretSet, apimSecretSet, docIntelliSecretSet, entraSecretSet) 
+    env: union(UISettings, apimSettings, entraSecuritySettings)
   }
-  dependsOn: [containerRegistry, apim]
+  dependsOn: deployAPIM ? [containerRegistry, apim] : [containerRegistry]
 }
 
 // --------------------------------------------------------------------------------------------------------------
 // -- Outputs ---------------------------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------------------------------
 output SUBSCRIPTION_ID string = subscription().subscriptionId
-output ACR_NAME string = containerRegistry.outputs.name
-output ACR_URL string = containerRegistry.outputs.loginServer
+output ACR_NAME string = deployContainerRegistry ? containerRegistry.outputs.name : ''
+output ACR_URL string = deployContainerRegistry ? containerRegistry.outputs.loginServer : ''
 output AI_ENDPOINT string = openAI.outputs.endpoint
-output AI_HUB_ID string = deployAIHub ? aiFoundryHub.outputs.id : ''
-output AI_HUB_NAME string = deployAIHub ? aiFoundryHub.outputs.name : ''
+output AI_HUB_ID string = deployAIHub ? aiProject.outputs.projectId : ''
+output AI_HUB_NAME string = deployAIHub ? aiProject.outputs.projectName : ''
 output AI_PROJECT_NAME string = resourceNames.outputs.aiHubProjectName
 output AI_SEARCH_ENDPOINT string = searchService.outputs.endpoint
 output API_CONTAINER_APP_FQDN string = deployAPIApp ? containerAppAPI.outputs.fqdn : ''
@@ -796,16 +802,16 @@ output UI_CONTAINER_APP_NAME string = deployUIApp ? containerAppUI.outputs.name 
 output API_KEY string = apiKeyValue
 output API_MANAGEMENT_ID string = deployAPIM ? apim.outputs.id : ''
 output API_MANAGEMENT_NAME string = deployAPIM ? apim.outputs.name : ''
-output AZURE_CONTAINER_ENVIRONMENT_NAME string = managedEnvironment.outputs.name
-output AZURE_CONTAINER_REGISTRY_ENDPOINT string = containerRegistry.outputs.loginServer
-output AZURE_CONTAINER_REGISTRY_NAME string = containerRegistry.outputs.name
+output AZURE_CONTAINER_ENVIRONMENT_NAME string = deployCAEnvironment ? managedEnvironment.outputs.name : ''
+output AZURE_CONTAINER_REGISTRY_ENDPOINT string = deployContainerRegistry ? containerRegistry.outputs.loginServer : ''
+output AZURE_CONTAINER_REGISTRY_NAME string = deployContainerRegistry ? containerRegistry.outputs.name : ''
 output AZURE_RESOURCE_GROUP string = resourceGroupName
 output COSMOS_CONTAINER_NAME string = uiChatContainerName
 output COSMOS_DATABASE_NAME string = cosmos.outputs.databaseName
 output COSMOS_ENDPOINT string = cosmos.outputs.endpoint
-output DOCUMENT_INTELLIGENCE_ENDPOINT string = documentIntelligence.outputs.endpoint
-output MANAGED_ENVIRONMENT_ID string = managedEnvironment.outputs.id
-output MANAGED_ENVIRONMENT_NAME string = managedEnvironment.outputs.name
+output DOCUMENT_INTELLIGENCE_ENDPOINT string = deployDocumentIntelligence ? documentIntelligence.outputs.endpoint : ''
+output MANAGED_ENVIRONMENT_ID string = deployCAEnvironment ? managedEnvironment.outputs.id : ''
+output MANAGED_ENVIRONMENT_NAME string = deployCAEnvironment ? managedEnvironment.outputs.name : ''
 output RESOURCE_TOKEN string = resourceToken
 output STORAGE_ACCOUNT_BATCH_IN_CONTAINER string = storage.outputs.containerNames[1].name
 output STORAGE_ACCOUNT_BATCH_OUT_CONTAINER string = storage.outputs.containerNames[2].name

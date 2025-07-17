@@ -1,21 +1,31 @@
 param tags object = {}
 param vnetResourceId string
 param keyVaultPrivateEndpointName string
-
-//commented out as they are not being deployed in the LZ
-//param acrPrivateEndpointName string
 param openAiPrivateEndpointName string
-//param documentIntelligencePrivateEndpointName string
 param aiSearchPrivateEndpointName string
-//param cosmosPrivateEndpointName string
 param storageBlobPrivateEndpointName string
 param storageQueuePrivateEndpointName string
 param storageTablePrivateEndpointName string
-
+param storageFilePrivateEndpointName string = ''
 param defaultAcaDomain string = ''
 param acaStaticIp string = ''
+param acrPrivateEndpointName string = ''
+param documentIntelligencePrivateEndpointName string = ''
+param cosmosPrivateEndpointName string = ''
 
-module kvZone 'zone-with-a-record.bicep' = {
+var deployKeyVault = !empty(keyVaultPrivateEndpointName)
+var deployOpenAi = !empty(openAiPrivateEndpointName)
+var deployAiSearch = !empty(aiSearchPrivateEndpointName)
+var deployStorageBlob = !empty(storageBlobPrivateEndpointName)
+var deployStorageQueue = !empty(storageQueuePrivateEndpointName)
+var deployStorageTable = !empty(storageTablePrivateEndpointName)
+var deployStorageFile = !empty(storageFilePrivateEndpointName)
+var deployAcaDomain = !empty(defaultAcaDomain)
+var deployACR = !empty(acrPrivateEndpointName)
+var deployDocumentIntelligence = !empty(documentIntelligencePrivateEndpointName)
+var deployCosmosDb = !empty(cosmosPrivateEndpointName)
+
+module kvZone 'zone-with-a-record.bicep' = if (deployKeyVault) {
   name: 'kvZone'
   params: {
     zoneName: 'privatelink.vaultcore.azure.net'
@@ -25,18 +35,17 @@ module kvZone 'zone-with-a-record.bicep' = {
   }
 }
 
-// Uncomment the following lines if you want to deploy the ACR and Document Intelligence zones
-// module acrZone 'zone-with-a-record.bicep' = {
-//   name: 'acrZone'
-//   params: {
-//     zoneName: 'privatelink.azurecr.io'
-//     vnetResourceId: vnetResourceId
-//     tags: tags
-//     privateEndpointNames: [acrPrivateEndpointName]
-//   }
-// }
+module acrZone 'zone-with-a-record.bicep' = if (deployACR) {
+  name: 'acrZone'
+  params: {
+    zoneName: 'privatelink.azurecr.io'
+    vnetResourceId: vnetResourceId
+    tags: tags
+    privateEndpointNames: [acrPrivateEndpointName]
+  }
+}
 
-module openAiZone 'zone-with-a-record.bicep' = {
+module openAiZone 'zone-with-a-record.bicep' = if (deployOpenAi) {
   name: 'openAiZone'
   params: {
     zoneName: 'privatelink.openai.azure.com'
@@ -46,18 +55,17 @@ module openAiZone 'zone-with-a-record.bicep' = {
   }
 }
 
-// Uncomment the following line if you want to deploy the Document Intelligence zone
-// module documentIntelligenceZone 'zone-with-a-record.bicep' = {
-//   name: 'docInteliZone'
-//   params: {
-//     zoneName: 'privatelink.cognitiveservices.azure.com'
-//     vnetResourceId: vnetResourceId
-//     tags: tags
-//     privateEndpointNames: [documentIntelligencePrivateEndpointName]
-//   }
-// }
+module documentIntelligenceZone 'zone-with-a-record.bicep' = if (deployDocumentIntelligence) {
+  name: 'docIntelligenceZone'
+  params: {
+    zoneName: 'privatelink.cognitiveservices.azure.com'
+    vnetResourceId: vnetResourceId
+    tags: tags
+    privateEndpointNames: [documentIntelligencePrivateEndpointName]
+  }
+}
 
-module aiSearchZone 'zone-with-a-record.bicep' = {
+module aiSearchZone 'zone-with-a-record.bicep' = if (deployAiSearch) {
   name: 'aiSearchZone'
   params: {
     zoneName: 'privatelink.search.windows.net'
@@ -67,18 +75,17 @@ module aiSearchZone 'zone-with-a-record.bicep' = {
   }
 }
 
-// Uncomment the following lines if you want to deploy the Cosmos DB and Storage File zones
-// module cosmosZone 'zone-with-a-record.bicep' = {
-//   name: 'cosmosZone'
-//   params: {
-//     zoneName: 'privatelink.documents.azure.com'
-//     vnetResourceId: vnetResourceId
-//     tags: tags
-//     privateEndpointNames: [cosmosPrivateEndpointName]
-//   }
-// }
+module cosmosZone 'zone-with-a-record.bicep' = if (deployCosmosDb) {
+  name: 'cosmosZone'
+  params: {
+    zoneName: 'privatelink.documents.azure.com'
+    vnetResourceId: vnetResourceId
+    tags: tags
+    privateEndpointNames: [cosmosPrivateEndpointName]
+  }
+}
 
-module storageBlobZone 'zone-with-a-record.bicep' = {
+module storageBlobZone 'zone-with-a-record.bicep' = if (deployStorageBlob) {
   name: 'storageBlobZone'
   params: {
     zoneName: 'privatelink.blob.${environment().suffixes.storage}' 
@@ -88,7 +95,7 @@ module storageBlobZone 'zone-with-a-record.bicep' = {
   }
 }
 
-module storageTableZone 'zone-with-a-record.bicep' = {
+module storageTableZone 'zone-with-a-record.bicep' = if (deployStorageTable) {
   name: 'storageTableZone'
   params: {
     zoneName: 'privatelink.table.${environment().suffixes.storage}' 
@@ -98,7 +105,7 @@ module storageTableZone 'zone-with-a-record.bicep' = {
   }
 }
 
-module storageQueueZone 'zone-with-a-record.bicep' = {
+module storageQueueZone 'zone-with-a-record.bicep' = if (deployStorageQueue) {
   name: 'storageQueueZone'
   params: {
     zoneName: 'privatelink.queue.${environment().suffixes.storage}' 
@@ -108,17 +115,17 @@ module storageQueueZone 'zone-with-a-record.bicep' = {
   }
 }
 
-// module storageFileZone 'zone-with-a-record.bicep' = {
-//   name: 'storageFileZone'
-//   params: {
-//     zoneName: 'privatelink.file.${environment().suffixes.storage}' 
-//     vnetResourceId: vnetResourceId
-//     tags: tags
-//     privateEndpointNames: [storagePrivateEndpointName]
-//   }
-// }
+module storageFileZone 'zone-with-a-record.bicep' = if (deployStorageFile) {
+  name: 'storageFileZone'
+  params: {
+    zoneName: 'privatelink.file.${environment().suffixes.storage}' 
+    vnetResourceId: vnetResourceId
+    tags: tags
+    privateEndpointNames: [storageFilePrivateEndpointName]
+  }
+}
 
-resource acaZone 'Microsoft.Network/privateDnsZones@2020-06-01' = if (!empty(defaultAcaDomain)) {
+resource acaZone 'Microsoft.Network/privateDnsZones@2020-06-01' = if (deployAcaDomain) {
   name: defaultAcaDomain
   location: 'global'
   tags: tags
@@ -137,7 +144,7 @@ resource acaZone 'Microsoft.Network/privateDnsZones@2020-06-01' = if (!empty(def
   }
 }
 
-resource vnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = if (!empty(defaultAcaDomain)) {
+resource vnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = if (deployAcaDomain) {
   parent: acaZone
   name: uniqueString(acaZone.id)
   location: 'global'

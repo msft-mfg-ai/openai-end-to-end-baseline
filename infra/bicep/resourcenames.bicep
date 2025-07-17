@@ -71,7 +71,7 @@ output storageAccountName string          = take('${resourceAbbreviations.storag
 // ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Network resource names
 // ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-output vnet_Name string                   = toLower('${resourceAbbreviations.networkVirtualNetworks}-${sanitizedAppName}-${sanitizedEnvironment}${resourceTokenWithDash}${dashRegionDashInstance}')
+output vnet_Name string                   = toLower('${sanitizedAppName}-${resourceAbbreviations.networkVirtualNetworks}-${sanitizedEnvironment}${resourceTokenWithDash}${dashRegionDashInstance}')
 output subnetAppGwName string             = toLower('snet-app-gateway')
 output subnetAppSeName string             = toLower('snet-app-services')
 output subnetPeName string                = toLower('snet-private-endpoint')
@@ -81,25 +81,13 @@ output subnetJumpboxName string           = toLower('snet-jumpbox')
 output subnetTrainingName string          = toLower('snet-training')
 output subnetScoringName string           = toLower('snet-scoring')
 
-//param vnetPrefix string = '10.183.4.0/22'
-//param subnetAppGwPrefix string = '10.183.5.0/24'
-//param subnetAppSePrefix string = '10.183.4.0/24'
-//param subnetPePrefix string = '10.183.6.0/27'
-//param subnetAgentPrefix string = '10.183.6.32/27'
-//param subnetBastionPrefix string = '10.183.6.64/26'
-//param subnetJumpboxPrefix string = '10.183.6.128/28'
-//param subnetTrainingPrefix string = '10.183.7.0/25'
-//param subnetScoringPrefix string = '10.183.7.128/25'
-
-output vm_name string = take(toLower('${resourceAbbreviations.computeVirtualMachines}-${sanitizedAppName}-${dashInstance}-${sanitizedEnvironment}'),12)
-output vm_nic_name string = toLower('${resourceAbbreviations.networkNetworkInterfaces}-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-001')
-output vm_pip_name string = toLower('${resourceAbbreviations.networkPublicIPAddresses}-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-001')
-output vm_os_disk_name string = toLower('${resourceAbbreviations.computeDisks}-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-001')
-output vm_nsg_name string = toLower('${resourceAbbreviations.networkNetworkSecurityGroups}-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-001')
-output bastion_host_name string = toLower('${resourceAbbreviations.networkBastionHosts}${sanitizedAppName}-${sanitizedEnvironment}${dashInstance}')
-output bastion_pip_name string = toLower('${resourceAbbreviations.networkPublicIPAddresses}${sanitizedAppName}-${resourceAbbreviations.bastionPip}-${sanitizedEnvironment}${dashInstance}')
-
-
+output vm_name string                     = take(toLower('${sanitizedAppName}-${resourceAbbreviations.computeVirtualMachines}${dashInstance}-${sanitizedEnvironment}'),15)
+output vm_nic_name string                 = toLower('${sanitizedAppName}${resourceAbbreviations.networkNetworkInterfaces}${dashInstance}-${sanitizedEnvironment}')
+output vm_pip_name string                 = toLower('${sanitizedAppName}${resourceAbbreviations.networkPublicIPAddresses}${dashInstance}-${sanitizedEnvironment}')
+output vm_os_disk_name string             = toLower('${sanitizedAppName}-${resourceAbbreviations.computeDisks}${dashInstance}-${sanitizedEnvironment}')
+output vm_nsg_name string                 = toLower('${sanitizedAppName}${resourceAbbreviations.networkNetworkSecurityGroups}${dashInstance}-${sanitizedEnvironment}')
+output bastion_host_name string           = toLower('${sanitizedAppName}${resourceAbbreviations.networkBastionHosts}${dashInstance}-${sanitizedEnvironment}')
+output bastion_pip_name string         =    toLower('${sanitizedAppName}${resourceAbbreviations.networkPublicIPAddresses}${resourceAbbreviations.bastionPip}${dashInstance}-${sanitizedEnvironment}')
 
 // ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Private Endpoint Names (sequential) -- created for the customer need

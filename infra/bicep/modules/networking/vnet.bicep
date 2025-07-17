@@ -26,7 +26,7 @@ param subnetTrainingName string
 param subnetTrainingPrefix string
 param subnetScoringName string
 param subnetScoringPrefix string
-param vnetNsgName string
+param vnetNsgName string = '${newVirtualNetworkName}-${subnetAppSeName}-nsg-${location}'
 
 var useExistingResource = !empty(existingVirtualNetworkName)
 

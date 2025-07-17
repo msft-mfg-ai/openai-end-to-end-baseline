@@ -57,11 +57,32 @@ Follow these steps to get started quickly:
     gh variable set GLOBAL_REGION_CODE -b AM
     ```
 
+    For each environment, you can control the AI Model capacity with this variable:
+
+    ```bash
+    gh variable set --env <envName> AI_MODEL_CAPACITY -b 20
+    ```
+
     Other optional variables can be used to supplement Tags, including:
 
     ```bash
     gh variable set OWNER_EMAIL -b yourname@yourdomain.com
     gh variable set COST_CENTER -b 'CC'
+    ```
+
+    If you want to add additional configuration for the application, like Entra App Registrations or APIM keys, you may want to add keys like this: (note that these are all based on the code in the container app):
+
+    ```bash
+    gh variable set --env <envName> ENTRA_TENANT_ID -b <YOUR_ENTRA_TENANT_ID>
+    gh variable set --env <envName> ENTRA_API_AUDIENCE -b <YOUR_ENTRA_API_AUDIENCE>
+    gh variable set --env <envName> ENTRA_REDIRECT_URI -b <YOUR_ENTRA_REDIRECT_URI>
+    gh variable set --env <envName> ENTRA_SCOPES -b <YOUR_ENTRA_SCOPES>
+    gh secret set --env <envName> ENTRA_CLIENT_ID -b <YOUR_ENTRA_CLIENT_ID>
+    gh secret set --env <envName> ENTRA_CLIENT_SECRET -b <YOUR_ENTRA_CLIENT_SECRET>
+
+    gh variable set --env <envName> APIM_ACCESS_URL -b https://<NAME>.azure-api.net/api/<NAME>-app-access/2025-06-24
+    gh variable set --env <envName> APIM_BASE_URL -b https://<NAME>.azure-api.net/api/<NAME>-facade/2025-06-24
+    gh secret set --env <envName> APIM_ACCESS_KEY -b <SECRET_VALUE>
     ```
 
 1. Run the **[1-infra-build-deploy-all](./workflows/1-infra-build-deploy-all.yml):** action in this repo to deploy the UI.

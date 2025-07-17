@@ -10,7 +10,6 @@
 //   INSTANCE_NUMBER     - GH Environment Variable
 //   OWNER_EMAIL         - GH Environment Variable - optional
 //   environmentName     - Runtime  - Environment Code (e.g., dev, qa, prod)
-//   DEPLOYMENTCOUNT     - number of the resource group that will be created
 // --------------------------------------------------------------------------------
 
 using './main-advanced.bicep'
@@ -25,9 +24,7 @@ param regionCode = '#{GLOBAL_REGION_CODE}#'
 // param requestorName= '#{requestorName}#'
 // param costCenterTag = 'CC'
 
-
-//commenting out the role assignment parameters as they are not used in this deployment
-//param addRoleAssignments = #{addRoleAssignments}#
+param addRoleAssignments = #{addRoleAssignments}#
 param createDnsZones = true
 param publicAccessEnabled = false
 
@@ -38,9 +35,6 @@ param myIpAddress = '#{MY_IP_ADDRESS}#'
 
 param openAI_deploy_location = '#{OPENAI_DEPLOY_LOCATION}#'
 param deployAIHub = true
-//added the '' in between the parameters
-//param deployAPIM = #{deployAPIM}#
-
-param deployAPIM = true
-//param deployAPIApp = true  // Should we deploy the API app?
-//param deployUIApp = true // Should we deploy the UI app?
+param deployAPIM = false              // # { deployAPIM } #  // Should we deploy the API Management service?
+param deployAPIApp = false            // # { deployAPIApp } #  // Should we deploy the API app?
+param deployUIApp = false             // # { deployUIApp } #  // Should we deploy the UI app?

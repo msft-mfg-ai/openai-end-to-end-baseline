@@ -38,7 +38,7 @@ param applicationPrefix string = ''
 @description('The environment code (i.e. dev, qa, prod)')
 param environmentName string = ''
 // @description('Environment name used by the azd command (optional)')
-//param azdEnvName string = ''
+// param azdEnvName string = ''
 
 @description('Primary location for all resources')
 param location string = resourceGroup().location
@@ -85,29 +85,39 @@ param subnetScoringPrefix string = '10.183.7.128/25'
 // Virtual machine jumpbox
 // --------------------------------------------------------------------------------------------------------------
 @description('Admin username for the VM (optional - only deploy VM if provided)')
-param admin_username string = 'fewald'
-
-@description('Admin password for the VM (optional - only deploy VM if provided)')
+param admin_username string
 @secure()
-param admin_password string // This is a default password, you should change it to something more secure
+@description('Admin password for the VM (optional - only deploy VM if provided)')
+param admin_password string
 @description('VM name (optional - only deploy VM if provided)')
 param vm_name string
 
 // --------------------------------------------------------------------------------------------------------------
 // Container App Environment
 // --------------------------------------------------------------------------------------------------------------
-//Commenting container app environment as we are not deploying it in the LZ
-// @description('Name of the Container Apps Environment workload profile to use for the app')
-// param appContainerAppEnvironmentWorkloadProfileName string = 'app'
-// @description('Workload profiles for the Container Apps environment')
-// param containerAppEnvironmentWorkloadProfiles array = [
-//   {
-//     name: 'app'
-//     workloadProfileType: 'D4'
-//     minimumCount: 1
-//     maximumCount: 10
-//   }
-// ]
+@description('Name of the Container Apps Environment workload profile to use for the app')
+param appContainerAppEnvironmentWorkloadProfileName string = 'app'
+@description('Workload profiles for the Container Apps environment')
+param containerAppEnvironmentWorkloadProfiles array = [
+  {
+    name: 'app'
+    workloadProfileType: 'D4'
+    minimumCount: 1
+    maximumCount: 10
+  }
+]
+
+// --------------------------------------------------------------------------------------------------------------
+// Container App Entra Parameters
+// -------------------------------------------------------------------------------------------------------------`
+param entraTenantId string = tenant().tenantId
+param entraApiAudience string = ''
+param entraScopes string = ''
+param entraRedirectUri string = ''
+@secure()
+param entraClientId string = ''
+@secure()
+param entraClientSecret string = ''
 
 // --------------------------------------------------------------------------------------------------------------
 // AI Hub Parameters
@@ -118,35 +128,44 @@ param aiProjectFriendlyName string = 'Agents Project resource'
 param aiProjectDescription string = 'This is an example AI Project resource for use in Azure AI Studio.'
 @description('Should we deploy an AI Foundry Hub?')
 param deployAIHub bool = true
-@description('Should we deploy an APIM?')
-param deployAPIM bool = false
 
 // --------------------------------------------------------------------------------------------------------------
 // AI Models
 // --------------------------------------------------------------------------------------------------------------
-//@description('The default GPT 4o model deployment name for the AI Agent')
-//param gpt40_DeploymentName string = 'gpt-4o' 
-//@description('The GPT 4o model version to use')
-//param gpt40_ModelVersion string = '2024-11-20'
-//@description('The GPT 4o model deployment capacity')
-//param gpt40_DeploymentCapacity int = 10
+@description('The default GPT 4o model deployment name for the AI Agent')
+param gpt40_DeploymentName string = 'gpt-4o' 
+@description('The GPT 4o model version to use')
+param gpt40_ModelVersion string = '2024-11-20'
+@description('The GPT 4o model deployment capacity')
+param gpt40_DeploymentCapacity int = 10
 
 @description('The default GPT 4.1 model deployment name for the AI Agent')
-param gpt41_DeploymentName string = 'gpt-4o-mini'
+param gpt41_DeploymentName string = 'gpt-4.1'
 @description('The GPT 4.1 model version to use')
-param gpt41_ModelVersion string = '2024-07-18'
+param gpt41_ModelVersion string = '2025-04-14'
 @description('The GPT 4.1 model deployment capacity')
 param gpt41_DeploymentCapacity int = 10
 
 // --------------------------------------------------------------------------------------------------------------
 // APIM Parameters
 // --------------------------------------------------------------------------------------------------------------
+@description('Should we deploy an APIM?')
+param deployAPIM bool = false
 @description('Name of the APIM Subscription. Defaults to aiagent-subscription')
 param apimSubscriptionName string = 'aiagent-subscription'
 @description('Email of the APIM Publisher')
 param apimPublisherEmail string = 'somebody@somewhere.com'
 @description('Name of the APIM Publisher')
 param adminPublisherName string = 'AI Agent Admin'
+
+// --------------------------------------------------------------------------------------------------------------
+// External APIM Parameters
+// --------------------------------------------------------------------------------------------------------------
+@description('Base URL to facade API')
+param apimBaseUrl string = ''
+param apimAccessUrl string = ''
+@secure()
+param apimAccessKey string = ''
 
 // --------------------------------------------------------------------------------------------------------------
 // Application Gateway Parameters
@@ -177,19 +196,10 @@ param appGatewayDnsLabelPrefix string = ''
 param appGatewaySslCertificateKeyVaultSecretId string = ''
 
 // --------------------------------------------------------------------------------------------------------------
-// External APIM Parameters
-// --------------------------------------------------------------------------------------------------------------
-//@description('Base URL to facade API')
-//param apimBaseUrl string = ''
-//param apimAccessUrl string = ''
-//@secure()
-//param apimAccessKey string = ''
-
-// --------------------------------------------------------------------------------------------------------------
 // Existing images
 // --------------------------------------------------------------------------------------------------------------
-//param apiImageName string = ''
-//param UIImageName string = ''
+param apiImageName string = ''
+param UIImageName string = ''
 
 // --------------------------------------------------------------------------------------------------------------
 // Other deployment switches  
@@ -198,7 +208,6 @@ param appGatewaySslCertificateKeyVaultSecretId string = ''
 param publicAccessEnabled bool = true
 @description('Create DNS Zones?')
 param createDnsZones bool = true
-// commented out as roleassigments should be part of the application deployment not the LZ
 @description('Add Role Assignments for the user assigned identity?')
 param addRoleAssignments bool = true
 @description('Should we run a script to dedupe the KeyVault secrets? (this fails on private networks right now)')
@@ -206,15 +215,16 @@ param deduplicateKeyVaultSecrets bool = false
 @description('Set this if you want to append all the resource names with a unique token')
 param appendResourceTokens bool = false
 
-//comented as we are not using container app
-//@description('Should API container app be deployed?')
-//param deployAPIApp bool = false
-//@description('Should UI container app be deployed?')
-//param deployUIApp bool = false
+@description('Should API container app be deployed?')
+param deployAPIApp bool = false
+@description('Should UI container app be deployed?')
+param deployUIApp bool = false
+@description('Should we deploy a Document Intelligence?')
+param deployDocumentIntelligence bool = false
 
 @description('Global Region where the resources will be deployed, e.g. AM (America), EM (EMEA), AP (APAC), CH (China)')
 //@allowed(['AM', 'EM', 'AP', 'CH', 'NAA'])
-param regionCode string = ''
+param regionCode string = 'NAA'
 
 @description('Instance number for the application, e.g. 001, 002, etc. This is used to differentiate multiple instances of the same application in the same environment.')
 param instanceNumber string = '001' // used to differentiate multiple instances of the same application in the same environment
@@ -222,11 +232,11 @@ param instanceNumber string = '001' // used to differentiate multiple instances 
 // // --------------------------------------------------------------------------------------------------------------
 // // Additional Tags that may be included or not
 // // --------------------------------------------------------------------------------------------------------------
-//param costCenterTag string = ''
-//param ownerEmailTag string = ''
-param requestorName string = 'UNKNOWN'
-param applicationId string = ''
-param primarySupportProviderTag string = ''
+// param costCenterTag string = ''
+// param ownerEmailTag string = ''
+// param requestorName string = 'UNKNOWN'
+// param applicationId string = ''
+// param primarySupportProviderTag string = ''
 
 // --------------------------------------------------------------------------------------------------------------
 // A variable masquerading as a parameter to allow for dynamic value assignment in Bicep
@@ -259,7 +269,7 @@ var tags = {
   'request-number':    'not-applicable'
   'requestor-name':    'daniel.pahng_otis.com'
 }
-//var commonTags = tags
+var commonTags = tags
 
 // var commonTags = {
 //   'creation-date': take(runDateTime, 8)
@@ -270,32 +280,27 @@ var tags = {
 //   'requestor-name': requestorName
 //   'primary-support-provider': primarySupportProviderTag == '' ? 'UNKNOWN' : primarySupportProviderTag
 // }
-
-var commonTags = {
-  'creation-date': take(runDateTime, 8)
-  'application-name': appName
-  'application-id': applicationId
-  'environment-name': environmentName
-  'global-region': regionCode
-  'requestor-name': requestorName
-  'primary-support-provider': primarySupportProviderTag == '' ? 'UNKNOWN' : primarySupportProviderTag
-}
-//var costCenterTagObject = costCenterTag == '' ? {} : { 'cost-center': costCenterTag }
-//var ownerEmailTagObject = ownerEmailTag == ''
-//  ? {}
-//  : {
-//  'application-owner': ownerEmailTag
-//  'business-owner': ownerEmailTag
-//  'point-of-contact': ownerEmailTag
-//}
+// var costCenterTagObject = costCenterTag == '' ? {} :  { 'cost-center': costCenterTag }
+// var ownerEmailTagObject = ownerEmailTag == '' ? {} :  { 
+//   'application-owner': ownerEmailTag
+//   'business-owner': ownerEmailTag
+//   'point-of-contact': ownerEmailTag
+// }
+// // if this bicep was called from AZD, then it needs this tag added to the resource group (at a minimum) to deploy successfully...
+// var azdTag = azdEnvName != '' ? { 'azd-env-name': azdEnvName } : {}
+// var tags = union(commonTags, azdTag, costCenterTagObject, ownerEmailTagObject)
 // if this bicep was called from AZD, then it needs this tag added to the resource group (at a minimum) to deploy successfully...
-//var azdTag = azdEnvName != '' ? { 'azd-env-name': azdEnvName } : {}
-//var tags = union(commonTags, azdTag, costCenterTagObject, ownerEmailTagObject)
+// var azdTag = azdEnvName != '' ? { 'azd-env-name': azdEnvName } : {}
+// var tags = union(commonTags, azdTag, costCenterTagObject, ownerEmailTagObject)
 
 // Run a script to dedupe the KeyVault secrets -- this fails on private networks right now so turn if off for them
 var deduplicateKVSecrets = publicAccessEnabled ? deduplicateKeyVaultSecrets : false
 
-var vnetAddressPrefix = vnetPrefix
+// if either of these are empty or the value is set to string 'null', then we will not deploy the Entra client secrets
+var deployEntraClientSecrets = !(empty(entraClientId) || empty(entraClientSecret) || toLower(entraClientId) == 'null' || toLower(entraClientSecret) == 'null')
+
+var deployContainerRegistry = deployAPIApp || deployUIApp
+var deployCAEnvironment = deployAPIApp || deployUIApp
 
 // --------------------------------------------------------------------------------------------------------------
 // -- Generate Resource Names -----------------------------------------------------------------------------------
@@ -321,7 +326,7 @@ module vnet './modules/networking/vnet.bicep' = {
     existingVirtualNetworkName: existingVnetName
     existingVnetResourceGroupName: existingVnetResourceGroupName
     newVirtualNetworkName: resourceNames.outputs.vnet_Name
-    vnetAddressPrefix: vnetAddressPrefix
+    vnetAddressPrefix: vnetPrefix
     vnetNsgName: resourceNames.outputs.vnetNsgName
     subnetAppGwName: !empty(subnetAppGwName) ? subnetAppGwName  : resourceNames.outputs.subnetAppGwName
     subnetAppGwPrefix: subnetAppGwPrefix 
@@ -373,9 +378,7 @@ module virtualMachine './modules/virtualMachine/virtualMachine.bicep' = if (!emp
 // --------------------------------------------------------------------------------------------------------------
 // -- Container Registry ----------------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------------------------------
-//commented as should be part of the app deployment not the LZ
-
-module containerRegistry './modules/app/containerregistry.bicep' = {
+module containerRegistry './modules/app/containerregistry.bicep' = if (deployContainerRegistry) {
   name: 'containerregistry${deploymentSuffix}'
   params: {
    newRegistryName: resourceNames.outputs.ACR_Name
@@ -437,7 +440,7 @@ module appIdentityRoleAssignments './modules/iam/role-assignments.bicep' = if (a
   params: {
     identityPrincipalId: identity.outputs.managedIdentityPrincipalId
     principalType: 'ServicePrincipal'
-    registryName: containerRegistry.outputs.name
+    registryName: deployContainerRegistry ? containerRegistry.outputs.name : ''
     storageAccountName: storage.outputs.name
     aiSearchName: searchService.outputs.name
     aiServicesName: openAI.outputs.name
@@ -447,13 +450,12 @@ module appIdentityRoleAssignments './modules/iam/role-assignments.bicep' = if (a
   }
 }
 
-
 module adminUserRoleAssignments './modules/iam/role-assignments.bicep' = if (addRoleAssignments && !empty(principalId)) {
   name: 'user-roles${deploymentSuffix}'
   params: {
     identityPrincipalId: principalId
     principalType: 'User'
-    registryName: containerRegistry.outputs.name
+    registryName: deployContainerRegistry ? containerRegistry.outputs.name : ''
     storageAccountName: storage.outputs.name
     aiSearchName: searchService.outputs.name
     aiServicesName: openAI.outputs.name
@@ -533,17 +535,16 @@ module openAISecret './modules/security/keyvault-cognitive-secret.bicep' = {
   }
 }
 
-//commented as we are not deploying document intelligence in the LZ
-// module documentIntelligenceSecret './modules/security/keyvault-cognitive-secret.bicep' = {
-//   name: 'secret-doc-intelligence${deploymentSuffix}'
-//   params: {
-//     keyVaultName: keyVault.outputs.name
-//     secretName: documentIntelligence.outputs.keyVaultSecretName
-//     cognitiveServiceName: documentIntelligence.outputs.name
-//     cognitiveServiceResourceGroup: documentIntelligence.outputs.resourceGroupName
-//     existingSecretNames: deduplicateKVSecrets ? keyVaultSecretList.outputs.secretNameList : ''
-//   }
-// }
+module documentIntelligenceSecret './modules/security/keyvault-cognitive-secret.bicep' = if (deployDocumentIntelligence) {
+  name: 'secret-doc-intelligence${deploymentSuffix}'
+  params: {
+    keyVaultName: keyVault.outputs.name
+    secretName: documentIntelligence.outputs.keyVaultSecretName
+    cognitiveServiceName: documentIntelligence.outputs.name
+    cognitiveServiceResourceGroup: documentIntelligence.outputs.resourceGroupName
+    existingSecretNames: deduplicateKVSecrets ? keyVaultSecretList.outputs.secretNameList : ''
+  }
+}
 
 module searchSecret './modules/security/keyvault-search-secret.bicep' = {
   name: 'secret-search${deploymentSuffix}'
@@ -552,6 +553,36 @@ module searchSecret './modules/security/keyvault-search-secret.bicep' = {
     secretName: searchService.outputs.keyVaultSecretName
     searchServiceName: searchService.outputs.name
     searchServiceResourceGroup: searchService.outputs.resourceGroupName
+    existingSecretNames: deduplicateKVSecrets ? keyVaultSecretList.outputs.secretNameList : ''
+  }
+}
+
+module apimSecret './modules/security/keyvault-secret.bicep' = if (deployAPIM) {
+  name: 'apim-search${deploymentSuffix}'
+  params: {
+    keyVaultName: keyVault.outputs.name
+    secretName: 'apimkey'
+    secretValue: apimAccessKey
+    existingSecretNames: deduplicateKVSecrets ? keyVaultSecretList.outputs.secretNameList : ''
+  }
+  dependsOn: [ apim ]
+}
+
+module entraClientIdSecret './modules/security/keyvault-secret.bicep' = if (deployEntraClientSecrets) {
+  name: 'entraClientId-search${deploymentSuffix}'
+  params: {
+    keyVaultName: keyVault.outputs.name
+    secretName: 'entraclientid'
+    secretValue: entraClientId
+    existingSecretNames: deduplicateKVSecrets ? keyVaultSecretList.outputs.secretNameList : ''
+  }
+}
+module entraClientSecretSecret './modules/security/keyvault-secret.bicep' = if (deployEntraClientSecrets) {
+  name: 'entraClientSecret-search${deploymentSuffix}'
+  params: {
+    keyVaultName: keyVault.outputs.name
+    secretName: 'entraclientsecret'
+    secretValue: entraClientSecret
     existingSecretNames: deduplicateKVSecrets ? keyVaultSecretList.outputs.secretNameList : ''
   }
 }
@@ -585,6 +616,8 @@ module cosmos './modules/database/cosmosdb.bicep' = {
     containerArray: cosmosContainerArray
     location: location
     tags: tags
+    privateEndpointSubnetId: vnet.outputs.subnetPeResourceID
+    privateEndpointName: 'pe-${resourceNames.outputs.cosmosName}'
     managedIdentityPrincipalId: identity.outputs.managedIdentityPrincipalId
     userPrincipalId: principalId
     publicNetworkAccess: publicAccessEnabled ? 'enabled' : 'disabled'
@@ -639,13 +672,13 @@ module openAI './modules/ai/cognitive-services.bicep' = {
       ModelVersion: '0125'
       DeploymentCapacity: 10
     }
-    //chatGpt_Premium: {
-      //DeploymentName: gpt40_DeploymentName
-      //ModelName: gpt40_DeploymentName
-      //ModelVersion: gpt40_ModelVersion
-      //DeploymentCapacity: gpt40_DeploymentCapacity
+    chatGpt_Premium: {
+      DeploymentName: gpt40_DeploymentName
+      ModelName: gpt40_DeploymentName
+      ModelVersion: gpt40_ModelVersion
+      DeploymentCapacity: gpt40_DeploymentCapacity
 
-    //}
+    }
     chatGpt_41: {
       DeploymentName: gpt41_DeploymentName
       ModelName: gpt41_DeploymentName
@@ -663,65 +696,66 @@ module openAI './modules/ai/cognitive-services.bicep' = {
   ]
 }
 
-//commenting documment intelligence as it is part of the application not lz
+module documentIntelligence './modules/ai/document-intelligence.bicep' = if (deployDocumentIntelligence) {
+  name: 'doc-intelligence${deploymentSuffix}'
+  params: {
+    name: resourceNames.outputs.documentIntelligenceName
+    location: location // this may be different than the other resources
+    tags: tags
+    publicNetworkAccess: publicAccessEnabled ? 'enabled' : 'disabled'
+    privateEndpointSubnetId: vnet.outputs.subnetPeResourceID
+    privateEndpointName: 'pe-${resourceNames.outputs.documentIntelligenceName}'
+    myIpAddress: myIpAddress
+    managedIdentityId: identity.outputs.managedIdentityId
+  }
+  dependsOn: [
+    searchService
+  ]
+}
 
-// module documentIntelligence './modules/ai/document-intelligence.bicep' = {
-//   name: 'doc-intelligence${deploymentSuffix}'
+// --------------------------------------------------------------------------------------------------------------
+// I thought these were the new ones but they are not....
+// do not use the Foundry files in /modules/ai-foundry....
+// use the foundry in /modules/cognitive-services/ai-project.bicep
+// --------------------------------------------------------------------------------------------------------------
+// module aiFoundryHub './modules/ai-foundry/ai-foundry-hub.bicep' = {
+//   name: 'aiHub${deploymentSuffix}'
 //   params: {
-//     name: resourceNames.outputs.documentIntelligenceName
-//     location: location // this may be different than the other resources
-//     tags: tags
-//     publicNetworkAccess: publicAccessEnabled ? 'enabled' : 'disabled'
-//     privateEndpointSubnetId: vnet.outputs.subnetPeResourceID
-//     privateEndpointName: 'pe-${resourceNames.outputs.documentIntelligenceName}'
-//     myIpAddress: myIpAddress
-//     managedIdentityId: identity.outputs.managedIdentityId
+//     location: location
+//     name: resourceNames.outputs.aiHubName
+//     tags: commonTags
+//     applicationInsightsId: logAnalytics.outputs.applicationInsightsId
+//     storageAccountId: storage.outputs.id
+//     aiServiceKind: openAI.outputs.kind
+//     aiServicesId: openAI.outputs.id
+//     aiServicesName: openAI.outputs.name
+//     aiServicesTarget: openAI.outputs.endpoint
+//     aiSearchId: searchService.outputs.id
+//     aiSearchName: searchService.outputs.name
 //   }
-//   dependsOn: [
-//     searchService
-//   ]
+// }
+// module aiFoundryProject './modules/ai-foundry/ai-foundry-project.bicep' = {
+//   name: 'aiFoundryProject${deploymentSuffix}'
+//   params: {
+//     location: location
+//     name: resourceNames.outputs.aiHubFoundryProjectName
+//     tags: commonTags
+//     hubId: aiFoundryHub.outputs.id
+//   }
 // }
 
 // --------------------------------------------------------------------------------------------------------------
 // AI Foundry Hub and Project V2
 // Imported from https://github.com/adamhockemeyer/ai-agent-experience
 // --------------------------------------------------------------------------------------------------------------
-module aiFoundryHub './modules/ai-foundry/ai-foundry-hub.bicep' = {
-  name: 'aiHub${deploymentSuffix}'
-  params: {
-    location: location
-    name: resourceNames.outputs.aiHubName
-    tags: commonTags
-    applicationInsightsId: logAnalytics.outputs.applicationInsightsId
-    storageAccountId: storage.outputs.id
-    aiServiceKind: openAI.outputs.kind
-    aiServicesId: openAI.outputs.id
-    aiServicesName: openAI.outputs.name
-    aiServicesTarget: openAI.outputs.endpoint
-    aiSearchId: searchService.outputs.id
-    aiSearchName: searchService.outputs.name
-  }
-}
-
-module aiFoundryProject './modules/ai-foundry/ai-foundry-project.bicep' = {
-  name: 'aiFoundryProject${deploymentSuffix}'
-  params: {
-    location: location
-    name: resourceNames.outputs.aiHubFoundryProjectName
-    tags: commonTags
-    hubId: aiFoundryHub.outputs.id
-  }
-}
-
 // AI Project and Capability Host
-
 module aiProject './modules/cognitive-services/ai-project.bicep' = {
   name: 'aiProject${deploymentSuffix}'
   params: {
     location: location
     accountName: openAI.outputs.name
-    projectName:  resourceNames.outputs.aiHubProjectName
-    projectDescription:aiProjectDescription
+    projectName: resourceNames.outputs.aiHubProjectName
+    projectDescription: aiProjectDescription
     displayName: aiProjectFriendlyName
     // Connect to existing resources
     aiSearchName: searchService.outputs.name
@@ -737,9 +771,9 @@ module aiProject './modules/cognitive-services/ai-project.bicep' = {
     azureStorageSubscriptionId: subscription().subscriptionId
 
     // // Connect to App Insights
-    //appInsightsName: logAnalytics.outputs.applicationInsightsName
-    //appInsightsResourceGroupName: resourceGroup().name
-    //appInsightsSubscriptionId: subscription().subscriptionId
+    // appInsightsName: logAnalytics.outputs.applicationInsightsName
+    // appInsightsResourceGroupName: resourceGroup().name
+    // appInsightsSubscriptionId: subscription().subscriptionId
   }
 }
 
@@ -785,19 +819,17 @@ module allDnsZones './modules/networking/all-zones.bicep' = if (createDnsZones) 
     vnetResourceId: vnet.outputs.vnetResourceId
 
     keyVaultPrivateEndpointName: keyVault.outputs.privateEndpointName
-    //commenting below as we are not deploying container registry in the LZ - if uncommented need go to /modules/networking/all-zones.bicep and uncomment the acrPrivateEndpointName parameter
-    //acrPrivateEndpointName: containerRegistry.outputs.privateEndpointName
     openAiPrivateEndpointName: openAI.outputs.privateEndpointName
     aiSearchPrivateEndpointName: searchService.outputs.privateEndpointName
-    //commenting document intelligence as it is part of the application not the LZ -if uncommented need to go to /modules/networking/all-zones.bicep and uncomment the documentIntelligencePrivateEndpointName parameter
-    //documentIntelligencePrivateEndpointName: documentIntelligence.outputs.privateEndpointName
-    //commenting cosmos as it is part of the application not the LZ - if uncommented need to go to /modules/networking/all-zones.bicep and uncomment the cosmosPrivateEndpointName parameter
-    //cosmosPrivateEndpointName: cosmos.outputs.privateEndpointName
     storageBlobPrivateEndpointName: storage.outputs.privateEndpointBlobName
     storageQueuePrivateEndpointName: storage.outputs.privateEndpointQueueName
     storageTablePrivateEndpointName: storage.outputs.privateEndpointTableName
 
+    documentIntelligencePrivateEndpointName: deployDocumentIntelligence ? documentIntelligence.outputs.privateEndpointName : ''
+    acrPrivateEndpointName: deployContainerRegistry ? containerRegistry.outputs.privateEndpointName : ''
+
     //commenting as we are not deploying the maanged environment in the LZ
+    //cosmosPrivateEndpointName: cosmos.outputs.privateEndpointName
     //defaultAcaDomain: managedEnvironment.outputs.defaultDomain
     //acaStaticIp: managedEnvironment.outputs.staticIp
   }
@@ -1054,42 +1086,160 @@ module applicationGateway './modules/networking/application-gateway.bicep' = if 
   ]
 }
 
+
+// --------------------------------------------------------------------------------------------------------------
+// -- Container App Environment ---------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------
+module managedEnvironment './modules/app/managedEnvironment.bicep' = if (deployCAEnvironment) {
+  name: 'caenv${deploymentSuffix}'
+  params: {
+    newEnvironmentName: resourceNames.outputs.caManagedEnvName
+    location: location
+    logAnalyticsWorkspaceName: logAnalytics.outputs.logAnalyticsWorkspaceName
+    logAnalyticsRgName: resourceGroupName
+    appSubnetId: vnet.outputs.subnetAppSeResourceID
+    tags: tags
+    publicAccessEnabled: publicAccessEnabled
+    containerAppEnvironmentWorkloadProfiles: containerAppEnvironmentWorkloadProfiles
+  }
+}
+
+var apiTargetPort = 8000
+var apiSettings = [
+  {
+    name: 'API_URL'
+    value: deployCAEnvironment ? 'https://${resourceNames.outputs.containerAppAPIName}.${managedEnvironment.outputs.defaultDomain}/agent' : ''
+  }
+  { name: 'API_KEY', secretRef: 'apikey' }
+  { name: 'APPLICATIONINSIGHTS_CONNECTION_STRING', value: logAnalytics.outputs.appInsightsConnectionString }
+
+  { name: 'SEMANTICKERNEL_EXPERIMENTAL_GENAI_ENABLE_OTEL_DIAGNOSTICS', value: 'true' }
+  { name: 'SEMANTICKERNEL_EXPERIMENTAL_GENAI_ENABLE_OTEL_DIAGNOSTICS_SENSITIVE', value: 'true' }
+
+  { name: 'AZURE_AI_AGENT_ENDPOINT', value: aiProject.outputs.projectEndpoint }
+  { name: 'AZURE_AI_AGENT_MODEL_DEPLOYMENT_NAME', value: gpt41_DeploymentName }
+
+  { name: 'COSMOS_DB_ENDPOINT', value: cosmos.outputs.endpoint }
+  { name: 'COSMOS_DB_API_SESSIONS_DATABASE_NAME', value: sessionsDatabaseName }
+  { name: 'COSMOS_DB_API_SESSIONS_CONTAINER_NAME', value: sessionsContainerArray[0].name }
+
+  { name: 'AZURE_CLIENT_ID', value: identity.outputs.managedIdentityClientId }
+
+  { name: 'AZURE_SDK_TRACING_IMPLEMENTATION', value: 'opentelemetry' }
+  { name: 'AZURE_TRACING_GEN_AI_CONTENT_RECORDING_ENABLED', value: 'true' }
+
+]
+var apimSettings = deployAPIM ? [
+  { name: 'API_MANAGEMENT_NAME', value: apim.outputs.name }
+  { name: 'API_MANAGEMENT_ID', value: apim.outputs.id }
+  { name: 'API_MANAGEMENT_ENDPOINT', value: apim.outputs.gatewayUrl }
+] : []
+var entraSecuritySettings = deployEntraClientSecrets ? [
+  { name: 'ENTRA_TENANT_ID', value: entraTenantId }
+  { name: 'ENTRA_API_AUDIENCE', value: entraApiAudience }
+  { name: 'ENTRA_SCOPES', value: entraScopes }
+  { name: 'ENTRA_REDIRECT_URI', value: entraRedirectUri }
+  { name: 'ENTRA_CLIENT_ID', secretRef: 'entraclientid' }
+  { name: 'ENTRA_CLIENT_SECRET', secretRef: 'entraclientsecret' }
+] : []
+
+var baseSecretSet = {
+  cosmos: cosmosSecret.outputs.secretUri
+  aikey: openAISecret.outputs.secretUri
+  searchkey: searchSecret.outputs.secretUri
+  apikey: apiKeySecret.outputs.secretUri
+}
+var apimSecretSet = deployAPIM ? {
+  apimkey: apimSecret.outputs.secretUri
+} : {}
+var docIntelliSecretSet = deployDocumentIntelligence ? {
+  docintellikey: documentIntelligenceSecret.outputs.secretUri
+} : {}
+var entraSecretSet = deployEntraClientSecrets ? {
+  entraclientid: entraClientIdSecret.outputs.secretUri
+  entraclientsecret: entraClientSecretSecret.outputs.secretUri
+} : {}
+
+module containerAppAPI './modules/app/containerappstub.bicep' = if (deployAPIApp) {
+  name: 'ca-api-stub${deploymentSuffix}'
+  params: {
+    appName: resourceNames.outputs.containerAppAPIName
+    managedEnvironmentName: managedEnvironment.outputs.name
+    managedEnvironmentRg: managedEnvironment.outputs.resourceGroupName
+    workloadProfileName: appContainerAppEnvironmentWorkloadProfileName
+    registryName: resourceNames.outputs.ACR_Name
+    targetPort: apiTargetPort
+    userAssignedIdentityName: identity.outputs.managedIdentityName
+    location: location
+    imageName: apiImageName
+    
+    tags: union(tags, { 'azd-service-name': 'api' })
+    deploymentSuffix: deploymentSuffix
+    secrets: union(baseSecretSet, apimSecretSet, docIntelliSecretSet, entraSecretSet) 
+    env: union(apiSettings, apimSettings, entraSecuritySettings)
+  }
+  dependsOn: createDnsZones && deployContainerRegistry ? [allDnsZones, containerRegistry, apim] : (createDnsZones && !deployContainerRegistry) ? [allDnsZones, apim] : (!createDnsZones && deployContainerRegistry) ? [containerRegistry, apim] : [apim]
+}
+
+var UITargetPort = 8001
+var UISettings = union(apiSettings, [
+  { name: 'API_URL', value: deployCAEnvironment ? 'https://${resourceNames.outputs.containerAppAPIName}.${managedEnvironment.outputs.defaultDomain}/agent' : '' }
+])
+
+module containerAppUI './modules/app/containerappstub.bicep' = if (deployUIApp) {
+  name: 'ca-UI-stub${deploymentSuffix}'
+  params: {
+    appName: resourceNames.outputs.containerAppUIName
+    managedEnvironmentName: managedEnvironment.outputs.name
+    managedEnvironmentRg: managedEnvironment.outputs.resourceGroupName
+    workloadProfileName: appContainerAppEnvironmentWorkloadProfileName
+    registryName: resourceNames.outputs.ACR_Name
+    targetPort: UITargetPort
+    userAssignedIdentityName: identity.outputs.managedIdentityName
+    location: location
+    imageName: UIImageName
+    tags: union(tags, { 'azd-service-name': 'UI' })
+    deploymentSuffix: deploymentSuffix
+    secrets: union(baseSecretSet, apimSecretSet, docIntelliSecretSet, entraSecretSet) 
+    env: union(UISettings, apimSettings, entraSecuritySettings)
+  }
+  dependsOn: createDnsZones && deployContainerRegistry ? [allDnsZones, containerRegistry, apim] : (createDnsZones && !deployContainerRegistry) ? [allDnsZones, apim] : (!createDnsZones && deployContainerRegistry) ? [containerRegistry, apim] : [apim]
+}
+
 // --------------------------------------------------------------------------------------------------------------
 // -- Outputs ---------------------------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------------------------------
 output SUBSCRIPTION_ID string = subscription().subscriptionId
-// commenting as container registry is not part of the LZ deployment
-//output ACR_NAME string = containerRegistry.outputs.name
-//output ACR_URL string = containerRegistry.outputs.loginServer
+output ACR_NAME string = deployContainerRegistry ? containerRegistry.outputs.name : ''
+output ACR_URL string = deployContainerRegistry ? containerRegistry.outputs.loginServer : ''
 output AI_ENDPOINT string = openAI.outputs.endpoint
-output AI_HUB_ID string = deployAIHub ? aiFoundryHub.outputs.id : ''
-output AI_HUB_NAME string = deployAIHub ? aiFoundryHub.outputs.name : ''
+output AI_HUB_ID string = deployAIHub ? aiProject.outputs.projectId : ''
+output AI_HUB_NAME string = deployAIHub ? aiProject.outputs.projectName : ''
 output AI_PROJECT_NAME string = resourceNames.outputs.aiHubProjectName
 output AI_SEARCH_ENDPOINT string = searchService.outputs.endpoint
-//commented as container app is not deployed in the LZ
-//output API_CONTAINER_APP_FQDN string = deployAPIApp ? containerAppAPI.outputs.fqdn : ''
-//output API_CONTAINER_APP_NAME string = deployAPIApp ? containerAppAPI.outputs.name : ''
+output API_CONTAINER_APP_FQDN string = deployAPIApp ? containerAppAPI.outputs.fqdn : ''
+output API_CONTAINER_APP_NAME string = deployAPIApp ? containerAppAPI.outputs.name : ''
+output UI_CONTAINER_APP_FQDN string = deployUIApp ? containerAppUI.outputs.fqdn : ''
+output UI_CONTAINER_APP_NAME string = deployUIApp ? containerAppUI.outputs.name : ''
 output API_KEY string = apiKeyValue
 output API_MANAGEMENT_ID string = deployAPIM ? apim.outputs.id : ''
 output API_MANAGEMENT_NAME string = deployAPIM ? apim.outputs.name : ''
-//commented as container app is not deployed in the LZ
-//output AZURE_CONTAINER_ENVIRONMENT_NAME string = managedEnvironment.outputs.name
-//output AZURE_CONTAINER_REGISTRY_ENDPOINT string = containerRegistry.outputs.loginServer
-//output AZURE_CONTAINER_REGISTRY_NAME string = containerRegistry.outputs.name
+output AZURE_CONTAINER_ENVIRONMENT_NAME string = deployCAEnvironment ? managedEnvironment.outputs.name : ''
+output AZURE_CONTAINER_REGISTRY_ENDPOINT string = deployContainerRegistry ? containerRegistry.outputs.loginServer : ''
+output AZURE_CONTAINER_REGISTRY_NAME string = deployContainerRegistry ? containerRegistry.outputs.name : ''
 output AZURE_RESOURCE_GROUP string = resourceGroupName
-////commented as Cosmos app is not deployed in the LZ
-//output COSMOS_CONTAINER_NAME string = uiChatContainerName
-//output COSMOS_DATABASE_NAME string = cosmos.outputs.databaseName
-//output COSMOS_ENDPOINT string = cosmos.outputs.endpoint
-//commented as Document Intelligence is not deployed in the LZ
-//output DOCUMENT_INTELLIGENCE_ENDPOINT string = documentIntelligence.outputs.endpoint
-//output MANAGED_ENVIRONMENT_ID string = managedEnvironment.outputs.id
-//output MANAGED_ENVIRONMENT_NAME string = managedEnvironment.outputs.name
+output COSMOS_CONTAINER_NAME string = uiChatContainerName
+output COSMOS_DATABASE_NAME string = cosmos.outputs.databaseName
+output COSMOS_ENDPOINT string = cosmos.outputs.endpoint
+output DOCUMENT_INTELLIGENCE_ENDPOINT string = deployDocumentIntelligence ? documentIntelligence.outputs.endpoint : ''
+output MANAGED_ENVIRONMENT_ID string = deployCAEnvironment ? managedEnvironment.outputs.id : ''
+output MANAGED_ENVIRONMENT_NAME string = deployCAEnvironment ? managedEnvironment.outputs.name : ''
 output RESOURCE_TOKEN string = resourceToken
 output STORAGE_ACCOUNT_BATCH_IN_CONTAINER string = storage.outputs.containerNames[1].name
 output STORAGE_ACCOUNT_BATCH_OUT_CONTAINER string = storage.outputs.containerNames[2].name
 output STORAGE_ACCOUNT_CONTAINER string = storage.outputs.containerNames[0].name
 output STORAGE_ACCOUNT_NAME string = storage.outputs.name
+
 output VNET_CORE_ID string = vnet.outputs.vnetResourceId
 output VNET_CORE_NAME string = vnet.outputs.vnetName
 output VNET_CORE_PREFIX string = vnet.outputs.vnetAddressPrefix

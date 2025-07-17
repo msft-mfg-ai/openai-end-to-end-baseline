@@ -5,7 +5,7 @@ param location string = resourceGroup().location
 param pe_location string = location
 param tags object = {}
 param appInsightsName string
-param peOpenAIServiceConnection string
+param peOpenAIServiceConnection string = ''
 
 //param deployments array = []
 @description('The Kind of AI Service, can be "OpenAI" or "AIServices"')
@@ -135,6 +135,7 @@ resource deployment 'Microsoft.CognitiveServices/accounts/deployments@2025-04-01
 
 module privateEndpoint '../networking/private-endpoint.bicep' = if (deployInVNET && !useExistingService) {
   name: '${name}-private-endpoint'
+  dependsOn: [ account, deployment ]
   params: {
     tags: tags
     location: pe_location
@@ -147,6 +148,7 @@ module privateEndpoint '../networking/private-endpoint.bicep' = if (deployInVNET
 
 module privateEndpoint2 '../networking/private-endpoint.bicep' = if (deployInVNET && !useExistingService) {
   name: '${name}-openai-private-endpoint'
+  dependsOn: [ account, deployment ]
   params: {
     tags: tags
     location: pe_location
@@ -166,6 +168,7 @@ resource appInsights 'Microsoft.Insights/components@2020-02-02' existing = {
 resource connection 'Microsoft.CognitiveServices/accounts/connections@2025-04-01-preview' = {
   name: 'applicationInsights'
   parent: account
+  dependsOn: [ account, deployment, appInsights ]
   properties: {
     category: 'AppInsights'
     //group: 'ServicesAndApps'  // read-only...
