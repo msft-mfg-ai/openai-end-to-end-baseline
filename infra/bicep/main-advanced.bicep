@@ -90,7 +90,7 @@ param admin_username string
 @description('Admin password for the VM (optional - only deploy VM if provided)')
 param admin_password string
 @description('VM name (optional - only deploy VM if provided)')
-param vm_name string
+param vm_name string = ''
 
 // --------------------------------------------------------------------------------------------------------------
 // Container App Environment
