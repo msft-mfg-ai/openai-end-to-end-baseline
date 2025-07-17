@@ -36,5 +36,5 @@ param myIpAddress = '#{MY_IP_ADDRESS}#'
 param openAI_deploy_location = '#{OPENAI_DEPLOY_LOCATION}#'
 param deployAIHub = true
 param deployAPIM = false              // # { deployAPIM } #  // Should we deploy the API Management service?
-param deployAPIApp = false            // # { deployAPIApp } #  // Should we deploy the API app?
+param deployAPIApp = true            // # { deployAPIApp } #  // Should we deploy the API app?
 param deployUIApp = true             // # { deployUIApp } #  // Should we deploy the UI app?
