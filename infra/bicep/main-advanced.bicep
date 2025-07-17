@@ -161,9 +161,9 @@ param adminPublisherName string = 'AI Agent Admin'
 // --------------------------------------------------------------------------------------------------------------
 // External APIM Parameters
 // --------------------------------------------------------------------------------------------------------------
-@description('Base URL to facade API')
-param apimBaseUrl string = ''
-param apimAccessUrl string = ''
+//@description('Base URL to facade API')
+//param apimBaseUrl string = ''
+//param apimAccessUrl string = ''
 @secure()
 param apimAccessKey string = ''
 
