@@ -28,9 +28,9 @@ param addRoleAssignments = #{addRoleAssignments}#
 param createDnsZones = true
 param publicAccessEnabled = false
 
-param admin_username = '#{ADMIN_USERNAME}#' // This is the username for the admin user of jumpboxvm
-param admin_password = '#{ADMIN_PASSWORD}#' // This is the password for the admin user of jumpboxvm
-param vm_name = '#{VM_NAME}#' // optional Jumpbox VM name - otherwise created by resourceNames.bicep
+param admin_username = '#{VM_USERNAME}#' // This is the username for the admin user of jumpboxvm
+param admin_password = '#{VM_PASSWORD}#' // This is the password for the admin user of jumpboxvm
+param vm_name = '#{VM_COMPUTENAME}#' // optional Jumpbox VM name - otherwise created by resourceNames.bicep
 param myIpAddress = '#{MY_IP_ADDRESS}#'
 
 param openAI_deploy_location = '#{OPENAI_DEPLOY_LOCATION}#'
