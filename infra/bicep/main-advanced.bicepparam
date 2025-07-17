@@ -37,4 +37,4 @@ param openAI_deploy_location = '#{OPENAI_DEPLOY_LOCATION}#'
 param deployAIHub = true
 param deployAPIM = false              // # { deployAPIM } #  // Should we deploy the API Management service?
 param deployAPIApp = false            // # { deployAPIApp } #  // Should we deploy the API app?
-param deployUIApp = false             // # { deployUIApp } #  // Should we deploy the UI app?
+param deployUIApp = true             // # { deployUIApp } #  // Should we deploy the UI app?
