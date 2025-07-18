@@ -85,12 +85,12 @@ param subnetScoringPrefix string = '10.183.7.128/25'
 // Virtual machine jumpbox
 // --------------------------------------------------------------------------------------------------------------
 @description('Admin username for the VM (optional - only deploy VM if provided)')
-param admin_username string
+param admin_username string = ''
 @secure()
 @description('Admin password for the VM (optional - only deploy VM if provided)')
-param admin_password string
-@description('VM name (optional - only deploy VM if provided)')
-param vm_name string
+param admin_password string = ''
+@description('VM name (optional - will use generated name if not provided)')
+param vm_name string = ''
 
 // --------------------------------------------------------------------------------------------------------------
 // Container App Environment
@@ -301,6 +301,7 @@ var deployEntraClientSecrets = !(empty(entraClientId) || empty(entraClientSecret
 
 var deployContainerRegistry = deployAPIApp || deployUIApp
 var deployCAEnvironment = deployAPIApp || deployUIApp
+var deployVirtualMachine = !empty(admin_username) && !empty(admin_password)
 
 // --------------------------------------------------------------------------------------------------------------
 // -- Generate Resource Names -----------------------------------------------------------------------------------
@@ -350,7 +351,7 @@ module vnet './modules/networking/vnet.bicep' = {
 // --------------------------------------------------------------------------------------------------------------
 // -- JumpBox ------------------------------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------------------------------
-module virtualMachine './modules/virtualMachine/virtualMachine.bicep' = if (!empty(admin_username) && !empty(admin_password) && !empty(vm_name)) {
+module virtualMachine './modules/virtualMachine/virtualMachine.bicep' = if (deployVirtualMachine) {
   name: 'jumpboxVirtualMachineDeployment'
   params: {
     // Required parameters
@@ -1245,9 +1246,9 @@ output VNET_CORE_NAME string = vnet.outputs.vnetName
 output VNET_CORE_PREFIX string = vnet.outputs.vnetAddressPrefix
 
 // Virtual Machine outputs (if deployed)
-output VM_ID string = (!empty(admin_username) && !empty(vm_name)) ? virtualMachine!.outputs.vm_id : ''
-output VM_PRIVATE_IP string = (!empty(admin_username) && !empty(vm_name)) ? virtualMachine!.outputs.vm_private_ip : ''
-output VM_PUBLIC_IP string = (!empty(admin_username) && !empty(vm_name)) ? virtualMachine!.outputs.vm_public_ip : ''
+output VM_ID string = deployVirtualMachine ? virtualMachine!.outputs.vm_id : ''
+output VM_PRIVATE_IP string = deployVirtualMachine ? virtualMachine!.outputs.vm_private_ip : ''
+output VM_PUBLIC_IP string = deployVirtualMachine ? virtualMachine!.outputs.vm_public_ip : ''
 
 // Application Gateway outputs (if deployed)
 output APPLICATION_GATEWAY_ID string = deployApplicationGateway ? applicationGateway!.outputs.resourceId : ''
