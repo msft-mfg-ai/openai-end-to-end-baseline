@@ -1,0 +1,52 @@
+# This is a reusable GitHub Actions workflow template for Azure login as a composite action
+# Usage: Reference this action in your workflow using 'uses: ./.github/actions/azure-login'
+
+name: 'azure-login'
+description: 'Reusable composite action for Azure login using OIDC or client secret.'
+
+inputs:
+  client-id:
+    description: 'Azure Client ID (Service Principal or Workload Identity)'
+    required: true
+  tenant-id:
+    description: 'Azure Tenant ID'
+    required: true
+  subscription-id:
+    description: 'Azure Subscription ID'
+    required: true
+  client-secret:
+    description: 'Azure Client Secret (optional, for client secret auth)'
+    required: false
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Determine Azure Authentication Method
+      id: auth-check
+      shell: bash
+      run: |
+        if [[ -n "${{ inputs.client-secret }}" ]]; then
+          echo "auth-method=client-secret" >> $GITHUB_OUTPUT
+          echo "Using Client Secret authentication (secret available)"
+        else
+          echo "auth-method=oidc" >> $GITHUB_OUTPUT
+          echo "Using OIDC authentication"
+        fi
+
+    - name: Login to Azure using OIDC
+      if: ${{ steps.auth-check.outputs.auth-method == 'oidc' }}
+      uses: azure/login@v2
+      with:
+        client-id: ${{ inputs.client-id }}
+        tenant-id: ${{ inputs.tenant-id }}
+        subscription-id: ${{ inputs.subscription-id }}
+
+    - name: Login to Azure using Secret
+      if: ${{ steps.auth-check.outputs.auth-method == 'client-secret' }}
+      uses: azure/login@v2
+      with:
+        creds: '{"clientId":"${{ inputs.client-id }}","clientSecret":"${{ inputs.client-secret }}","tenantId":"${{ inputs.tenant-id }}","subscriptionId":"${{ inputs.subscription-id }}"}'
+
+    - name: Display Azure Account
+      shell: bash
+      run: az account show

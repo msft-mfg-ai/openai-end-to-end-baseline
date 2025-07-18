@@ -15,8 +15,14 @@ param existingCosmosResourceGroupName string = resourceGroup().name
 @description('The name for the SQL database')
 param databaseName string
 
+@description('Sessions database name')
+param sessionsDatabaseName string = ''
+
 @description('The collection of containers to create')
 param containerArray array = []
+
+@description('The collection of containers to create in sessions database')
+param sessionContainerArray array = []
 
 @description('Location for the Cosmos DB account.')
 param location string = resourceGroup().location
@@ -107,6 +113,44 @@ resource cosmosDatabase 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2024
     options: {}
   }
 }
+
+resource sessionsCosmosDatabase 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2024-08-15' = if (!useExistingAccount && !empty(sessionsDatabaseName)) {
+  parent: cosmosAccount
+  name: sessionsDatabaseName
+  tags: tags
+  properties: {
+    resource: {
+      id: sessionsDatabaseName
+    }
+    options: {}
+  }
+}
+
+resource sessionsContainer 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers@2024-08-15' = [for container in sessionContainerArray: if (!useExistingAccount) {
+  parent: sessionsCosmosDatabase
+  name: container.Name
+  tags: tags
+  properties: {
+    resource: {
+      id: container.name
+      indexingPolicy: {
+        indexingMode: 'consistent'
+        automatic: true
+        includedPaths: [{ path: '/*' }]
+        excludedPaths: [{ path: '/"_etag"/?' }]
+      }
+      partitionKey: {
+        paths: [ container.partitionKey ]
+        kind: 'Hash'
+      }
+      conflictResolutionPolicy: {
+        mode: 'LastWriterWins'
+        conflictResolutionPath: '/_ts'
+      }
+    }
+    options: {}
+  }
+}]
 
 resource chatContainer 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers@2024-08-15' = [for container in containerArray: if (!useExistingAccount) {
   parent: cosmosDatabase

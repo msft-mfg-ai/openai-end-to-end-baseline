@@ -67,7 +67,9 @@ param systemDatastoresAuthMode string
 @allowed(['ApiKey','AAD'])
 param connectionAuthMode string
 
-var privateEndpointName = '${aiHubName}-AIHub-PE'
+@description('Private endpoint name to use')
+param privateEndpointName string = '${aiHubName}-AIHub-PE'
+
 var targetSubResource = ['amlworkspace']
 
 resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-04-01-preview' = {

@@ -16,14 +16,31 @@
 using './main-basic.bicep'
 
 param applicationName = '#{APP_NAME}#'
-param applicationId = '#{APP_ID}#'
 param environmentName = '#{envCode}#'
 param principalId = '#{USER_PRINCIPAL_ID}#'
 param instanceNumber = '#{INSTANCE_NUMBER}#'
-param ownerEmailTag = '#{OWNER_EMAIL}#' 
-param requestorName= '#{requestorName}#'
 param regionCode = '#{GLOBAL_REGION_CODE}#' 
-param costCenterTag = 'CC'
+// param applicationId = '#{APP_ID}#'
+// param ownerEmailTag = '#{OWNER_EMAIL}#' 
+// param requestorName= '#{requestorName}#'
+// param costCenterTag = 'CC'
+
+param gpt40_DeploymentCapacity = #{AI_MODEL_CAPACITY}#
+param gpt41_DeploymentCapacity = #{AI_MODEL_CAPACITY}#
+
+param apimBaseUrl = '#{APIM_BASE_URL}#'
+param apimAccessUrl = '#{APIM_ACCESS_URL}#'
+@secure()
+param apimAccessKey = '#{APIM_ACCESS_KEY}#'
+
+param entraTenantId = '#{ENTRA_TENANT_ID}#'
+param entraApiAudience = '#{ENTRA_API_AUDIENCE}#'
+param entraScopes = '#{ENTRA_SCOPES}#'
+param entraRedirectUri = '#{ENTRA_REDIRECT_URI}#'
+@secure()
+param entraClientId = '#{ENTRA_CLIENT_ID}#'
+@secure()
+param entraClientSecret = '#{ENTRA_CLIENT_SECRET}#'
 
 param addRoleAssignments = #{addRoleAssignments}#
 param publicAccessEnabled = true

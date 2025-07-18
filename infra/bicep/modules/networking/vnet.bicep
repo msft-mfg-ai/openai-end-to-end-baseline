@@ -26,6 +26,7 @@ param subnetTrainingName string
 param subnetTrainingPrefix string
 param subnetScoringName string
 param subnetScoringPrefix string
+param vnetNsgName string = '${newVirtualNetworkName}-${subnetAppSeName}-nsg-${location}'
 
 var useExistingResource = !empty(existingVirtualNetworkName)
 
@@ -60,7 +61,7 @@ resource existingVirtualNetwork 'Microsoft.Network/virtualNetworks@2024-01-01' e
 module appSubnetNSG './network-security-group.bicep' = if (!useExistingResource) {
   name: 'nsg'
   params: {
-    nsgName: '${newVirtualNetworkName}-${subnetAppSeName}-nsg-${location}'
+    nsgName: vnetNsgName
     location: location
   }
 }

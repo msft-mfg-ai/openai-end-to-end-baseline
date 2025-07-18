@@ -1,6 +1,6 @@
 // --------------------------------------------------------------------------------
 // This file contains the parameters for the Bicep deployment.
-// Note: This is dynamically modified by the build process.
+// Note: This is dynamically modified by the build process.  
 // Anything that starts with a # and a { is a variable that will be replaced at runtime.
 // --------------------------------------------------------------------------------
 // The following values should be defined in GitHub Secrets or Environment Variables:
@@ -15,26 +15,26 @@
 using './main-advanced.bicep'
 
 param applicationName = '#{APP_NAME}#'
-param applicationId = '#{APP_ID}#'
 param environmentName = '#{envCode}#'
 param principalId = '#{USER_PRINCIPAL_ID}#'
 param instanceNumber = '#{INSTANCE_NUMBER}#'
-param ownerEmailTag = '#{OWNER_EMAIL}#' 
-param requestorName= '#{requestorName}#'
 param regionCode = '#{GLOBAL_REGION_CODE}#' 
-param costCenterTag = 'CC'
+// param applicationId = '#{APP_ID}#'
+// param ownerEmailTag = '#{OWNER_EMAIL}#' 
+// param requestorName= '#{requestorName}#'
+// param costCenterTag = 'CC'
 
 param addRoleAssignments = #{addRoleAssignments}#
 param createDnsZones = true
 param publicAccessEnabled = false
 
-param admin_username = '#{ADMIN_USERNAME}#' // This is the username for the admin user of jumpboxvm
-param admin_password = '#{ADMIN_PASSWORD}#' // This is the password for the admin user of jumpboxvm
-param vm_name = '#{VM_NAME}#' // optional Jumpbox VM name - otherwise created by resourceNames.bicep
+param admin_username = '#{VM_USERNAME}#' // This is the username for the admin user of jumpboxvm
+param admin_password = '#{VM_PASSWORD}#' // This is the password for the admin user of jumpboxvm
+param vm_name = '#{VM_COMPUTENAME}#' // optional Jumpbox VM name - otherwise created by resourceNames.bicep
 param myIpAddress = '#{MY_IP_ADDRESS}#'
 
 param openAI_deploy_location = '#{OPENAI_DEPLOY_LOCATION}#'
 param deployAIHub = true
-param deployAPIM = #{deployAPIM}#
-param deployAPIApp = #{deployAPI}#  // Should we deploy the API app?
-param deployUIApp = #{deployUI}#  // Should we deploy the UI app?
+param deployAPIM = false              // # { deployAPIM } #  // Should we deploy the API Management service?
+param deployAPIApp = true            // # { deployAPIApp } #  // Should we deploy the API app?
+param deployUIApp = true             // # { deployUIApp } #  // Should we deploy the UI app?

@@ -179,38 +179,17 @@ jobs:
           echo "##[endgroup]"
         continue-on-error: true
 
-      - name: Determine Azure Authentication Method
-        id: auth-check
-        env:
-          CICD_CLIENT_SECRET: ${{ secrets.CICD_CLIENT_SECRET }}
-        run: |
-          # Check if we have a client secret or should fall back to OIDC
-          if [[ -n "$CICD_CLIENT_SECRET" ]]; then
-            echo "auth-method=client-secret" >> $GITHUB_OUTPUT
-            echo "Using Client Secret authentication (secret available)"
-          else
-            echo "auth-method=oidc" >> $GITHUB_OUTPUT            
-            echo "Using OIDC authentication"
-          fi
-
-      # https://learn.microsoft.com/en-us/entra/workload-id/workload-identity-federation-create-trust
-      - name: Login to Azure using OIDC
-        if: ${{ steps.auth-check.outputs.auth-method == 'oidc' }}
-        uses: azure/login@v2
+      - name: Azure Login (Reusable Action)
+        uses: ./.github/actions/login-action
         with:
           client-id: ${{ secrets.CICD_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-
-      - name: Login to Azure using Secret
-        if: ${{ steps.auth-check.outputs.auth-method == 'client-secret' }}
-        uses: azure/login@v2
-        with:
-          creds: '{"clientId":"${{ secrets.CICD_CLIENT_ID }}","clientSecret":"${{ secrets.CICD_CLIENT_SECRET }}","tenantId":"${{ secrets.AZURE_TENANT_ID }}","subscriptionId":"${{ secrets.AZURE_SUBSCRIPTION_ID }}"}'
+          client-secret: ${{ secrets.CICD_CLIENT_SECRET }}
 
       - name: Create Resource Group
         if: ${{ inputs.runCreateInfra && inputs.deployInResourceGroup }}
-        run: az group create --name ${{ env.generatedResourceGroupName }} --location ${{ vars.RESOURCEGROUP_LOCATION }} --tags Environment=${{ inputs.envCode }}
+        run: az group create --name ${{ env.generatedResourceGroupName }} --location ${{ vars.RESOURCEGROUP_LOCATION }} --tags Environment=${{ inputs.envCode }} Template=${{ inputs.templateFile }} Instance=${{ vars.INSTANCE_NUMBER }} Requestor=${{ inputs.requestorName }}
 
       - name: What-If Analysis (RG)
         if: ${{ inputs.runCreateInfra && inputs.deployInResourceGroup && inputs.bicepDeploymentMode == 'whatIf' }}
