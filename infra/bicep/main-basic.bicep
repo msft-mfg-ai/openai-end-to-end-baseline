@@ -43,8 +43,8 @@ param environmentName string = ''
 param location string = resourceGroup().location
 
 // See https://learn.microsoft.com/en-us/azure/ai-services/openai/concepts/models
-@description('OAI Region availability: East US, East US2, North Central US, South Central US, Sweden Central, West US, and West US3')
-param openAI_deploy_location string = location
+@description('Foundry Region availability: East US, East US2, North Central US, South Central US, Sweden Central, West US, and West US3')
+param aiFoundry_deploy_location string = location
 
 // --------------------------------------------------------------------------------------------------------------
 // Personal info
@@ -58,7 +58,7 @@ param principalId string = ''
 // Container App Environment
 // --------------------------------------------------------------------------------------------------------------
 @description('Name of the Container Apps Environment workload profile to use for the app')
-param appContainerAppEnvironmentWorkloadProfileName string = 'app'
+param appContainerAppEnvironmentWorkloadProfileName string = containerAppEnvironmentWorkloadProfiles[0].name
 @description('Workload profiles for the Container Apps environment')
 param containerAppEnvironmentWorkloadProfiles array = [
   {
@@ -75,27 +75,28 @@ param containerAppEnvironmentWorkloadProfiles array = [
 param entraTenantId string = tenant().tenantId
 param entraApiAudience string = ''
 param entraScopes string = ''
-param entraRedirectUri string = ''
+@description('Entra Redirect URI for the application. Only required for custom domains. Should end with /auth/callback')
+param entraRedirectUri string?
 @secure()
 param entraClientId string = ''
 @secure()
 param entraClientSecret string = ''
 
 // --------------------------------------------------------------------------------------------------------------
-// AI Hub Parameters
+// Foundry Parameters
 // --------------------------------------------------------------------------------------------------------------
 @description('Friendly name for your Azure AI resource')
 param aiProjectFriendlyName string = 'Agents Project resource'
 @description('Description of your Azure AI resource displayed in AI studio')
 param aiProjectDescription string = 'This is an example AI Project resource for use in Azure AI Studio.'
-@description('Should we deploy an AI Foundry Hub?')
-param deployAIHub bool = true
+@description('Should we deploy an AI Foundry?')
+param deployAIFoundry bool = true
 
 // --------------------------------------------------------------------------------------------------------------
 // AI Models
 // --------------------------------------------------------------------------------------------------------------
 @description('The default GPT 4o model deployment name for the AI Agent')
-param gpt40_DeploymentName string = 'gpt-4o' 
+param gpt40_DeploymentName string = 'gpt-4o'
 @description('The GPT 4o model version to use')
 param gpt40_ModelVersion string = '2024-11-20'
 @description('The GPT 4o model deployment capacity')
@@ -132,16 +133,14 @@ param apimAccessKey string = ''
 // --------------------------------------------------------------------------------------------------------------
 // Existing images
 // --------------------------------------------------------------------------------------------------------------
-param apiImageName string = ''
-param UIImageName string = ''
+param apiImageName string?
+param uiImageName string?
 
 // --------------------------------------------------------------------------------------------------------------
 // Other deployment switches
 // --------------------------------------------------------------------------------------------------------------
 @description('Should resources be created with public access?')
 param publicAccessEnabled bool = true
-@description('Create DNS Zones?')
-param createDnsZones bool = false
 @description('Add Role Assignments for the user assigned identity?')
 param addRoleAssignments bool = true
 @description('Should we run a script to dedupe the KeyVault secrets? (this fails on private networks right now)')
@@ -289,6 +288,7 @@ module storage './modules/storage/storage-account.bicep' = {
     tags: tags
     myIpAddress: myIpAddress
     containers: ['data', 'batch-input', 'batch-output']
+    allowSharedKeyAccess: false
   }
 }
 
@@ -308,13 +308,13 @@ module appIdentityRoleAssignments './modules/iam/role-assignments.bicep' = if (a
   params: {
     identityPrincipalId: identity.outputs.managedIdentityPrincipalId
     principalType: 'ServicePrincipal'
-    registryName: deployContainerRegistry ? containerRegistry.outputs.name : ''
+    registryName: deployContainerRegistry ? containerRegistry!.outputs.name : ''
     storageAccountName: storage.outputs.name
     aiSearchName: searchService.outputs.name
-    aiServicesName: openAI.outputs.name
+    aiServicesName: aiFoundry.outputs.name
     cosmosName: cosmos.outputs.name
     keyVaultName: keyVault.outputs.name
-    apimName: deployAPIM ? apim.outputs.name : ''
+    apimName: deployAPIM ? apim!.outputs.name : ''
   }
 }
 
@@ -323,13 +323,13 @@ module adminUserRoleAssignments './modules/iam/role-assignments.bicep' = if (add
   params: {
     identityPrincipalId: principalId
     principalType: 'User'
-    registryName: deployContainerRegistry ? containerRegistry.outputs.name : ''
+    registryName: deployContainerRegistry ? containerRegistry!.outputs.name : ''
     storageAccountName: storage.outputs.name
     aiSearchName: searchService.outputs.name
-    aiServicesName: openAI.outputs.name
+    aiServicesName: aiFoundry.outputs.name
     cosmosName: cosmos.outputs.name
     keyVaultName: keyVault.outputs.name
-    apimName: deployAPIM ? apim.outputs.name : ''
+    apimName: deployAPIM ? apim!.outputs.name : ''
   }
 }
 
@@ -365,73 +365,20 @@ module apiKeySecret './modules/security/keyvault-secret.bicep' = {
   params: {
     keyVaultName: keyVault.outputs.name
     secretName: 'api-key'
-    existingSecretNames: deduplicateKVSecrets ? keyVaultSecretList.outputs.secretNameList : ''
+    existingSecretNames: deduplicateKVSecrets ? keyVaultSecretList!.outputs.secretNameList : ''
     secretValue: apiKeyValue
   }
 }
 
-module cosmosSecret './modules/security/keyvault-cosmos-secret.bicep' = {
-  name: 'secret-cosmos${deploymentSuffix}'
-  params: {
-    keyVaultName: keyVault.outputs.name
-    secretName: cosmos.outputs.keyVaultSecretName
-    cosmosAccountName: cosmos.outputs.name
-    existingSecretNames: deduplicateKVSecrets ? keyVaultSecretList.outputs.secretNameList : ''
-  }
-}
-
-module storageSecret './modules/security/keyvault-storage-secret.bicep' = {
-  name: 'secret-storage${deploymentSuffix}'
-  params: {
-    keyVaultName: keyVault.outputs.name
-    secretName: storage.outputs.storageAccountConnectionStringSecretName
-    storageAccountName: storage.outputs.name
-    existingSecretNames: deduplicateKVSecrets ? keyVaultSecretList.outputs.secretNameList : ''
-  }
-}
-
-module openAISecret './modules/security/keyvault-cognitive-secret.bicep' = {
-  name: 'secret-openai${deploymentSuffix}'
-  params: {
-    keyVaultName: keyVault.outputs.name
-    secretName: openAI.outputs.cognitiveServicesKeySecretName
-    cognitiveServiceName: openAI.outputs.name
-    cognitiveServiceResourceGroup: openAI.outputs.resourceGroupName
-    existingSecretNames: deduplicateKVSecrets ? keyVaultSecretList.outputs.secretNameList : ''
-  }
-}
-
-module documentIntelligenceSecret './modules/security/keyvault-cognitive-secret.bicep' = if (deployDocumentIntelligence) {
-  name: 'secret-doc-intelligence${deploymentSuffix}'
-  params: {
-    keyVaultName: keyVault.outputs.name
-    secretName: documentIntelligence.outputs.keyVaultSecretName
-    cognitiveServiceName: documentIntelligence.outputs.name
-    cognitiveServiceResourceGroup: documentIntelligence.outputs.resourceGroupName
-    existingSecretNames: deduplicateKVSecrets ? keyVaultSecretList.outputs.secretNameList : ''
-  }
-}
-
-module searchSecret './modules/security/keyvault-search-secret.bicep' = {
-  name: 'secret-search${deploymentSuffix}'
-  params: {
-    keyVaultName: keyVault.outputs.name
-    secretName: searchService.outputs.keyVaultSecretName
-    searchServiceName: searchService.outputs.name
-    searchServiceResourceGroup: searchService.outputs.resourceGroupName
-    existingSecretNames: deduplicateKVSecrets ? keyVaultSecretList.outputs.secretNameList : ''
-  }
-}
-
-module apimSecret './modules/security/keyvault-secret.bicep' = if (deployAPIM) {
+module apimSecret './modules/security/keyvault-secret.bicep' = {
   name: 'apim-search${deploymentSuffix}'
   params: {
     keyVaultName: keyVault.outputs.name
     secretName: 'apimkey'
     secretValue: apimAccessKey
-    existingSecretNames: deduplicateKVSecrets ? keyVaultSecretList.outputs.secretNameList : ''
+    existingSecretNames: deduplicateKVSecrets ? keyVaultSecretList!.outputs.secretNameList : ''
   }
-  dependsOn: [ apim ]
+  dependsOn: [apim]
 }
 
 module entraClientIdSecret './modules/security/keyvault-secret.bicep' = if (deployEntraClientSecrets) {
@@ -440,7 +387,7 @@ module entraClientIdSecret './modules/security/keyvault-secret.bicep' = if (depl
     keyVaultName: keyVault.outputs.name
     secretName: 'entraclientid'
     secretValue: entraClientId
-    existingSecretNames: deduplicateKVSecrets ? keyVaultSecretList.outputs.secretNameList : ''
+    existingSecretNames: deduplicateKVSecrets ? keyVaultSecretList!.outputs.secretNameList : ''
   }
 }
 module entraClientSecretSecret './modules/security/keyvault-secret.bicep' = if (deployEntraClientSecrets) {
@@ -449,7 +396,7 @@ module entraClientSecretSecret './modules/security/keyvault-secret.bicep' = if (
     keyVaultName: keyVault.outputs.name
     secretName: 'entraclientsecret'
     secretValue: entraClientSecret
-    existingSecretNames: deduplicateKVSecrets ? keyVaultSecretList.outputs.secretNameList : ''
+    existingSecretNames: deduplicateKVSecrets ? keyVaultSecretList!.outputs.secretNameList : ''
   }
 }
 
@@ -457,11 +404,11 @@ module entraClientSecretSecret './modules/security/keyvault-secret.bicep' = if (
 // -- Cosmos Resources ------------------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------------------------------
 var uiDatabaseName = 'ChatHistory'
-var sessionsDatabaseName = 'Sessions'
+var sessionsDatabaseName = 'sessions'
 var uiChatContainerName = 'ChatTurn'
 var uiChatContainerName2 = 'ChatHistory'
 var apiSessionsContainerName = 'apisessions'
-var sessionsContainerName = 'sessions'
+var uiSessionsContainerName = 'uisessions'
 var cosmosContainerArray = [
   { name: 'AgentLog', partitionKey: '/requestId' }
   { name: 'UserDocuments', partitionKey: '/userId' }
@@ -470,7 +417,7 @@ var cosmosContainerArray = [
 ]
 var sessionsContainerArray = [
   { name: apiSessionsContainerName, partitionKey: '/id' }
-  { name: sessionsContainerName, partitionKey: '/id' }
+  { name: uiSessionsContainerName, partitionKey: '/id' }
 ]
 module cosmos './modules/database/cosmosdb.bicep' = {
   name: 'cosmos${deploymentSuffix}'
@@ -486,6 +433,7 @@ module cosmos './modules/database/cosmosdb.bicep' = {
     userPrincipalId: principalId
     publicNetworkAccess: publicAccessEnabled ? 'enabled' : 'disabled'
     myIpAddress: myIpAddress
+    disableKeys: true
   }
 }
 
@@ -495,6 +443,7 @@ module cosmos './modules/database/cosmosdb.bicep' = {
 module searchService './modules/search/search-services.bicep' = {
   name: 'search${deploymentSuffix}'
   params: {
+    disableLocalAuth: true
     location: location
     name: resourceNames.outputs.searchServiceName
     publicNetworkAccess: publicAccessEnabled ? 'enabled' : 'disabled'
@@ -507,46 +456,68 @@ module searchService './modules/search/search-services.bicep' = {
 }
 
 // --------------------------------------------------------------------------------------------------------------
-// -- Azure OpenAI Resources ------------------------------------------------------------------------------------
+// -- Azure OpenAI/Foundry Resources ------------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------------------------------
-module openAI './modules/ai/cognitive-services.bicep' = {
-  name: 'openai${deploymentSuffix}'
+module aiFoundry './modules/ai/cognitive-services.bicep' = {
+  name: 'aiFoundry${deploymentSuffix}'
   params: {
     managedIdentityId: identity.outputs.managedIdentityId
     name: resourceNames.outputs.cogServiceName
-    location: openAI_deploy_location // this may be different than the other resources
+    location: aiFoundry_deploy_location // this may be different than the other resources
     pe_location: location
     appInsightsName: logAnalytics.outputs.applicationInsightsName
+    disableLocalAuth: true
     tags: tags
-    textEmbeddings: [
+    deployments: [
       {
         name: 'text-embedding'
-        model: {
-          format: 'OpenAI'
-          name: 'text-embedding-ada-002'
-          version: '2'
+        properties: {
+          model: {
+            format: 'OpenAI'
+            name: 'text-embedding-ada-002'
+            version: '2'
+          }
+        }
+      }
+      {
+        name: 'gpt-35-turbo'
+        properties: {
+          model: {
+            format: 'OpenAI'
+            name: 'gpt-35-turbo'
+            version: '0125'
+          }
+        }
+      }
+      {
+        name: gpt40_DeploymentName
+        properties: {
+          model: {
+            format: 'OpenAI'
+            name: gpt40_DeploymentName
+            version: gpt40_ModelVersion
+          }
+        }
+        sku: {
+          name: 'Standard'
+          capacity: gpt40_DeploymentCapacity
+        }
+      }
+      {
+        name: gpt41_DeploymentName
+        properties: {
+          model: {
+            format: 'OpenAI'
+            name: gpt41_DeploymentName
+            version: gpt41_ModelVersion
+          }
+        }
+        sku: {
+          name: 'GlobalStandard'
+          capacity: gpt41_DeploymentCapacity
         }
       }
     ]
-    chatGpt_Standard: {
-      DeploymentName: 'gpt-35-turbo'
-      ModelName: 'gpt-35-turbo'
-      ModelVersion: '0125'
-      DeploymentCapacity: 10
-    }
-    chatGpt_Premium: {
-      DeploymentName: gpt40_DeploymentName
-      ModelName: gpt40_DeploymentName
-      ModelVersion: gpt40_ModelVersion
-      DeploymentCapacity: gpt40_DeploymentCapacity
-
-    }
-    chatGpt_41: {
-      DeploymentName: gpt41_DeploymentName
-      ModelName: gpt41_DeploymentName
-      ModelVersion: gpt41_ModelVersion
-      DeploymentCapacity: gpt41_DeploymentCapacity
-    }
     publicNetworkAccess: publicAccessEnabled ? 'enabled' : 'disabled'
     myIpAddress: myIpAddress
   }
@@ -558,6 +529,7 @@ module openAI './modules/ai/cognitive-services.bicep' = {
 module documentIntelligence './modules/ai/document-intelligence.bicep' = if (deployDocumentIntelligence) {
   name: 'doc-intelligence${deploymentSuffix}'
   params: {
+    disableLocalAuth: true
     name: resourceNames.outputs.documentIntelligenceName
     location: location // this may be different than the other resources
     tags: tags
@@ -571,46 +543,15 @@ module documentIntelligence './modules/ai/document-intelligence.bicep' = if (dep
 }
 
 // --------------------------------------------------------------------------------------------------------------
-// I thought these were the new ones but they are not....
-// do not use the Foundry files in /modules/ai-foundry....
-// use the foundry in /modules/cognitive-services/ai-project.bicep
-// --------------------------------------------------------------------------------------------------------------
-// module aiFoundryHub './modules/ai-foundry/ai-foundry-hub.bicep' = {
-//   name: 'aiHub${deploymentSuffix}'
-//   params: {
-//     location: location
-//     name: resourceNames.outputs.aiHubName
-//     tags: commonTags
-//     applicationInsightsId: logAnalytics.outputs.applicationInsightsId
-//     storageAccountId: storage.outputs.id
-//     aiServiceKind: openAI.outputs.kind
-//     aiServicesId: openAI.outputs.id
-//     aiServicesName: openAI.outputs.name
-//     aiServicesTarget: openAI.outputs.endpoint
-//     aiSearchId: searchService.outputs.id
-//     aiSearchName: searchService.outputs.name
-//   }
-// }
-// module aiFoundryProject './modules/ai-foundry/ai-foundry-project.bicep' = {
-//   name: 'aiFoundryProject${deploymentSuffix}'
-//   params: {
-//     location: location
-//     name: resourceNames.outputs.aiHubFoundryProjectName
-//     tags: commonTags
-//     hubId: aiFoundryHub.outputs.id
-//   }
-// }
-
-// --------------------------------------------------------------------------------------------------------------
 // AI Foundry Hub and Project V2
 // Imported from https://github.com/adamhockemeyer/ai-agent-experience
 // --------------------------------------------------------------------------------------------------------------
-// AI Project and Capability Host
-module aiProject './modules/cognitive-services/ai-project.bicep' = {
+// AI Project
+module aiProject './modules/ai/ai-project.bicep' = {
   name: 'aiProject${deploymentSuffix}'
   params: {
     location: location
-    accountName: openAI.outputs.name
+    foundryName: aiFoundry.outputs.name
     projectName: resourceNames.outputs.aiHubProjectName
     projectDescription: aiProjectDescription
     displayName: aiProjectFriendlyName
@@ -627,14 +568,11 @@ module aiProject './modules/cognitive-services/ai-project.bicep' = {
     azureStorageResourceGroupName: resourceGroup().name
     azureStorageSubscriptionId: subscription().subscriptionId
 
-    // // Connect to App Insights
-    // appInsightsName: logAnalytics.outputs.applicationInsightsName
-    // appInsightsResourceGroupName: resourceGroup().name
-    // appInsightsSubscriptionId: subscription().subscriptionId
+    createHubCapabilityHost: true
   }
 }
 
-module formatProjectWorkspaceId './modules/cognitive-services/format-project-workspace-id.bicep' = {
+module formatProjectWorkspaceId './modules/ai/format-project-workspace-id.bicep' = {
   name: 'aiProjectFormatWorkspaceId${deploymentSuffix}'
   params: {
     projectWorkspaceId: aiProject.outputs.projectWorkspaceId
@@ -660,9 +598,9 @@ module apim './modules/api-management/apim.bicep' = if (deployAPIM) {
 module apimConfiguration './modules/api-management/apim-oai-config.bicep' = if (deployAPIM) {
   name: 'apimConfig${deploymentSuffix}'
   params: {
-    apimName: apim.outputs.name
-    apimLoggerName: apim.outputs.loggerName
-    cognitiveServicesName: openAI.outputs.name
+    apimName: apim!.outputs.name
+    apimLoggerName: apim!.outputs.loggerName
+    cognitiveServicesName: aiFoundry.outputs.name
   }
 }
 
@@ -686,7 +624,9 @@ var apiTargetPort = 8000
 var apiSettings = [
   {
     name: 'API_URL'
-    value: deployCAEnvironment ? 'https://${resourceNames.outputs.containerAppAPIName}.${managedEnvironment.outputs.defaultDomain}/agent' : ''
+    value: deployCAEnvironment
+      ? 'https://${resourceNames.outputs.containerAppAPIName}.${managedEnvironment!.outputs.defaultDomain}/agent'
+      : ''
   }
   { name: 'API_KEY', secretRef: 'apikey' }
   { name: 'APPLICATIONINSIGHTS_CONNECTION_STRING', value: logAnalytics.outputs.appInsightsConnectionString }
@@ -706,54 +646,50 @@ var apiSettings = [
   { name: 'AZURE_SDK_TRACING_IMPLEMENTATION', value: 'opentelemetry' }
   { name: 'AZURE_TRACING_GEN_AI_CONTENT_RECORDING_ENABLED', value: 'true' }
 
+  { name: 'APIM_BASE_URL', value: apimBaseUrl }
+  { name: 'APIM_ACCESS_URL', value: apimAccessUrl }
+  { name: 'APIM_KEY', secretRef: 'apimkey'}
 ]
 var apimSettings = deployAPIM ? [
-  { name: 'API_MANAGEMENT_NAME', value: apim.outputs.name }
-  { name: 'API_MANAGEMENT_ID', value: apim.outputs.id }
-  { name: 'API_MANAGEMENT_ENDPOINT', value: apim.outputs.gatewayUrl }
+  { name: 'API_MANAGEMENT_NAME', value: apim!.outputs.name }
+  { name: 'API_MANAGEMENT_ID', value: apim!.outputs.id }
+  { name: 'API_MANAGEMENT_ENDPOINT', value: apim!.outputs.gatewayUrl }
 ] : []
 var entraSecuritySettings = deployEntraClientSecrets ? [
   { name: 'ENTRA_TENANT_ID', value: entraTenantId }
   { name: 'ENTRA_API_AUDIENCE', value: entraApiAudience }
   { name: 'ENTRA_SCOPES', value: entraScopes }
-  { name: 'ENTRA_REDIRECT_URI', value: entraRedirectUri }
+  { name: 'ENTRA_REDIRECT_URI', value: entraRedirectUri ?? 'https://${resourceNames.outputs.containerAppUIName}.${managedEnvironment!.outputs.defaultDomain}/auth/callback' }
   { name: 'ENTRA_CLIENT_ID', secretRef: 'entraclientid' }
-  { name: 'ENTRA_CLIENT_SECRET',secretRef: 'entraclientsecret' }
+  { name: 'ENTRA_CLIENT_SECRET', secretRef: 'entraclientsecret' }
 ] : []
 
 var baseSecretSet = {
-  cosmos: cosmosSecret.outputs.secretUri
-  aikey: openAISecret.outputs.secretUri
-  searchkey: searchSecret.outputs.secretUri
   apikey: apiKeySecret.outputs.secretUri
 }
-var apimSecretSet = deployAPIM ? {
-  apimkey: apimSecret.outputs.secretUri
-} : {}
-var docIntelliSecretSet = deployDocumentIntelligence ? {
-  docintellikey: documentIntelligenceSecret.outputs.secretUri
-} : {}
+var apimSecretSet = empty(apimAccessKey) ? {} : {
+  apimkey: apimSecret!.outputs.secretUri
+}
 var entraSecretSet = deployEntraClientSecrets ? {
-  entraclientid: entraClientIdSecret.outputs.secretUri
-  entraclientsecret: entraClientSecretSecret.outputs.secretUri
+  entraclientid: entraClientIdSecret!.outputs.secretUri
+  entraclientsecret: entraClientSecretSecret!.outputs.secretUri
 } : {}
 
 module containerAppAPI './modules/app/containerappstub.bicep' = if (deployAPIApp) {
   name: 'ca-api-stub${deploymentSuffix}'
   params: {
     appName: resourceNames.outputs.containerAppAPIName
-    managedEnvironmentName: managedEnvironment.outputs.name
-    managedEnvironmentRg: managedEnvironment.outputs.resourceGroupName
+    managedEnvironmentName: managedEnvironment!.outputs.name
+    managedEnvironmentRg: managedEnvironment!.outputs.resourceGroupName
     workloadProfileName: appContainerAppEnvironmentWorkloadProfileName
     registryName: resourceNames.outputs.ACR_Name
     targetPort: apiTargetPort
     userAssignedIdentityName: identity.outputs.managedIdentityName
     location: location
     imageName: apiImageName
-    
+
     tags: union(tags, { 'azd-service-name': 'api' })
-    deploymentSuffix: deploymentSuffix
-    secrets: union(baseSecretSet, apimSecretSet, docIntelliSecretSet, entraSecretSet) 
+    secrets: union(baseSecretSet, apimSecretSet, entraSecretSet) 
     env: union(apiSettings, apimSettings, entraSecuritySettings)
   }
   dependsOn: deployAPIM ? [containerRegistry, apim] : [containerRegistry]
@@ -761,24 +697,28 @@ module containerAppAPI './modules/app/containerappstub.bicep' = if (deployAPIApp
 
 var UITargetPort = 8001
 var UISettings = union(apiSettings, [
-  { name: 'API_URL', value: deployCAEnvironment ? 'https://${resourceNames.outputs.containerAppAPIName}.${managedEnvironment.outputs.defaultDomain}/agent' : '' }
+  {
+    name: 'API_URL'
+    value: deployCAEnvironment
+      ? 'https://${resourceNames.outputs.containerAppAPIName}.${managedEnvironment!.outputs.defaultDomain}/agent'
+      : ''
+  }
 ])
 
 module containerAppUI './modules/app/containerappstub.bicep' = if (deployUIApp) {
   name: 'ca-UI-stub${deploymentSuffix}'
   params: {
     appName: resourceNames.outputs.containerAppUIName
-    managedEnvironmentName: managedEnvironment.outputs.name
-    managedEnvironmentRg: managedEnvironment.outputs.resourceGroupName
+    managedEnvironmentName: managedEnvironment!.outputs.name
+    managedEnvironmentRg: managedEnvironment!.outputs.resourceGroupName
     workloadProfileName: appContainerAppEnvironmentWorkloadProfileName
     registryName: resourceNames.outputs.ACR_Name
     targetPort: UITargetPort
     userAssignedIdentityName: identity.outputs.managedIdentityName
     location: location
-    imageName: UIImageName
+    imageName: uiImageName
     tags: union(tags, { 'azd-service-name': 'UI' })
-    deploymentSuffix: deploymentSuffix
-    secrets: union(baseSecretSet, apimSecretSet, docIntelliSecretSet, entraSecretSet) 
+    secrets: union(baseSecretSet, apimSecretSet, entraSecretSet)
     env: union(UISettings, apimSettings, entraSecuritySettings)
   }
   dependsOn: deployAPIM ? [containerRegistry, apim] : [containerRegistry]
@@ -788,30 +728,30 @@ module containerAppUI './modules/app/containerappstub.bicep' = if (deployUIApp) 
 // -- Outputs ---------------------------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------------------------------
 output SUBSCRIPTION_ID string = subscription().subscriptionId
-output ACR_NAME string = deployContainerRegistry ? containerRegistry.outputs.name : ''
-output ACR_URL string = deployContainerRegistry ? containerRegistry.outputs.loginServer : ''
-output AI_ENDPOINT string = openAI.outputs.endpoint
-output AI_HUB_ID string = deployAIHub ? aiProject.outputs.projectId : ''
-output AI_HUB_NAME string = deployAIHub ? aiProject.outputs.projectName : ''
+output ACR_NAME string = deployContainerRegistry ? containerRegistry!.outputs.name : ''
+output ACR_URL string = deployContainerRegistry ? containerRegistry!.outputs.loginServer : ''
+output AI_ENDPOINT string = aiFoundry.outputs.endpoint
+output AI_FOUNDRY_PROJECT_ID string = deployAIFoundry ? aiProject.outputs.projectId : ''
+output AI_FOUNDRY_PROJECT_NAME string = deployAIFoundry ? aiProject.outputs.projectName : ''
 output AI_PROJECT_NAME string = resourceNames.outputs.aiHubProjectName
 output AI_SEARCH_ENDPOINT string = searchService.outputs.endpoint
-output API_CONTAINER_APP_FQDN string = deployAPIApp ? containerAppAPI.outputs.fqdn : ''
-output API_CONTAINER_APP_NAME string = deployAPIApp ? containerAppAPI.outputs.name : ''
-output UI_CONTAINER_APP_FQDN string = deployUIApp ? containerAppUI.outputs.fqdn : ''
-output UI_CONTAINER_APP_NAME string = deployUIApp ? containerAppUI.outputs.name : ''
+output API_CONTAINER_APP_FQDN string = deployAPIApp ? containerAppAPI!.outputs.fqdn : ''
+output API_CONTAINER_APP_NAME string = deployAPIApp ? containerAppAPI!.outputs.name : ''
+output UI_CONTAINER_APP_FQDN string = deployUIApp ? containerAppUI!.outputs.fqdn : ''
+output UI_CONTAINER_APP_NAME string = deployUIApp ? containerAppUI!.outputs.name : ''
 output API_KEY string = apiKeyValue
-output API_MANAGEMENT_ID string = deployAPIM ? apim.outputs.id : ''
-output API_MANAGEMENT_NAME string = deployAPIM ? apim.outputs.name : ''
-output AZURE_CONTAINER_ENVIRONMENT_NAME string = deployCAEnvironment ? managedEnvironment.outputs.name : ''
-output AZURE_CONTAINER_REGISTRY_ENDPOINT string = deployContainerRegistry ? containerRegistry.outputs.loginServer : ''
-output AZURE_CONTAINER_REGISTRY_NAME string = deployContainerRegistry ? containerRegistry.outputs.name : ''
+output API_MANAGEMENT_ID string = deployAPIM ? apim!.outputs.id : ''
+output API_MANAGEMENT_NAME string = deployAPIM ? apim!.outputs.name : ''
+output AZURE_CONTAINER_ENVIRONMENT_NAME string = deployCAEnvironment ? managedEnvironment!.outputs.name : ''
+output AZURE_CONTAINER_REGISTRY_ENDPOINT string = deployContainerRegistry ? containerRegistry!.outputs.loginServer : ''
+output AZURE_CONTAINER_REGISTRY_NAME string = deployContainerRegistry ? containerRegistry!.outputs.name : ''
 output AZURE_RESOURCE_GROUP string = resourceGroupName
 output COSMOS_CONTAINER_NAME string = uiChatContainerName
 output COSMOS_DATABASE_NAME string = cosmos.outputs.databaseName
 output COSMOS_ENDPOINT string = cosmos.outputs.endpoint
-output DOCUMENT_INTELLIGENCE_ENDPOINT string = deployDocumentIntelligence ? documentIntelligence.outputs.endpoint : ''
-output MANAGED_ENVIRONMENT_ID string = deployCAEnvironment ? managedEnvironment.outputs.id : ''
-output MANAGED_ENVIRONMENT_NAME string = deployCAEnvironment ? managedEnvironment.outputs.name : ''
+output DOCUMENT_INTELLIGENCE_ENDPOINT string = deployDocumentIntelligence ? documentIntelligence!.outputs.endpoint : ''
+output MANAGED_ENVIRONMENT_ID string = deployCAEnvironment ? managedEnvironment!.outputs.id : ''
+output MANAGED_ENVIRONMENT_NAME string = deployCAEnvironment ? managedEnvironment!.outputs.name : ''
 output RESOURCE_TOKEN string = resourceToken
 output STORAGE_ACCOUNT_BATCH_IN_CONTAINER string = storage.outputs.containerNames[1].name
 output STORAGE_ACCOUNT_BATCH_OUT_CONTAINER string = storage.outputs.containerNames[2].name

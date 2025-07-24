@@ -34,7 +34,7 @@ on:
         description: Create\Update Container Apps
         required: false
         default: false
-        type: boolean
+        type: boolean        
       runMSSecurityScan:
         description: Run MS DevSecOps Security Scan
         required: false
@@ -42,6 +42,11 @@ on:
         type: boolean
       runGHASSecurityScan:
         description: Run GHAS Scan
+        required: false
+        default: false
+        type: boolean
+      updateACRFirewall:
+        description: Update ACR Firewall
         required: false
         default: false
         type: boolean
@@ -88,8 +93,8 @@ jobs:
 
       # BICEP DEFINITION: output acrName string = toLower('${resourceAbbreviations.appContainerRegistry}-${sanitizedAppName}-${sanitizedEnvironment}${resourceToken}${dashRegionDashInstance}')
       # EXAMPLE: crooaidevnaa020
-      # ACR_NAME: 'cr${{ steps.set-env.outputs.APP_NAME_NO_DASHES }}${{ inputs.deployEnvironment }}${{ vars.GLOBAL_REGION_CODE }}${{ vars.INSTANCE_NUMBER }}'
-      ACR_NAME: '${{ steps.set-env.outputs.ACR_NAME }}'
+      ACR_NAME: 'cr${{ steps.set-env.outputs.APP_NAME_NO_DASHES }}${{ inputs.deployEnvironment }}${{ vars.GLOBAL_REGION_CODE }}${{ vars.INSTANCE_NUMBER }}'
+      # ACR_NAME: '${{ steps.set-env.outputs.ACR_NAME }}'
       ACR_REPO_NAME: ${{ env.ACR_REPO_NAME }}
 
       # BICEP DEFINITION: output caManagedEnvName string = toLower('${resourceAbbreviations.appManagedEnvironments}-${sanitizedAppName}-${sanitizedEnvironment}${resourceToken}${dashRegionDashInstance}')
@@ -119,7 +124,7 @@ jobs:
           echo "inputs.ENV_CODE: ${{ inputs.deployEnvironment }}"
           echo "vars.APP_NAME: ${{ vars.APP_NAME }}"
 
-          APP_NAME_NO_DASHES="$(echo ${{ vars.APP_NAME }} | tr -d '-' | tr -d '_')"
+          APP_NAME_NO_DASHES="$(echo ${{ vars.APP_NAME }} | tr -d '-' | tr -d '_' | tr '[:upper:]' '[:lower:]')"
           echo "APP_NAME_NO_DASHES=$APP_NAME_NO_DASHES"
           echo "APP_NAME_NO_DASHES=$APP_NAME_NO_DASHES" >> $GITHUB_OUTPUT
           
@@ -127,12 +132,11 @@ jobs:
           echo "ENV_DASH_REGION_DASH_INSTANCE=$ENV_DASH_REGION_DASH_INSTANCE"
           echo "ENV_DASH_REGION_DASH_INSTANCE=$ENV_DASH_REGION_DASH_INSTANCE" >> $GITHUB_OUTPUT
           
-          # RESOURCE_GROUP_NAME="$(echo "${{ vars.RESOURCEGROUP_PREFIX }}-${{ inputs.deployEnvironment }}-${{ vars.GLOBAL_REGION_CODE }}-${{ vars.INSTANCE_NUMBER }}" | tr '[:upper:]' '[:lower:]')"
-          RESOURCE_GROUP_NAME="${{ vars.RESOURCEGROUP_NAME }}"
+          RESOURCE_GROUP_NAME="$(echo "${{ vars.RESOURCEGROUP_PREFIX }}-${{ inputs.deployEnvironment }}-${{ vars.GLOBAL_REGION_CODE }}-${{ vars.INSTANCE_NUMBER }}" | tr '[:upper:]' '[:lower:]')"
           echo "RESOURCE_GROUP_NAME=$RESOURCE_GROUP_NAME"
           echo "RESOURCE_GROUP_NAME=$RESOURCE_GROUP_NAME" >> $GITHUB_OUTPUT
 
-          ACR_NAME="${{ vars.ACR_NAME }}"
+          ACR_NAME="$(echo ${{ vars.ACR_NAME }} | tr '[:upper:]' '[:lower:]')"
           echo "ACR_NAME=$ACR_NAME" >> $GITHUB_OUTPUT
 
           CONTAINER_APP_ENV_NAME="${{ vars.CONTAINER_APP_ENV_NAME }}"
@@ -176,7 +180,7 @@ jobs:
 
       ACR_NAME: ${{ needs.template-env.outputs.ACR_NAME }}
       ACR_REPO_NAME: ${{ needs.template-env.outputs.ACR_REPO_NAME }}
-      ACR_FW_UPDATE: false # not needed if ACR is publicly accessible
+      ACR_FW_UPDATE: ${{ inputs.updateACRFirewall }}
 
       APP_PATH: ${{ needs.template-env.outputs.API_APP_PATH }}
       ACR_APP_NAME: ${{ needs.template-env.outputs.API_ACR_APP_NAME }}
@@ -195,7 +199,7 @@ jobs:
 
       ACR_NAME: ${{ needs.template-env.outputs.ACR_NAME }}
       ACR_REPO_NAME: ${{ needs.template-env.outputs.ACR_REPO_NAME }}
-      ACR_FW_UPDATE: false # not needed if ACR is publicly accessible
+      ACR_FW_UPDATE: ${{ inputs.updateACRFirewall }}
 
       APP_PATH: ${{ needs.template-env.outputs.UI_APP_PATH }}
       ACR_APP_NAME: ${{ needs.template-env.outputs.UI_ACR_APP_NAME }}
@@ -324,7 +328,7 @@ jobs:
             --env-vars APPLICATIONINSIGHTS_CONNECTION_STRING="${{ vars.APPLICATIONINSIGHTS_CONNECTION_STRING }}" \
             COSMOS_DB_ENDPOINT="${{ vars.COSMOS_DB_ENDPOINT }}" \
             COSMOS_DB_SESSIONS_DATABASE_NAME="sessions" \
-            COSMOS_DB_SESSIONS_CONTAINER_NAME="sessions" \
+            COSMOS_DB_SESSIONS_CONTAINER_NAME="uisessions" \
             ENTRA_CLIENT_ID=secretref:entraclientid \
             ENTRA_CLIENT_SECRET=secretref:entraclientsecret \
             ENTRA_TENANT_ID="${{ vars.ENTRA_TENANT_ID }}" \

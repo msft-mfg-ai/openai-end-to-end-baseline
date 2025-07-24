@@ -45,14 +45,14 @@ Follow these steps to get started quickly:
 
     The Resource Group Name created will be `<RESOURCEGROUP_PREFIX>-<ENVIRONMENT>-<GLOBAL_REGION_CODE>-<INSTANCE>` and will be created in the `<RESOURCEGROUP_LOCATION>` Azure region. If you want to use an existing Resource Group Name or change the format of the `generatedResourceGroupName` variable in the [template-create-infra.yml](./workflows/template-create-infra.yml) file (and a few other YML files... search for `RESOURCEGROUP_PREFIX`).
 
-    The `<OPENAI_DEPLOY_LOCATION>` can be specified if you want to deploy the OpenAI resources in a different region than the rest of the resources due to region constraints.
+    The `<AIFOUNDRY_DEPLOY_LOCATION>` can be specified if you want to deploy the OpenAI resources in a different region than the rest of the resources due to region constraints.
 
     ```bash
     gh variable set APP_NAME -b YOUR-APP-NAME
     gh variable set APP_ID -b YOUR-APP-ID
     gh variable set RESOURCEGROUP_PREFIX -b rg-PREFIX
     gh variable set RESOURCEGROUP_LOCATION -b eastus2
-    gh variable set OPENAI_DEPLOY_LOCATION -b eastus2
+    gh variable set AIFOUNDRY_DEPLOY_LOCATION -b eastus2
     gh variable set INSTANCE_NUMBER -b 01
     gh variable set GLOBAL_REGION_CODE -b AM
     ```

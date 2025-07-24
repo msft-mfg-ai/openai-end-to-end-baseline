@@ -58,7 +58,7 @@ jobs:
           echo '${{ toJSON(inputs) }}'
           echo "##[endgroup]"
         continue-on-error: true
-
+        
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -72,9 +72,10 @@ jobs:
 
       - name: Deploy Container App
         run: |
-          echo "az containerapp update --name ${{ inputs.CONTAINER_NAME }} --resource-group ${{ inputs.RESOURCE_GROUP }} --container-name app --image '${{ inputs.ACR_NAME }}.azurecr.io/${{ inputs.IMAGE_NAME }}'"
+          IMAGE="$(echo '${{ inputs.ACR_NAME }}.azurecr.io/${{ inputs.IMAGE_NAME }}' | tr '[:upper:]' '[:lower:]')"
+          echo "az containerapp update --name ${{ inputs.CONTAINER_NAME }} --resource-group ${{ inputs.RESOURCE_GROUP }} --container-name app --image $IMAGE"
           az containerapp update \
             --name ${{ inputs.CONTAINER_NAME }} \
             --resource-group ${{ inputs.RESOURCE_GROUP }} \
             --container-name app \
-            --image '${{ inputs.ACR_NAME }}.azurecr.io/${{ inputs.IMAGE_NAME }}'
+            --image $IMAGE

@@ -41,6 +41,39 @@ param zones array = [
   3
 ]
 
+var supportedZoneRegions = [
+  'koreacentral'
+  'mexicocentral'
+  'canadacentral'
+  'polandcentral'
+  'israelcentral'
+  'francecentral'
+  'qatarcentral'
+  'eastasia'
+  'eastus2'
+  'norwayeast'
+  'italynorth'
+  'swedencentral'
+  'southafricanorth'
+  'brazilsouth'
+  'germanywestcentral'
+  'westus2'
+  'spaincentral'
+  'northeurope'
+  'uksouth'
+  'australiaeast'
+  'uaenorth'
+  'centralus'
+  'switzerlandnorth'
+  'indiacentral'
+  'japaneast'
+  'japanwest'
+]
+
+var useZones = contains(supportedZoneRegions, toLower(location))
+
+var availabilityZones = useZones ? zones : []
+
 //@description('Optional. Diagnostic settings configuration.')
 //param diagnosticSettings array = []
 
@@ -51,7 +84,7 @@ resource publicIp 'Microsoft.Network/publicIPAddresses@2024-05-01' = {
   name: name
   location: location
   tags: tags
-  zones: zones
+  zones: availabilityZones
   sku: {
     name: sku
     tier: tier
@@ -119,3 +152,6 @@ output ipAddress string = publicIp.properties.ipAddress
 
 @description('The FQDN of the public IP.')
 output fqdn string = !empty(dnsLabelPrefix) ? publicIp.properties.dnsSettings.fqdn : ''
+
+@description('The availability zones the public IP is deployed into.')
+output availabilityZones array = availabilityZones

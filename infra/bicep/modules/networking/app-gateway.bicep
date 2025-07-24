@@ -46,6 +46,9 @@ param wafPolicyResourceId string
 @description('The maximum timeout in seconds for the backend to respond to a request')
 param backendMaxTimeoutSeconds int
 
+@description('A list of availability zones denoting where the resource needs to come from.')
+param availabilityZones array = [1, 2, 3]
+
 var internalHttpsListenerName = 'internalGatewayHttpsListener'
 var externalHttpsListenerName = 'externalHttpsListener'
 var apimFrontEndPort = 'https_443'
@@ -319,7 +322,6 @@ resource appGw 'Microsoft.Network/applicationGateways@2023-11-01' = {
             statusCodes: [
               '200-399'
             ]
-          
           }
         }
       }
@@ -364,7 +366,7 @@ resource appGw 'Microsoft.Network/applicationGateways@2023-11-01' = {
       id: wafPolicyResourceId
     }
   }
-  zones: ['1', '2', '3']
+  zones: availabilityZones
 }
 
 resource diags 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {

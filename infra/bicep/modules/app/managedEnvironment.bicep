@@ -10,6 +10,8 @@ param logAnalyticsRgName string
 param appSubnetId string = ''
 param publicAccessEnabled bool = true
 param containerAppEnvironmentWorkloadProfiles array
+param privateEndpointSubnetId string = ''
+param privateEndpointName string = ''
 
 // --------------------------------------------------------------------------------------------------------------
 var useExistingEnvironment = !empty(existingEnvironmentName)
@@ -56,8 +58,23 @@ resource newAppEnvironmentResource 'Microsoft.App/managedEnvironments@2024-03-01
   }
 }
 
+// --------------------------------------------------------------------------------------------------------------
+// Private Endpoints
+module privateEndpoint '../networking/private-endpoint.bicep' = if (!useExistingEnvironment && !empty(privateEndpointSubnetId) && !empty(privateEndpointName)) {
+  name: '${cleanAppEnvName}-private-endpoint'
+  params: {
+    tags: tags
+    location: location
+    privateEndpointName: privateEndpointName
+    groupIds: ['managedEnvironments']
+    targetResourceId: newAppEnvironmentResource.id
+    subnetId: privateEndpointSubnetId
+  }
+}
+
 output id string = useExistingEnvironment ? existingAppEnvironmentResource.id : newAppEnvironmentResource.id
 output name string = useExistingEnvironment ? existingAppEnvironmentResource.name : newAppEnvironmentResource.name
 output resourceGroupName string = resourceGroupName
-output defaultDomain string = useExistingEnvironment ? existingAppEnvironmentResource.properties.defaultDomain : newAppEnvironmentResource.properties.defaultDomain
-output staticIp string = useExistingEnvironment ? existingAppEnvironmentResource.properties.staticIp : newAppEnvironmentResource.properties.staticIp
+output defaultDomain string = useExistingEnvironment ? existingAppEnvironmentResource!.properties.defaultDomain : newAppEnvironmentResource!.properties.defaultDomain
+output staticIp string = useExistingEnvironment ? existingAppEnvironmentResource!.properties.staticIp : newAppEnvironmentResource!.properties.staticIp
+output privateEndpointName string = privateEndpointName

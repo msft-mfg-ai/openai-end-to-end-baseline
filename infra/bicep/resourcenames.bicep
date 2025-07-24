@@ -99,11 +99,13 @@ output peKeyVaultName string = 'pep-${sanitizedAppName}-${sanitizedEnvironment}-
 output peAcrName string = 'pep-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-006'
 output peSearchServiceName string = 'pep-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-007'
 output peOpenAIName string = 'pep-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-008'
-output peOpenAIServiceConnection string = 'pep-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-009'
+output peContainerAppsName string = 'pep-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-009'
+
 output peDocumentIntelligenceName string = 'pep-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-010'
-output peAIHubName string = 'pep-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-011'
-output peAppInsightsName string = 'pep-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-012'
-output peMonitorName string = 'pep-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-013'
+output peOpenAIServiceConnection string = 'pep-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-011'
+output peAIHubName string = 'pep-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-012'
+output peAppInsightsName string = 'pep-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-013'
+output peMonitorName string = 'pep-${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-014'
 
 output vnetNsgName string = '${resourceAbbreviations.networkNetworkSecurityGroups}${sanitizedAppName}-${sanitizedEnvironment}-${regionCode}-001'
 

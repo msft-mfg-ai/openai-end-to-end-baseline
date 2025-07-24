@@ -38,7 +38,7 @@ param semanticSearch string = 'standard'
 param privateEndpointSubnetId string = ''
 param privateEndpointName string = ''
 param managedIdentityId string = ''
-
+param disableLocalAuth bool = false
 // --------------------------------------------------------------------------------------------------------------
 // Variables
 // --------------------------------------------------------------------------------------------------------------
@@ -63,6 +63,7 @@ resource search 'Microsoft.Search/searchServices@2024-06-01-preview' = if (!useE
     }
   }
   properties: {
+    disableLocalAuth: disableLocalAuth
     networkRuleSet: publicNetworkAccess == 'enabled' ? {} : {
       bypass: 'AzurePortal'
       ipRules: empty(myIpAddress)
@@ -77,7 +78,7 @@ resource search 'Microsoft.Search/searchServices@2024-06-01-preview' = if (!useE
     publicNetworkAccess: publicNetworkAccess
     replicaCount: replicaCount
     semanticSearch: semanticSearch
-    authOptions: {
+    authOptions: disableLocalAuth ? null : {
       aadOrApiKey: {
         aadAuthFailureMode: 'http401WithBearerChallenge'
       }

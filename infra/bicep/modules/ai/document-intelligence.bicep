@@ -15,6 +15,7 @@ param privateEndpointName string = ''
 @description('Provide the IP address to allow access to the Azure Container Registry')
 param myIpAddress string = ''
 param managedIdentityId string = ''
+param disableLocalAuth bool = false
 
 // --------------------------------------------------------------------------------------------------------------
 // Variables
@@ -42,6 +43,7 @@ resource account 'Microsoft.CognitiveServices/accounts@2023-05-01' = if (!useExi
       }
     }
     properties: {
+      disableLocalAuth: disableLocalAuth
       publicNetworkAccess: publicNetworkAccess
       networkAcls: {
         defaultAction: publicNetworkAccess == 'Enabled' ? 'Allow' : 'Deny'
