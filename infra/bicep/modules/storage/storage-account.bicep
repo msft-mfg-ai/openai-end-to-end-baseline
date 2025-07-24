@@ -17,6 +17,7 @@ param resourcesWithAccess object[] = []
 param kind string = 'StorageV2'
 param minimumTlsVersion string = 'TLS1_2'
 param sku object = { name: 'Standard_LRS' }
+param allowSharedKeyAccess bool = true
 
 // --------------------------------------------------------------------------------------------------------------
 // Variables
@@ -59,6 +60,7 @@ resource storage 'Microsoft.Storage/storageAccounts@2023-05-01' = if (!useExisti
     allowBlobPublicAccess: false
     publicNetworkAccess: publicNetworkAccess ? 'Enabled' : 'Disabled' // this needs to be 'Enabled' for 'Enabled from selected virtual networks and IP addresses'
     supportsHttpsTrafficOnly: true
+    allowSharedKeyAccess: allowSharedKeyAccess
     networkAcls: {
       bypass: 'AzureServices'
       resourceAccessRules: resourcesWithAccess

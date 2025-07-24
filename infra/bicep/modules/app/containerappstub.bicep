@@ -2,7 +2,8 @@
 param appName string
 param managedEnvironmentName string
 param managedEnvironmentRg string
-param imageName string = ''
+@description('Full image name including tag, e.g. "myregistry.azurecr.io/myapp:latest"')
+param imageName string?
 param registryName string
 param userAssignedIdentityName string
 param workloadProfileName string
@@ -12,7 +13,6 @@ param targetPort int = 80
 
 param location string = resourceGroup().location
 param tags object = {}
-param deploymentSuffix string = ''
 
 @description('The secrets required for the container, with the key being the secret name and the value being the key vault URL')
 @secure()
@@ -31,13 +31,6 @@ resource userIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-
   name: userAssignedIdentityName
 }
 
-module fetchLatestImage './fetch-container-image.bicep' = {
-  name: 'app-fetch-image-${appName}${deploymentSuffix}'
-  params: {
-    exists: false
-    name: imageName
-  }
-}
 
 resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
   name: appName
@@ -71,8 +64,8 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
     template: {
       containers: [
         {
-          name: workloadProfileName
-          image: fetchLatestImage.outputs.?containers[?0].?image ?? 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
+          name: 'app'
+          image: imageName ?? 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
           env: env
           resources: {
             cpu: json('0.5')

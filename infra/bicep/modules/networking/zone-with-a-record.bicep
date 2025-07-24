@@ -1,32 +1,30 @@
+param privateEndpointNames string[]
+param zoneNames string[] = []
 param tags object = {}
 param vnetResourceId string
-param zoneName string
-param privateEndpointNames string[]
 
-module zone 'private-dns.bicep' = {
+resource pe 'Microsoft.Network/privateEndpoints@2023-06-01' existing = [for privateEndpointName in privateEndpointNames: {
+  name: privateEndpointName
+}]
+
+module zones 'private-dns.bicep' = [for zoneName in zoneNames: {
   name: '${zoneName}-zone'
   params: {
     zoneName: zoneName
     vnetResourceId: vnetResourceId
     tags: tags
   }
-}
-
-resource pe 'Microsoft.Network/privateEndpoints@2023-06-01' existing = [for privateEndpointName in privateEndpointNames: {
-  name: privateEndpointName
 }]
 
-resource privateEndpointDnsGroupname 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2022-07-01' = [for (privateEndpointName, i) in privateEndpointNames: {
+resource privateEndpointDnsGroupname 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2023-06-01' = [for (privateEndpointName, i) in privateEndpointNames: {
+  name: '${privateEndpointName}-dns-group'
   parent: pe[i]
-  name: '${privateEndpointName}-dnsgroup'
   properties: {
-    privateDnsZoneConfigs: [
-      {
-        name: 'config for ${privateEndpointName}'
-        properties: {
-          privateDnsZoneId: zone.outputs.id
-        }
+    privateDnsZoneConfigs: [for (z,j) in zoneNames: {
+      name: '${pe[i].name} for ${z}'
+      properties: {
+        privateDnsZoneId: zones[j].outputs.id
       }
-    ]
+    }]
   }
 }]

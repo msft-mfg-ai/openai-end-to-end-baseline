@@ -19,10 +19,10 @@ param databaseName string
 param sessionsDatabaseName string = ''
 
 @description('The collection of containers to create')
-param containerArray array = []
+param containerArray containerType[] = []
 
 @description('The collection of containers to create in sessions database')
-param sessionContainerArray array = []
+param sessionContainerArray containerType[] = []
 
 @description('Location for the Cosmos DB account.')
 param location string = resourceGroup().location
@@ -38,7 +38,13 @@ param privateEndpointSubnetId string = ''
 param privateEndpointName string = ''
 param managedIdentityPrincipalId string = ''
 param userPrincipalId string = ''
+param disableKeys bool = false
 
+@export()
+type containerType = {
+  name: string
+  partitionKey: string
+}
 // --------------------------------------------------------------------------------------------------------------
 // Variables
 // --------------------------------------------------------------------------------------------------------------
@@ -66,8 +72,8 @@ resource cosmosAccount 'Microsoft.DocumentDB/databaseAccounts@2024-08-15' = if (
     enableMultipleWriteLocations: false
     isVirtualNetworkFilterEnabled: false
     virtualNetworkRules: []
-    disableKeyBasedMetadataWriteAccess: false
-    disableLocalAuth: false
+    disableKeyBasedMetadataWriteAccess: disableKeys
+    disableLocalAuth: disableKeys
     enableFreeTier: false
     enableAnalyticalStorage: false
     createMode: 'Default'
@@ -126,57 +132,61 @@ resource sessionsCosmosDatabase 'Microsoft.DocumentDB/databaseAccounts/sqlDataba
   }
 }
 
-resource sessionsContainer 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers@2024-08-15' = [for container in sessionContainerArray: if (!useExistingAccount) {
-  parent: sessionsCosmosDatabase
-  name: container.Name
-  tags: tags
-  properties: {
-    resource: {
-      id: container.name
-      indexingPolicy: {
-        indexingMode: 'consistent'
-        automatic: true
-        includedPaths: [{ path: '/*' }]
-        excludedPaths: [{ path: '/"_etag"/?' }]
+resource sessionsContainers 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers@2024-08-15' = [
+  for container in sessionContainerArray: if (!useExistingAccount) {
+    parent: sessionsCosmosDatabase
+    name: container.name
+    tags: tags
+    properties: {
+      resource: {
+        id: container.name
+        indexingPolicy: {
+          indexingMode: 'consistent'
+          automatic: true
+          includedPaths: [{ path: '/*' }]
+          excludedPaths: [{ path: '/"_etag"/?' }]
+        }
+        partitionKey: {
+          paths: [container.partitionKey]
+          kind: 'Hash'
+        }
+        conflictResolutionPolicy: {
+          mode: 'LastWriterWins'
+          conflictResolutionPath: '/_ts'
+        }
       }
-      partitionKey: {
-        paths: [ container.partitionKey ]
-        kind: 'Hash'
-      }
-      conflictResolutionPolicy: {
-        mode: 'LastWriterWins'
-        conflictResolutionPath: '/_ts'
-      }
+      options: {}
     }
-    options: {}
   }
-}]
+]
 
-resource chatContainer 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers@2024-08-15' = [for container in containerArray: if (!useExistingAccount) {
-  parent: cosmosDatabase
-  name: container.Name
-  tags: tags
-  properties: {
-    resource: {
-      id: container.name
-      indexingPolicy: {
-        indexingMode: 'consistent'
-        automatic: true
-        includedPaths: [{ path: '/*' }]
-        excludedPaths: [{ path: '/"_etag"/?' }]
+resource chatContainers 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers@2024-08-15' = [
+  for container in containerArray: if (!useExistingAccount) {
+    parent: cosmosDatabase
+    name: container.name
+    tags: tags
+    properties: {
+      resource: {
+        id: container.name
+        indexingPolicy: {
+          indexingMode: 'consistent'
+          automatic: true
+          includedPaths: [{ path: '/*' }]
+          excludedPaths: [{ path: '/"_etag"/?' }]
+        }
+        partitionKey: {
+          paths: [container.partitionKey]
+          kind: 'Hash'
+        }
+        conflictResolutionPolicy: {
+          mode: 'LastWriterWins'
+          conflictResolutionPath: '/_ts'
+        }
       }
-      partitionKey: {
-        paths: [ container.partitionKey ]
-        kind: 'Hash'
-      }
-      conflictResolutionPolicy: {
-        mode: 'LastWriterWins'
-        conflictResolutionPath: '/_ts'
-      }
+      options: {}
     }
-    options: {}
   }
-}]
+]
 
 module privateEndpoint '../networking/private-endpoint.bicep' = if (!useExistingAccount && !empty(privateEndpointSubnetId)) {
   name: '${accountName}-private-endpoint'
@@ -190,6 +200,31 @@ module privateEndpoint '../networking/private-endpoint.bicep' = if (!useExisting
 }
 
 var roleDefinitions = loadJsonContent('../../data/roleDefinitions.json')
+
+resource cosmosDBOperatorRole 'Microsoft.Authorization/roleDefinitions@2022-04-01' existing = {
+  name: roleDefinitions.cosmos.operatorRoleId
+  scope: resourceGroup()
+}
+
+resource cosmosDBOperatorRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  scope: cosmosAccount
+  name: guid(managedIdentityPrincipalId, cosmosDBOperatorRole.id, cosmosAccount.id)
+  properties: {
+    principalId: managedIdentityPrincipalId
+    roleDefinitionId: cosmosDBOperatorRole.id
+    principalType: 'ServicePrincipal'
+  }
+}
+
+resource cosmosDBOperatorRoleAssignmentForUser 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (!useExistingAccount && !empty(userPrincipalId)) {
+  scope: cosmosAccount
+  name: guid(userPrincipalId, cosmosDBOperatorRole.id, cosmosAccount.id)
+  properties: {
+    principalId: userPrincipalId
+    roleDefinitionId: cosmosDBOperatorRole.id
+    principalType: 'User'
+  }
+}
 
 resource cosmosDbDataContributorRoleAssignment 'Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignments@2024-08-15' = if (!useExistingAccount) {
   name: guid(
@@ -206,7 +241,7 @@ resource cosmosDbDataContributorRoleAssignment 'Microsoft.DocumentDB/databaseAcc
   }
 }
 
-resource cosmosDbUserAccessRoleAssignment 'Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignments@2024-08-15' = if (!useExistingAccount && userPrincipalId != '') {
+resource cosmosDbUserAccessRoleAssignment 'Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignments@2024-08-15' = if (!useExistingAccount && !empty(userPrincipalId)) {
   name: guid(resourceGroup().id, userPrincipalId, roleDefinitions.cosmos.dataContributorRoleId, cosmosAccount.id)
   parent: cosmosAccount
   properties: {
@@ -216,13 +251,37 @@ resource cosmosDbUserAccessRoleAssignment 'Microsoft.DocumentDB/databaseAccounts
   }
 }
 
+var sessionContainerIds = [
+  for container in sessionContainerArray: '/subscriptions/${subscription().subscriptionId}/resourceGroups/${resourceGroup().name}/providers/Microsoft.DocumentDB/databaseAccounts/${cosmosAccount.name}/dbs/${sessionsDatabaseName}/colls/${container.name}'
+]
+var chatContainerIds = [
+  for container in containerArray: '/subscriptions/${subscription().subscriptionId}/resourceGroups/${resourceGroup().name}/providers/Microsoft.DocumentDB/databaseAccounts/${cosmosAccount.name}/dbs/${databaseName}/colls/${container.name}'
+]
+
+resource containerRoleAssignmentUserContainer 'Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignments@2022-05-15' = [
+  for container in union(chatContainerIds, sessionContainerIds): if (!useExistingAccount) {
+  parent: cosmosAccount
+  name: guid(container, roleDefinitions.cosmos.dataContributorRoleId, managedIdentityPrincipalId)
+  properties: {
+    principalId: managedIdentityPrincipalId
+    roleDefinitionId: '${resourceGroup().id}/providers/Microsoft.DocumentDB/databaseAccounts/${cosmosDatabase.name}/sqlRoleDefinitions/${roleDefinitions.cosmos.dataContributorRoleId}'
+    scope: container
+  }
+  dependsOn: [
+    sessionsContainers
+    chatContainers
+  ]
+}]
+
 // --------------------------------------------------------------------------------------------------------------
 // Outputs
 // --------------------------------------------------------------------------------------------------------------
 output id string = useExistingAccount ? existingCosmosAccount.id : cosmosAccount.id
 output name string = useExistingAccount ? existingCosmosAccount.name : cosmosAccount.name
 output resourceGroupName string = useExistingAccount ? existingCosmosResourceGroupName : resourceGroup().name
-output endpoint string = useExistingAccount ? existingCosmosAccount.properties.documentEndpoint : cosmosAccount.properties.documentEndpoint
+output endpoint string = useExistingAccount
+  ? existingCosmosAccount.properties.documentEndpoint
+  : cosmosAccount.properties.documentEndpoint
 output keyVaultSecretName string = connectionStringSecretName
 output privateEndpointName string = privateEndpointName
 output databaseName string = databaseName

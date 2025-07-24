@@ -93,6 +93,14 @@ resource newVirtualNetwork 'Microsoft.Network/virtualNetworks@2024-01-01' = if (
         name: subnetAgentName
         properties: {
           addressPrefix: subnetAgentPrefix
+          delegations: [
+            {
+              name: 'Microsoft.app/environments'
+              properties: {
+                serviceName: 'Microsoft.app/environments'
+              }
+            }
+          ]
         }
       }
       {
@@ -104,7 +112,7 @@ resource newVirtualNetwork 'Microsoft.Network/virtualNetworks@2024-01-01' = if (
         }
       }
       {
-        name: subnetJumpboxName 
+        name: subnetJumpboxName
         properties: {
           addressPrefix: subnetJumpboxPrefix
         }
@@ -129,16 +137,16 @@ resource newVirtualNetwork 'Microsoft.Network/virtualNetworks@2024-01-01' = if (
           networkSecurityGroup: {
             id: appSubnetNSG.outputs.id
           }
-          delegations: [ 
+          delegations: [
             {
-              name: 'environments'
+              name: 'Microsoft.App/environments'
               properties: {
                 serviceName: 'Microsoft.App/environments'
               }
               // id: 'string' // Resource ID.
               // type: 'string' // Resource type.
-            } 
-          ] 
+            }
+          ]
         }
       }
     ]
@@ -154,7 +162,7 @@ resource newVirtualNetwork 'Microsoft.Network/virtualNetworks@2024-01-01' = if (
   resource subnetPe 'subnets' existing = {
     name: subnetPeName
   }
-  resource subnetAgent'subnets' existing = {
+  resource subnetAgent 'subnets' existing = {
     name: subnetAgentName
   }
   resource subnetBastion 'subnets' existing = {
@@ -173,12 +181,30 @@ resource newVirtualNetwork 'Microsoft.Network/virtualNetworks@2024-01-01' = if (
 
 output vnetResourceId string = useExistingResource ? existingVirtualNetwork.id : newVirtualNetwork.id
 output vnetName string = useExistingResource ? existingVirtualNetwork.name : newVirtualNetwork.name
-output subnetAppGwResourceID string = useExistingResource ? existingVirtualNetwork::subnetAppGw.id : newVirtualNetwork::subnetAppGw.id
-output subnetAppSeResourceID string = useExistingResource ? existingVirtualNetwork::subnetAppSe.id : newVirtualNetwork::subnetAppSe.id  
-output subnetPeResourceID string = useExistingResource ? existingVirtualNetwork::subnetPe.id : newVirtualNetwork::subnetPe.id
-output subnetAgentResourceID string = useExistingResource ? existingVirtualNetwork::subnetAgent.id : newVirtualNetwork::subnetAgent.id
-output subnetBastionResourceID string = useExistingResource ? existingVirtualNetwork::subnetBastion.id : newVirtualNetwork::subnetBastion.id
-output subnetJumpboxResourceID string = useExistingResource ? existingVirtualNetwork::subnetJumpbox.id : newVirtualNetwork::subnetJumpbox.id
-output subnetTrainingResourceID string = useExistingResource ? existingVirtualNetwork::subnetTraining.id : newVirtualNetwork::subnetTraining.id
-output subnetScoringResourceID string = useExistingResource ? existingVirtualNetwork::subnetScoring.id : newVirtualNetwork::subnetScoring.id
-output vnetAddressPrefix string = useExistingResource ? existingVirtualNetwork.properties.addressSpace.addressPrefixes[0] : newVirtualNetwork.properties.addressSpace.addressPrefixes[0]
+output subnetAppGwResourceID string = useExistingResource
+  ? existingVirtualNetwork::subnetAppGw.id
+  : newVirtualNetwork::subnetAppGw.id
+output subnetAppSeResourceID string = useExistingResource
+  ? existingVirtualNetwork::subnetAppSe.id
+  : newVirtualNetwork::subnetAppSe.id
+output subnetPeResourceID string = useExistingResource
+  ? existingVirtualNetwork::subnetPe.id
+  : newVirtualNetwork::subnetPe.id
+output subnetAgentResourceID string = useExistingResource
+  ? existingVirtualNetwork::subnetAgent.id
+  : newVirtualNetwork::subnetAgent.id
+output subnetBastionResourceID string = useExistingResource
+  ? existingVirtualNetwork::subnetBastion.id
+  : newVirtualNetwork::subnetBastion.id
+output subnetJumpboxResourceID string = useExistingResource
+  ? existingVirtualNetwork::subnetJumpbox.id
+  : newVirtualNetwork::subnetJumpbox.id
+output subnetTrainingResourceID string = useExistingResource
+  ? existingVirtualNetwork::subnetTraining.id
+  : newVirtualNetwork::subnetTraining.id
+output subnetScoringResourceID string = useExistingResource
+  ? existingVirtualNetwork::subnetScoring.id
+  : newVirtualNetwork::subnetScoring.id
+output vnetAddressPrefix string = useExistingResource
+  ? existingVirtualNetwork.properties.addressSpace.addressPrefixes[0]
+  : newVirtualNetwork.properties.addressSpace.addressPrefixes[0]

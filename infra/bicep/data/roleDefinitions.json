@@ -4,7 +4,8 @@
   },
 
   "cosmos": {
-    "dataContributorRoleId": "00000000-0000-0000-0000-000000000002"
+    "dataContributorRoleId": "00000000-0000-0000-0000-000000000002",
+    "operatorRoleId": "230815da-be43-4aae-9cb4-875f7bd000aa"
   },
   "storage": {
     "blobDataContributorRoleId": "ba92f5b4-2d11-453d-a403-e96b0029c9fe",

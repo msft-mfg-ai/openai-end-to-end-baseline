@@ -12,6 +12,7 @@ param acaStaticIp string = ''
 param acrPrivateEndpointName string = ''
 param documentIntelligencePrivateEndpointName string = ''
 param cosmosPrivateEndpointName string = ''
+param acaPrivateEndpointName string = ''
 
 var deployKeyVault = !empty(keyVaultPrivateEndpointName)
 var deployOpenAi = !empty(openAiPrivateEndpointName)
@@ -20,108 +21,111 @@ var deployStorageBlob = !empty(storageBlobPrivateEndpointName)
 var deployStorageQueue = !empty(storageQueuePrivateEndpointName)
 var deployStorageTable = !empty(storageTablePrivateEndpointName)
 var deployStorageFile = !empty(storageFilePrivateEndpointName)
-var deployAcaDomain = !empty(defaultAcaDomain)
+var deployAcaDomain = !empty(defaultAcaDomain) && empty(acaPrivateEndpointName) // if acaPrivateEndpointName is provided, we will create a zone with A record
+var deployAca = !empty(acaPrivateEndpointName)
 var deployACR = !empty(acrPrivateEndpointName)
 var deployDocumentIntelligence = !empty(documentIntelligencePrivateEndpointName)
 var deployCosmosDb = !empty(cosmosPrivateEndpointName)
 
+
+
 module kvZone 'zone-with-a-record.bicep' = if (deployKeyVault) {
   name: 'kvZone'
   params: {
-    zoneName: 'privatelink.vaultcore.azure.net'
+    zoneNames: ['privatelink.vaultcore.azure.net']
+    privateEndpointNames: [keyVaultPrivateEndpointName]
     vnetResourceId: vnetResourceId
     tags: tags
-    privateEndpointNames: [keyVaultPrivateEndpointName]
   }
 }
 
 module acrZone 'zone-with-a-record.bicep' = if (deployACR) {
   name: 'acrZone'
   params: {
-    zoneName: 'privatelink.azurecr.io'
+    zoneNames: ['privatelink.azurecr.io']
+    privateEndpointNames: [acrPrivateEndpointName]
     vnetResourceId: vnetResourceId
     tags: tags
-    privateEndpointNames: [acrPrivateEndpointName]
   }
 }
 
 module openAiZone 'zone-with-a-record.bicep' = if (deployOpenAi) {
   name: 'openAiZone'
   params: {
-    zoneName: 'privatelink.openai.azure.com'
+    zoneNames: ['privatelink.openai.azure.com', 'privatelink.services.ai.azure.com', 'privatelink.cognitiveservices.azure.com']
+    privateEndpointNames: [openAiPrivateEndpointName]
     vnetResourceId: vnetResourceId
     tags: tags
-    privateEndpointNames: [openAiPrivateEndpointName]
   }
 }
 
 module documentIntelligenceZone 'zone-with-a-record.bicep' = if (deployDocumentIntelligence) {
   name: 'docIntelligenceZone'
   params: {
-    zoneName: 'privatelink.cognitiveservices.azure.com'
+    zoneNames: ['privatelink.cognitiveservices.azure.com']
+    privateEndpointNames: [documentIntelligencePrivateEndpointName]
     vnetResourceId: vnetResourceId
     tags: tags
-    privateEndpointNames: [documentIntelligencePrivateEndpointName]
   }
 }
 
 module aiSearchZone 'zone-with-a-record.bicep' = if (deployAiSearch) {
   name: 'aiSearchZone'
   params: {
-    zoneName: 'privatelink.search.windows.net'
+    zoneNames: ['privatelink.search.windows.net']
+    privateEndpointNames: [aiSearchPrivateEndpointName]
     vnetResourceId: vnetResourceId
     tags: tags
-    privateEndpointNames: [aiSearchPrivateEndpointName]
   }
 }
 
 module cosmosZone 'zone-with-a-record.bicep' = if (deployCosmosDb) {
   name: 'cosmosZone'
   params: {
-    zoneName: 'privatelink.documents.azure.com'
+    zoneNames: ['privatelink.documents.azure.com']
+    privateEndpointNames: [cosmosPrivateEndpointName]
     vnetResourceId: vnetResourceId
     tags: tags
-    privateEndpointNames: [cosmosPrivateEndpointName]
   }
 }
 
 module storageBlobZone 'zone-with-a-record.bicep' = if (deployStorageBlob) {
   name: 'storageBlobZone'
   params: {
-    zoneName: 'privatelink.blob.${environment().suffixes.storage}' 
+    zoneNames: ['privatelink.blob.${environment().suffixes.storage}']
+    privateEndpointNames: [storageBlobPrivateEndpointName]
     vnetResourceId: vnetResourceId
     tags: tags
-    privateEndpointNames: [storageBlobPrivateEndpointName]
   }
 }
 
 module storageTableZone 'zone-with-a-record.bicep' = if (deployStorageTable) {
   name: 'storageTableZone'
   params: {
-    zoneName: 'privatelink.table.${environment().suffixes.storage}' 
+    zoneNames: ['privatelink.table.${environment().suffixes.storage}']
+    privateEndpointNames: [storageTablePrivateEndpointName]
     vnetResourceId: vnetResourceId
     tags: tags
-    privateEndpointNames: [storageTablePrivateEndpointName]
   }
 }
 
 module storageQueueZone 'zone-with-a-record.bicep' = if (deployStorageQueue) {
   name: 'storageQueueZone'
   params: {
-    zoneName: 'privatelink.queue.${environment().suffixes.storage}' 
+    zoneNames: ['privatelink.queue.${environment().suffixes.storage}']
+    privateEndpointNames: [storageQueuePrivateEndpointName]
     vnetResourceId: vnetResourceId
     tags: tags
-    privateEndpointNames: [storageQueuePrivateEndpointName]
   }
 }
 
 module storageFileZone 'zone-with-a-record.bicep' = if (deployStorageFile) {
   name: 'storageFileZone'
   params: {
-    zoneName: 'privatelink.file.${environment().suffixes.storage}' 
+    zoneNames: ['privatelink.file.${environment().suffixes.storage}']
+    privateEndpointNames: [storageFilePrivateEndpointName]
     vnetResourceId: vnetResourceId
     tags: tags
-    privateEndpointNames: [storageFilePrivateEndpointName]
   }
 }
 
@@ -141,6 +145,21 @@ resource acaZone 'Microsoft.Network/privateDnsZones@2020-06-01' = if (deployAcaD
         }
       ]
     }
+  }
+}
+
+resource acaPe 'Microsoft.Network/privateEndpoints@2023-06-01' existing = {
+  name: acaPrivateEndpointName
+}
+
+// privatelink.${LOCATION}.azurecontainerapps.io
+module acaPrivateEndpointZone 'zone-with-a-record.bicep' = if (deployAca) {
+  name: 'acaPrivateEndpointZone'
+  params: {
+    zoneNames: ['privatelink.${acaPe.location}.azurecontainerapps.io']
+    privateEndpointNames: [acaPrivateEndpointName]
+    vnetResourceId: vnetResourceId
+    tags: tags
   }
 }
 

@@ -5,15 +5,8 @@ param location string = resourceGroup().location
 param pe_location string = location
 param tags object = {}
 param appInsightsName string
-param peOpenAIServiceConnection string = ''
+param agentSubnetId string = ''
 
-//param deployments array = []
-@description('The Kind of AI Service, can be "OpenAI" or "AIServices"')
-@allowed([
-  'OpenAI'
-  'AIServices'
-])
-param kind string = 'AIServices'
 param publicNetworkAccess string = ''
 param sku object = {
   name: 'S0'
@@ -22,12 +15,18 @@ param privateEndpointSubnetId string = ''
 param privateEndpointName string = ''
 @description('Provide the IP address to allow access to the Azure Container Registry')
 param myIpAddress string = ''
-param managedIdentityId string
+param managedIdentityId string = ''
+param disableLocalAuth bool = false
 
-param textEmbeddings array = []
-param chatGpt_Standard object = {}
-param chatGpt_Premium object = {}
-param chatGpt_41 object = {}
+// --------------------------------------------------------------------------------------------------------------
+// split managed identity resource ID to get the name
+var identityParts = split(managedIdentityId, '/')
+// get the name of the managed identity
+var managedIdentityName = length(identityParts) > 0 ? identityParts[length(identityParts) - 1] : ''
+
+resource identity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-07-31-preview' existing = if (!empty(managedIdentityName)) {
+  name: managedIdentityName
+}
 
 // --------------------------------------------------------------------------------------------------------------
 // Variables
@@ -36,71 +35,56 @@ var resourceGroupName = resourceGroup().name
 var useExistingService = !empty(existing_CogServices_Name)
 var deployInVNET = !empty(privateEndpointSubnetId)
 var cognitiveServicesKeySecretName = 'cognitive-services-key'
-var deployments = union(
-  textEmbeddings,
-  [
-    {
-      name: chatGpt_Standard.DeploymentName
-      model: {
-        format: 'OpenAI'
-        name: chatGpt_Standard.ModelName
-        version: chatGpt_Standard.ModelVersion
-      }
-      sku: chatGpt_Standard.?sku ?? {
-        name: 'Standard'
-        capacity: chatGpt_Standard.DeploymentCapacity
-      }
+
+param gpt41Deployment aiModelTDeploymentType?
+param deployments aiModelTDeploymentType[] = []
+
+@export()
+type aiModelTDeploymentType = {
+  @description('The name of the deployment')
+  name: string
+  properties: {
+    model: {
+      @description('The name of the model - often the same as the deployment name')
+      name: string
+      @description('The version of the model, e.g. "2024-11-20" or "0125"')
+      version: string
+      format: 'OpenAI'
     }
-    {
-      name: chatGpt_Premium.DeploymentName
-      model: {
-        format: 'OpenAI'
-        name: chatGpt_Premium.ModelName
-        version: chatGpt_Premium.ModelVersion
-      }
-      sku: chatGpt_Premium.?sku ?? {
-        name: 'Standard'
-        capacity: chatGpt_Premium.DeploymentCapacity
-      }
-    }
-    {
-      name: chatGpt_41.DeploymentName
-      model: {
-        format: 'OpenAI'
-        name: chatGpt_41.ModelName
-        version: chatGpt_41.ModelVersion
-      }
-      sku: chatGpt_41.?sku ?? {
-        name: 'GlobalStandard'
-        capacity: chatGpt_41.DeploymentCapacity
-      }
-    }
-  ]
-)
+  }
+  sku: {
+    name: 'Standard' | 'GlobalStandard'
+    capacity: int
+  }?
+}
 
 // --------------------------------------------------------------------------------------------------------------
-resource existingAccount 'Microsoft.CognitiveServices/accounts@2025-04-01-preview' existing = if (useExistingService) {
+resource existingAccount 'Microsoft.CognitiveServices/accounts@2025-06-01' existing = if (useExistingService) {
   scope: resourceGroup(existing_CogServices_RG_Name)
   name: existing_CogServices_Name
 }
 
 // --------------------------------------------------------------------------------------------------------------
-resource account 'Microsoft.CognitiveServices/accounts@2025-04-01-preview' = if (!useExistingService) {
+resource account 'Microsoft.CognitiveServices/accounts@2025-06-01' = if (!useExistingService) {
   name: name
   location: location
   tags: tags
-  kind: kind
-
-  identity: {
-    type: 'UserAssigned'
-    userAssignedIdentities: {
-      '${managedIdentityId}': {}
-    }
-  }
+  kind: 'AIServices'
+  identity: !empty(managedIdentityId)
+    ? {
+        type: 'UserAssigned'
+        userAssignedIdentities: {
+          '${managedIdentityId}': {}
+        }
+      }
+    : {
+        type: 'SystemAssigned'
+      }
   properties: {
     // required to work in AI Foundry
-    allowProjectManagement: true 
+    allowProjectManagement: true
     publicNetworkAccess: publicNetworkAccess
+    disableLocalAuth: disableLocalAuth
     networkAcls: {
       bypass: 'AzureServices'
 
@@ -112,22 +96,28 @@ resource account 'Microsoft.CognitiveServices/accounts@2025-04-01-preview' = if 
               value: myIpAddress
             }
           ]
+      virtualNetworkRules: []
     }
+    networkInjections: (!empty(agentSubnetId)
+      ? [
+          {
+            scenario: 'agent'
+            subnetArmId: agentSubnetId
+            useMicrosoftManagedNetwork: false
+          }
+        ]
+      : null)
     customSubDomainName: toLower('${(name)}')
   }
   sku: sku
 }
 
 @batchSize(1)
-resource deployment 'Microsoft.CognitiveServices/accounts/deployments@2025-04-01-preview' = [
-  for deployment in deployments: if (!useExistingService) {
+resource deployment 'Microsoft.CognitiveServices/accounts/deployments@2025-06-01' = [
+  for deployment in union(deployments, empty(gpt41Deployment) ? [] : [gpt41Deployment]): if (!useExistingService) {
     parent: account
     name: deployment.name
-    properties: {
-      model: deployment.model
-      // // use the policy in the deployment if it exists, otherwise default to null
-      // raiPolicyName: deployment.?raiPolicyName ?? null
-    }
+    properties: deployment.properties
     // use the sku in the deployment if it exists, otherwise default to standard
     sku: deployment.?sku ?? { name: 'Standard', capacity: 20 }
   }
@@ -135,24 +125,11 @@ resource deployment 'Microsoft.CognitiveServices/accounts/deployments@2025-04-01
 
 module privateEndpoint '../networking/private-endpoint.bicep' = if (deployInVNET && !useExistingService) {
   name: '${name}-private-endpoint'
-  dependsOn: [ account, deployment ]
+  dependsOn: [deployment]
   params: {
     tags: tags
     location: pe_location
     privateEndpointName: privateEndpointName
-    groupIds: ['account']
-    targetResourceId: account.id
-    subnetId: privateEndpointSubnetId
-  }
-}
-
-module privateEndpoint2 '../networking/private-endpoint.bicep' = if (deployInVNET && !useExistingService) {
-  name: '${name}-openai-private-endpoint'
-  dependsOn: [ account, deployment ]
-  params: {
-    tags: tags
-    location: pe_location
-    privateEndpointName: peOpenAIServiceConnection
     groupIds: ['account']
     targetResourceId: account.id
     subnetId: privateEndpointSubnetId
@@ -168,7 +145,7 @@ resource appInsights 'Microsoft.Insights/components@2020-02-02' existing = {
 resource connection 'Microsoft.CognitiveServices/accounts/connections@2025-04-01-preview' = {
   name: 'applicationInsights'
   parent: account
-  dependsOn: [ account, deployment, appInsights ]
+  dependsOn: [deployment]
   properties: {
     category: 'AppInsights'
     //group: 'ServicesAndApps'  // read-only...
@@ -191,14 +168,14 @@ resource connection 'Microsoft.CognitiveServices/accounts/connections@2025-04-01
 // --------------------------------------------------------------------------------------------------------------
 output id string = useExistingService ? existingAccount.id : account.id
 output name string = useExistingService ? existingAccount.name : account.name
-output endpoint string = useExistingService
-  ? existingAccount.properties.endpoint
-  : account.properties.endpoint
+output endpoint string = useExistingService ? existingAccount!.properties.endpoint : account!.properties.endpoint
 output resourceGroupName string = useExistingService ? existing_CogServices_RG_Name : resourceGroupName
 output cognitiveServicesKeySecretName string = cognitiveServicesKeySecretName
 
-output textEmbeddings array = textEmbeddings
-output chatGpt_Standard object = chatGpt_Standard
-output kind string = kind
-output privateEndpointName string = deployInVNET && !useExistingService ? privateEndpoint.outputs.privateEndpointName : ''
-output privateEndpointName2 string = deployInVNET && !useExistingService ? privateEndpoint2.outputs.privateEndpointName: ''
+output chatGpt41Deployed aiModelTDeploymentType? = gpt41Deployment
+output privateEndpointName string = deployInVNET && !useExistingService
+  ? privateEndpoint!.outputs.privateEndpointName
+  : ''
+output accountPrincipalId string = empty(managedIdentityId)
+  ? (useExistingService ? (existingAccount.?identity.principalId ?? '') : account.?identity.principalId ?? '')
+  : (useExistingService ? '' : identity!.properties.principalId)

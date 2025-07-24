@@ -135,7 +135,7 @@ jobs:
           echo "vars.APP_NAME=${{ vars.APP_NAME }}"
           echo "vars.RESOURCEGROUP_PREFIX=${{ vars.RESOURCEGROUP_PREFIX }}"
           echo "vars.RESOURCEGROUP_LOCATION=${{ vars.RESOURCEGROUP_LOCATION }}"
-          echo "vars.OPENAI_DEPLOY_LOCATION=${{ vars.OPENAI_DEPLOY_LOCATION }}"
+          echo "vars.AIFOUNDRY_DEPLOY_LOCATION=${{ vars.AIFOUNDRY_DEPLOY_LOCATION }}"
           echo "vars.GLOBAL_REGION_CODE=${{ vars.GLOBAL_REGION_CODE }}"
           echo "vars.INSTANCE_NUMBER=${{ vars.INSTANCE_NUMBER }}"
           echo "vars.OWNER_EMAIL=${{ vars.OWNER_EMAIL }}"

@@ -1,6 +1,6 @@
 // --------------------------------------------------------------------------------
 // This file contains the parameters for the Bicep deployment.
-// Note: This is dynamically modified by the build process.  
+// Note: This is dynamically modified by the build process.
 // Anything that starts with a # and a { is a variable that will be replaced at runtime.
 // --------------------------------------------------------------------------------
 // The following values should be defined in GitHub Secrets or Environment Variables:
@@ -14,6 +14,8 @@
 
 using './main-advanced.bicep'
 
+// TODO: use readEnvironmentVariable() instead of tokens
+
 param applicationName = '#{APP_NAME}#'
 param environmentName = '#{envCode}#'
 param principalId = '#{USER_PRINCIPAL_ID}#'
@@ -24,17 +26,51 @@ param regionCode = '#{GLOBAL_REGION_CODE}#'
 // param requestorName= '#{requestorName}#'
 // param costCenterTag = 'CC'
 
+param gpt40_DeploymentCapacity = #{AI_MODEL_CAPACITY}#
+param gpt41_DeploymentCapacity = #{AI_MODEL_CAPACITY}#
+
+param apimBaseUrl = '#{APIM_BASE_URL}#'
+param apimAccessUrl = '#{APIM_ACCESS_URL}#'
+@secure()
+param apimAccessKey = '#{APIM_ACCESS_KEY}#'
+
+param entraTenantId = empty('#{ENTRA_TENANT_ID}#') ? null : '#{ENTRA_TENANT_ID}#'
+param entraApiAudience = empty('#{ENTRA_API_AUDIENCE}#') ? null : '#{ENTRA_API_AUDIENCE}#'
+param entraScopes = empty('#{ENTRA_SCOPES}#') ? null : '#{ENTRA_SCOPES}#'
+param entraRedirectUri = empty('#{ENTRA_REDIRECT_URI}#') ? null : '#{ENTRA_REDIRECT_URI}#'
+@secure()
+param entraClientId = empty('#{ENTRA_CLIENT_ID}#') ? null : '#{ENTRA_CLIENT_ID}#'
+@secure()
+param entraClientSecret = empty('#{ENTRA_CLIENT_SECRET}#') ? null : '#{ENTRA_CLIENT_SECRET}#'
+
+
 param addRoleAssignments = #{addRoleAssignments}#
 param createDnsZones = true
 param publicAccessEnabled = false
 
-param admin_username = '#{VM_USERNAME}#' // This is the username for the admin user of jumpboxvm
-param admin_password = '#{VM_PASSWORD}#' // This is the password for the admin user of jumpboxvm
-param vm_name = '#{VM_COMPUTENAME}#' // optional Jumpbox VM name - otherwise created by resourceNames.bicep
+param admin_username = '#{ADMIN_USERNAME}#' // This is the username for the admin user of jumpboxvm
+param admin_password = '#{ADMIN_PASSWORD}#' // This is the password for the admin user of jumpboxvm
+param vm_name = '#{VM_NAME}#' // optional Jumpbox VM name - otherwise created by resourceNames.bicep
 param myIpAddress = '#{MY_IP_ADDRESS}#'
 
-param openAI_deploy_location = '#{OPENAI_DEPLOY_LOCATION}#'
-param deployAIHub = true
-param deployAPIM = false              // # { deployAPIM } #  // Should we deploy the API Management service?
-param deployAPIApp = true            // # { deployAPIApp } #  // Should we deploy the API app?
-param deployUIApp = true             // # { deployUIApp } #  // Should we deploy the UI app?
+param aiFoundry_deploy_location = empty('#{AIFOUNDRY_DEPLOY_LOCATION}#') ? null : '#{AIFOUNDRY_DEPLOY_LOCATION}#'
+param deployAIFoundry = true
+param deployAPIM = #{deployAPIM}#              // Should we deploy the API Management service?
+param deployAPIApp = #{deployAPI}#             // Should we deploy the API app?
+param deployUIApp = #{deployUI}#               // Should we deploy the UI app?
+param vnetPrefix = empty('#{VNET_PREFIX}#') ? null : '#{VNET_PREFIX}#'
+
+// applications
+param apiImageName = empty('#{API_IMAGE_NAME}#') ? null : '#{API_IMAGE_NAME}#'
+param uiImageName = empty('#{UI_IMAGE_NAME}#') ? null : '#{UI_IMAGE_NAME}#'
+
+// only for Microsoft internal deployments
+param mockUserUpn = empty('#{MOCK_USER_UPN}#') ? false : toLower('#{MOCK_USER_UPN}#') == 'true' // Mock user UPN for testing purposes
+
+// use consumption for non-customer deployments
+param containerAppEnvironmentWorkloadProfiles = [
+  {
+    name: 'consumption'
+    workloadProfileType: 'consumption'
+  }
+]

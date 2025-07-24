@@ -71,9 +71,12 @@ jobs:
       - name: Set image name
         id: image-name
         run: |
-          echo "IMAGE_VERSION=${{ steps.get-date.outputs.TAG}}" >> $GITHUB_OUTPUT
-          echo "IMAGE_NAME=${{ inputs.ACR_REPO_NAME }}/${{ inputs.ACR_APP_NAME }}:${{ steps.get-date.outputs.TAG }}" >> $GITHUB_OUTPUT
-          echo "IMAGE_NAME_NO_TAG=${{ inputs.ACR_REPO_NAME }}/${{ inputs.ACR_APP_NAME }}" >> $GITHUB_OUTPUT
+          IMAGE_VERSION="$(echo ${{ steps.get-date.outputs.TAG}} | tr '[:upper:]' '[:lower:]')"
+          echo "IMAGE_VERSION=$IMAGE_VERSION" >> $GITHUB_OUTPUT
+          IMAGE_NAME="$(echo ${{ inputs.ACR_REPO_NAME }}/${{ inputs.ACR_APP_NAME }}:$IMAGE_VERSION | tr '[:upper:]' '[:lower:]')"
+          echo "IMAGE_NAME=$IMAGE_NAME" >> $GITHUB_OUTPUT
+          IMAGE_NAME_NO_TAG="$(echo ${{ inputs.ACR_REPO_NAME }}/${{ inputs.ACR_APP_NAME }} | tr '[:upper:]' '[:lower:]')"
+          echo "IMAGE_NAME_NO_TAG=$IMAGE_NAME_NO_TAG" >> $GITHUB_OUTPUT
 
       - name: Display Variables and Files
         run: |-
@@ -122,10 +125,13 @@ jobs:
         run: |
            echo "Executing: az acr network-rule add --name ${{ inputs.ACR_NAME }} --resource-group ${{ inputs.RESOURCE_GROUP }} --ip-address ${{ steps.get-ip.outputs.agentIpAddress }}"
            az acr network-rule add --name ${{ inputs.ACR_NAME }} --resource-group ${{ inputs.RESOURCE_GROUP }} --ip-address  ${{ steps.get-ip.outputs.agentIpAddress }}
+           # wait for the ACR to update
+           sleep 10
+           # check the ACR FW rules
+           az acr network-rule list --name ${{ inputs.ACR_NAME }} --resource-group ${{ inputs.RESOURCE_GROUP }} --output table
 
       - name: ACR Login
         if: ${{ inputs.PUSH_TO_ACR }}
-        working-directory: '${{ github.workspace }}/${{ inputs.APP_PATH }}'
         run: |
             az acr login -n ${{ inputs.ACR_NAME }}
 
@@ -157,6 +163,10 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           labels: ${{ steps.meta.outputs.labels }}            
           tags: ${{ steps.meta.outputs.tags }}
+          build-args: |
+            GIT_COMMIT=${{ github.sha }}
+            GIT_BRANCH=${{ github.ref_name }}
+            APP_VERSION=${{ steps.image-name.outputs.IMAGE_NAME }}
       # END -- Task Based Docker Push Commands ----------------------------------------------------------------------
 
       # -- Native Docker Push Commands ----------------------------------------------------------------------
