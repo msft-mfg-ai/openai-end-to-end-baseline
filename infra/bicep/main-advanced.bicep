@@ -879,7 +879,7 @@ module bastion './modules/networking/bastion.bicep' = {
 // --------------------------------------------------------------------------------------------------------------
 
 // Deploy WAF Policy for Application Gateway
-module appGatewayWafPolicy './modules/networking/application-gateway-waf-policy.bicep' = if (deployApplicationGateway) {
+module appGatewayWafPolicy './modules/networking/application-gateway-waf-policy.bicep' = if (deployApplicationGateway && deployCAEnvironment) {
   name: 'appGatewayWafPolicy${deploymentSuffix}'
   params: {
     name: resourceNames.outputs.appGatewayWafPolicyName
@@ -915,7 +915,7 @@ module appGatewayWafPolicy './modules/networking/application-gateway-waf-policy.
 }
 
 // Deploy Public IP for Application Gateway
-module appGatewayPublicIp './modules/networking/public-ip.bicep' = if (deployApplicationGateway) {
+module appGatewayPublicIp './modules/networking/public-ip.bicep' = if (deployApplicationGateway && deployCAEnvironment) {
   name: 'appGatewayPublicIp${deploymentSuffix}'
   params: {
     name: resourceNames.outputs.appGatewayPublicIpName
@@ -932,7 +932,7 @@ module appGatewayPublicIp './modules/networking/public-ip.bicep' = if (deployApp
 }
 
 // Deploy Application Gateway
-module applicationGateway './modules/networking/application-gateway.bicep' = if (deployApplicationGateway) {
+module applicationGateway './modules/networking/application-gateway.bicep' = if (deployApplicationGateway && deployCAEnvironment) {
   name: 'applicationGateway${deploymentSuffix}'
   params: {
     name: resourceNames.outputs.appGatewayName
@@ -1306,10 +1306,10 @@ output VM_PRIVATE_IP string = deployVirtualMachine ? virtualMachine!.outputs.vm_
 output VM_PUBLIC_IP string = deployVirtualMachine ? virtualMachine!.outputs.vm_public_ip : ''
 
 // Application Gateway outputs (if deployed)
-output APPLICATION_GATEWAY_ID string = deployApplicationGateway ? applicationGateway!.outputs.resourceId : ''
-output APPLICATION_GATEWAY_NAME string = deployApplicationGateway ? applicationGateway!.outputs.name : ''
-output APPLICATION_GATEWAY_PUBLIC_IP string = deployApplicationGateway ? appGatewayPublicIp!.outputs.ipAddress : ''
-output APPLICATION_GATEWAY_FQDN string = deployApplicationGateway ? appGatewayPublicIp!.outputs.fqdn : ''
-output APPLICATION_GATEWAY_WAF_POLICY_ID string = deployApplicationGateway
+output APPLICATION_GATEWAY_ID string = deployApplicationGateway && deployCAEnvironment ? applicationGateway!.outputs.resourceId : ''
+output APPLICATION_GATEWAY_NAME string = deployApplicationGateway && deployCAEnvironment ? applicationGateway!.outputs.name : ''
+output APPLICATION_GATEWAY_PUBLIC_IP string = deployApplicationGateway && deployCAEnvironment ? appGatewayPublicIp!.outputs.ipAddress : ''
+output APPLICATION_GATEWAY_FQDN string = deployApplicationGateway && deployCAEnvironment ? appGatewayPublicIp!.outputs.fqdn : ''
+output APPLICATION_GATEWAY_WAF_POLICY_ID string = deployApplicationGateway && deployCAEnvironment
   ? appGatewayWafPolicy!.outputs.resourceId
   : ''
