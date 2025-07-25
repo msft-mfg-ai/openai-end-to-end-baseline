@@ -129,6 +129,8 @@ param apimBaseUrl string = ''
 param apimAccessUrl string = ''
 @secure()
 param apimAccessKey string = ''
+@description('When set to true, UPN received from the authentication will be mocked to a fixed value')
+param mockUserUpn bool = false
 
 // --------------------------------------------------------------------------------------------------------------
 // Existing images
@@ -649,6 +651,7 @@ var apiSettings = [
   { name: 'APIM_BASE_URL', value: apimBaseUrl }
   { name: 'APIM_ACCESS_URL', value: apimAccessUrl }
   { name: 'APIM_KEY', secretRef: 'apimkey'}
+  { name: 'MOCK_USER_UPN', value: string(mockUserUpn) }
 ]
 var apimSettings = deployAPIM ? [
   { name: 'API_MANAGEMENT_NAME', value: apim!.outputs.name }
