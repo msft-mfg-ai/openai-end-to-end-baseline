@@ -158,8 +158,7 @@ param apimSubscriptionName string = 'aiagent-subscription'
 param apimPublisherEmail string = 'somebody@somewhere.com'
 @description('Name of the APIM Publisher')
 param adminPublisherName string = 'AI Agent Admin'
-@description('When set to true, UPN received from the authentication will be mocked to a fixed value')
-param mockUserUpn bool = false
+
 // --------------------------------------------------------------------------------------------------------------
 // External APIM Parameters
 // --------------------------------------------------------------------------------------------------------------
@@ -168,6 +167,8 @@ param apimBaseUrl string = ''
 param apimAccessUrl string = ''
 @secure()
 param apimAccessKey string = ''
+@description('When set to true, UPN received from the authentication will be mocked to a fixed value')
+param mockUserUpn bool = false
 
 // --------------------------------------------------------------------------------------------------------------
 // Application Gateway Parameters

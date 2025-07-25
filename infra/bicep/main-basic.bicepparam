@@ -25,13 +25,12 @@ param regionCode = '#{GLOBAL_REGION_CODE}#'
 // param requestorName= '#{requestorName}#'
 // param costCenterTag = 'CC'
 
-param gpt40_DeploymentCapacity = #{AI_MODEL_CAPACITY}#
-param gpt41_DeploymentCapacity = #{AI_MODEL_CAPACITY}#
+param gpt40_DeploymentCapacity = empty('#{AI_MODEL_CAPACITY}#') ? null : int('#{AI_MODEL_CAPACITY}#')
+param gpt41_DeploymentCapacity = empty('#{AI_MODEL_CAPACITY}#') ? null : int('#{AI_MODEL_CAPACITY}#')
 
-param apimBaseUrl = '#{APIM_BASE_URL}#'
-param apimAccessUrl = '#{APIM_ACCESS_URL}#'
-@secure()
-param apimAccessKey = '#{APIM_ACCESS_KEY}#'
+param apimBaseUrl = empty('#{APIM_BASE_URL}#') ? null : '#{APIM_BASE_URL}#'
+param apimAccessUrl = empty('#{APIM_ACCESS_URL}#') ? null : '#{APIM_ACCESS_URL}#'
+param apimAccessKey = empty('#{APIM_ACCESS_KEY}#') ? null : '#{APIM_ACCESS_KEY}#'
 
 param entraTenantId = empty('#{ENTRA_TENANT_ID}#') ? null : '#{ENTRA_TENANT_ID}#'
 param entraApiAudience = empty('#{ENTRA_API_AUDIENCE}#') ? null : '#{ENTRA_API_AUDIENCE}#'
@@ -42,19 +41,24 @@ param entraClientId = empty('#{ENTRA_CLIENT_ID}#') ? null : '#{ENTRA_CLIENT_ID}#
 @secure()
 param entraClientSecret = empty('#{ENTRA_CLIENT_SECRET}#') ? null : '#{ENTRA_CLIENT_SECRET}#'
 
-
-param addRoleAssignments = #{addRoleAssignments}#
+param addRoleAssignments = empty('#{addRoleAssignments}#') ? false : toLower('#{addRoleAssignments}#') == 'true'
 param publicAccessEnabled = true
 
 param aiFoundry_deploy_location = empty('#{AIFOUNDRY_DEPLOY_LOCATION}#') ? null : '#{AIFOUNDRY_DEPLOY_LOCATION}#'
 param deployAIFoundry = true
-param deployAPIM = #{deployAPIM}#
-param deployAPIApp = #{deployAPI}#  // Should we deploy the API app?
-param deployUIApp = #{deployUI}#  // Should we deploy the UI app?
+param deployAPIM = empty('#{deployAPIM}#') ? false : toLower('#{deployAPIM}#') == 'true'
+// Should we deploy the API Management service?
+param deployAPIApp = empty('#{deployAPI}#') ? false : toLower('#{deployAPI}#') == 'true'
+// Should we deploy the API app?
+param deployUIApp = empty('#{deployUI}#') ? false : toLower('#{deployUI}#') == 'true'
+// Should we deploy the UI app?
 
 // applications
 param apiImageName = empty('#{API_IMAGE_NAME}#') ? null : '#{API_IMAGE_NAME}#'
 param uiImageName = empty('#{UI_IMAGE_NAME}#') ? null : '#{UI_IMAGE_NAME}#'
+
+// only for Microsoft internal deployments
+param mockUserUpn = empty('#{MOCK_USER_UPN}#') ? false : toLower('#{MOCK_USER_UPN}#') == 'true' // Mock user UPN for testing purposes
 
 // use consumption for non-customer deployments
 param containerAppEnvironmentWorkloadProfiles = [

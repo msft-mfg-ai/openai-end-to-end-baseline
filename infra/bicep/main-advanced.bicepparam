@@ -26,13 +26,12 @@ param regionCode = '#{GLOBAL_REGION_CODE}#'
 // param requestorName= '#{requestorName}#'
 // param costCenterTag = 'CC'
 
-param gpt40_DeploymentCapacity = #{AI_MODEL_CAPACITY}#
-param gpt41_DeploymentCapacity = #{AI_MODEL_CAPACITY}#
+param gpt40_DeploymentCapacity = empty('#{AI_MODEL_CAPACITY}#') ? null : int('#{AI_MODEL_CAPACITY}#')
+param gpt41_DeploymentCapacity = empty('#{AI_MODEL_CAPACITY}#') ? null : int('#{AI_MODEL_CAPACITY}#')
 
-param apimBaseUrl = '#{APIM_BASE_URL}#'
-param apimAccessUrl = '#{APIM_ACCESS_URL}#'
-@secure()
-param apimAccessKey = '#{APIM_ACCESS_KEY}#'
+param apimBaseUrl = empty('#{APIM_BASE_URL}#') ? null : '#{APIM_BASE_URL}#'
+param apimAccessUrl = empty('#{APIM_ACCESS_URL}#') ? null : '#{APIM_ACCESS_URL}#'
+param apimAccessKey = empty('#{APIM_ACCESS_KEY}#') ? null : '#{APIM_ACCESS_KEY}#'
 
 param entraTenantId = empty('#{ENTRA_TENANT_ID}#') ? null : '#{ENTRA_TENANT_ID}#'
 param entraApiAudience = empty('#{ENTRA_API_AUDIENCE}#') ? null : '#{ENTRA_API_AUDIENCE}#'
@@ -43,21 +42,23 @@ param entraClientId = empty('#{ENTRA_CLIENT_ID}#') ? null : '#{ENTRA_CLIENT_ID}#
 @secure()
 param entraClientSecret = empty('#{ENTRA_CLIENT_SECRET}#') ? null : '#{ENTRA_CLIENT_SECRET}#'
 
-
-param addRoleAssignments = #{addRoleAssignments}#
+param addRoleAssignments = empty('#{addRoleAssignments}#') ? false : toLower('#{addRoleAssignments}#') == 'true'
 param createDnsZones = true
 param publicAccessEnabled = false
 
-param admin_username = '#{ADMIN_USERNAME}#' // This is the username for the admin user of jumpboxvm
-param admin_password = '#{ADMIN_PASSWORD}#' // This is the password for the admin user of jumpboxvm
-param vm_name = '#{VM_NAME}#' // optional Jumpbox VM name - otherwise created by resourceNames.bicep
-param myIpAddress = '#{MY_IP_ADDRESS}#'
+param admin_username = empty('#{ADMIN_USERNAME}#') ? null : '#{ADMIN_USERNAME}#' // This is the username for the admin user of jumpboxvm
+param admin_password = empty('#{ADMIN_PASSWORD}#') ? null : '#{ADMIN_PASSWORD}#' // This is the password for the admin user of jumpboxvm
+param vm_name = empty('#{VM_NAME}#') ? null : '#{VM_NAME}#' // optional Jumpbox VM name - otherwise created by resourceNames.bicep
+param myIpAddress = empty('#{MY_IP_ADDRESS}#') ? null : '#{MY_IP_ADDRESS}#'
 
 param aiFoundry_deploy_location = empty('#{AIFOUNDRY_DEPLOY_LOCATION}#') ? null : '#{AIFOUNDRY_DEPLOY_LOCATION}#'
 param deployAIFoundry = true
-param deployAPIM = #{deployAPIM}#              // Should we deploy the API Management service?
-param deployAPIApp = #{deployAPI}#             // Should we deploy the API app?
-param deployUIApp = #{deployUI}#               // Should we deploy the UI app?
+param deployAPIM = empty('#{deployAPIM}#') ? false : toLower('#{deployAPIM}#') == 'true'
+// Should we deploy the API Management service?
+param deployAPIApp = empty('#{deployAPI}#') ? false : toLower('#{deployAPI}#') == 'true'
+// Should we deploy the API app?
+param deployUIApp = empty('#{deployUI}#') ? false : toLower('#{deployUI}#') == 'true'
+// Should we deploy the UI app?
 param vnetPrefix = empty('#{VNET_PREFIX}#') ? null : '#{VNET_PREFIX}#'
 
 // applications
