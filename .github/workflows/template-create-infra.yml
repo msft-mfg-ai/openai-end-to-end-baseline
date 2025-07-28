@@ -213,7 +213,7 @@ jobs:
         run: |
           echo "Running what-if analysis..."
           az deployment group what-if \
-            --name ${{ inputs.templateFile }}-whatif-rg-${{ vars.RESOURCEGROUP_LOCATION }}-${{ steps.create-vars.outputs.DATE_TIME_STAMP}} \
+            --name ${{ inputs.templateFile }}-whatif-rg-${{ vars.RESOURCEGROUP_LOCATION }}-${{ steps.create-vars.outputs.DATE_TIME_STAMP }} \
             --resource-group "${{ steps.create-vars.outputs.RESOURCEGROUPNAME }}" \
             --template-file "${{ inputs.templatePath }}${{ inputs.templateFile }}" \
             --parameters "${{ inputs.templatePath }}${{ inputs.parameterFile }}" \
