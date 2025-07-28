@@ -1,6 +1,9 @@
 @description('Name of the Virtual Machine')
 param vm_name string
 
+@description('Name of the Virtual Machine Physical Host')
+param vm_computer_name string = vm_name
+
 @description('Location for all resources.')
 param location string = resourceGroup().location
 
@@ -167,7 +170,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2023-09-01' = {
       vmSize: vm_size
     }
     osProfile: {
-      computerName: vm_name
+      computerName: vm_computer_name
       adminUsername: admin_username
       adminPassword: admin_password
       windowsConfiguration: os_type == 'Windows' ? {

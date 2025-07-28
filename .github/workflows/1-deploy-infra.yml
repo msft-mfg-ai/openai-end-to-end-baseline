@@ -15,14 +15,14 @@ on:
       bicepVersion:
         description: Version - Basic=public, Advanced=VNET
         required: true
-        default: 'basic'
+        default: 'advanced'
         type: choice
         options:
           - basic
           - advanced
       appsToDeploy:
         description: Apps to Deploy
-        default: API+UI
+        default: none
         type: choice
         options:
           - none
@@ -39,7 +39,7 @@ on:
       createResourceGroup:
         description: Create Resource Group?
         type: boolean
-        default: false
+        default: true
       addRoleAssignments:
         description: Add Role Assignments?
         type: boolean
@@ -47,7 +47,7 @@ on:
       deployAPIM:
         description: Deploy APIM?
         type: boolean
-        default: true
+        default: false
       runMSSecurityScan:
         description: Run MS DevSecOps Security Scan
         required: false

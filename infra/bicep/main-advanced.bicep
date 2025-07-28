@@ -362,6 +362,7 @@ module virtualMachine './modules/virtualMachine/virtualMachine.bicep' = if (depl
     admin_password: admin_password 
     vnet_id: vnet.outputs.vnetResourceId
     vm_name: !empty(vm_name) ? vm_name : resourceNames.outputs.vm_name
+    vm_computer_name: resourceNames.outputs.vm_name_15
     vm_nic_name: resourceNames.outputs.vm_nic_name
     vm_pip_name: resourceNames.outputs.vm_pip_name
     vm_os_disk_name: resourceNames.outputs.vm_os_disk_name
