@@ -88,8 +88,6 @@ jobs:
     # Variables
     # ------------------------------------------------------------------------------------------------------------------------
     env:
-      envCode: ${{ inputs.envCode }}
-      generatedResourceGroupName: ${{ vars.RESOURCEGROUP_PREFIX }}-${{ inputs.envCode }}-${{ vars.GLOBAL_REGION_CODE }}-${{ vars.INSTANCE_NUMBER }}
       createResourceGroup: ${{ inputs.createResourceGroup }}
       publicAccessEnabled: ${{ inputs.publicAccessEnabled }}
       createDnsZones: ${{ inputs.createDnsZones }}
@@ -100,7 +98,14 @@ jobs:
       deployAPIM: ${{ inputs.deployAPIM }}
       loginWithFederatedIdentity: ${{ secrets.CICD_CLIENT_SECRET == '' && 'true' || 'false' }}
       loginWithSecret: ${{ secrets.CICD_CLIENT_SECRET != '' && 'true' || 'false' }}
-      requestorName: ${{ inputs.requestorName }}
+      gitHubRequestorName: ${{ inputs.requestorName }}
+      requestor-name: ${{ vars.REQUESTOR_NAME }}
+      created-by: ${{ vars.CREATED_BY }}
+      application-owner: ${{ vars.APPLICATION_OWNER }}
+      business-owner: ${{ vars.BUSINESS_OWNER }}
+      cost-center: ${{ vars.COST_CENTER }}
+      lti-service-class: ${{ vars.LTI_SERVICE_CLASS }}
+      primary-support-provider: ${{ vars.PRIMARY_SUPPORT_PROVIDER }}
  
     # ------------------------------------------------------------------------------------------------------------------------
     # Outputs
@@ -120,14 +125,25 @@ jobs:
         if: ${{ inputs.runCreateInfra }}
         uses: actions/checkout@v4
 
-      - name: Get the current date
-        id: get-date
-        run: echo "DATE_TIME_STAMP=$(date +'%Y%m%d%H%M')" >> $GITHUB_OUTPUT
+      - name: Create Variables
+        id: create-vars
+        run: |
+          DTS="$(echo $(date +'%Y%m%d%H%M'))"
+          echo "DTS=$DTS"
+          echo "DTS=$DTS" >> $GITHUB_OUTPUT
+
+          ENV_INITIAL="$(echo "${{ inputs.envCode }}" | cut -c1)"
+          echo "ENV_INITIAL=$ENV_INITIAL"
+          echo "ENV_INITIAL=$ENV_INITIAL" >> $GITHUB_OUTPUT
+
+          RESOURCEGROUPNAME="$(echo "${{ vars.RESOURCEGROUP_PREFIX }}-$ENV_INITIAL-${{ vars.GLOBAL_REGION_CODE }}-${{ vars.INSTANCE_NUMBER }}" | tr '[:lower:]' '[:upper:]')"
+          echo "RESOURCEGROUPNAME=$RESOURCEGROUPNAME"
+          echo "RESOURCEGROUPNAME=$RESOURCEGROUPNAME" >> $GITHUB_OUTPUT
 
       - name: Display Variables and Files
         run: |-
           echo "inputs.envCode=${{ inputs.envCode }}"
-          echo "env.generatedResourceGroupName=${{ env.generatedResourceGroupName }}"
+          echo "resourceGroupName=${{ steps.create-vars.outputs.RESOURCEGROUPNAME }}"
           echo "templateFilePath=${{ inputs.templatePath }}${{ inputs.templateFile }}"
           echo "parameterFilePath=${{ inputs.templatePath }}${{ inputs.parameterFile }}"
           echo "bicepDeploymentMode=${{ inputs.bicepDeploymentMode }}"
@@ -189,7 +205,7 @@ jobs:
 
       - name: Create Resource Group
         if: ${{ inputs.runCreateInfra && inputs.deployInResourceGroup }}
-        run: az group create --name ${{ env.generatedResourceGroupName }} --location ${{ vars.RESOURCEGROUP_LOCATION }} --tags Environment=${{ inputs.envCode }} Template=${{ inputs.templateFile }} Instance=${{ vars.INSTANCE_NUMBER }} Requestor=${{ inputs.requestorName }}
+        run: az group create --name ${{ steps.create-vars.outputs.RESOURCEGROUPNAME }} --location ${{ vars.RESOURCEGROUP_LOCATION }} --tags environment-name=${{ inputs.envCode }} Template=${{ inputs.templateFile }} Instance=${{ vars.INSTANCE_NUMBER }} creation-date=${{ steps.create-vars.outputs.DATE_TIME_STAMP}} requestor-name=${{ env.requestor-name }} application-owner=${{ env.application-owner }} business-owner=${{ env.business-owner }} cost-center=${{ env.cost-center }} created-by=${{ env.created-by }} lti-service-class=${{ env.ltiServiceClass }} otis-region=${{ vars.GLOBAL_REGION_CODE }} primary-support-provider=${{ env.primarySupportProvider }} application-name=not-applicable application-id=not-applicable request-number=not-applicable
 
       - name: What-If Analysis (RG)
         if: ${{ inputs.runCreateInfra && inputs.deployInResourceGroup && inputs.bicepDeploymentMode == 'whatIf' }}
@@ -197,8 +213,8 @@ jobs:
         run: |
           echo "Running what-if analysis..."
           az deployment group what-if \
-            --name ${{ inputs.templateFile }}-whatif-rg-${{ vars.RESOURCEGROUP_LOCATION }}-${{ steps.get-date.outputs.DATE_TIME_STAMP}} \
-            --resource-group "${{ env.generatedResourceGroupName }}" \
+            --name ${{ inputs.templateFile }}-whatif-rg-${{ vars.RESOURCEGROUP_LOCATION }}-${{ steps.create-vars.outputs.DATE_TIME_STAMP}} \
+            --resource-group "${{ steps.create-vars.outputs.RESOURCEGROUPNAME }}" \
             --template-file "${{ inputs.templatePath }}${{ inputs.templateFile }}" \
             --parameters "${{ inputs.templatePath }}${{ inputs.parameterFile }}" \
             --no-prompt true
@@ -213,7 +229,7 @@ jobs:
         with:
           scope: subscription
           location: ${{ vars.RESOURCEGROUP_LOCATION }}
-          name: ${{ inputs.templateFile }}-sub-${{ vars.RESOURCEGROUP_LOCATION }}-${{ steps.get-date.outputs.DATE_TIME_STAMP}}
+          name: ${{ inputs.templateFile }}-sub-${{ vars.RESOURCEGROUP_LOCATION }}-${{ steps.create-vars.outputs.DATE_TIME_STAMP}}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           template-file: ${{ inputs.templatePath }}${{ inputs.templateFile }}
           parameters-file: ${{ inputs.templatePath }}${{ inputs.parameterFile }}
@@ -229,9 +245,9 @@ jobs:
         id: deploy-bicep-rg
         with:
           scope: resourceGroup
-          name: ${{ inputs.templateFile }}-rg-${{ vars.RESOURCEGROUP_LOCATION }}-${{ steps.get-date.outputs.DATE_TIME_STAMP}}
+          name: ${{ inputs.templateFile }}-rg-${{ vars.RESOURCEGROUP_LOCATION }}-${{ steps.create-vars.outputs.DATE_TIME_STAMP}}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          resource-group-name: ${{ env.generatedResourceGroupName }}
+          resource-group-name: ${{ steps.create-vars.outputs.RESOURCEGROUPNAME }}
           template-file: ${{ inputs.templatePath }}${{ inputs.templateFile }}
           parameters-file: ${{ inputs.templatePath }}${{ inputs.parameterFile }}
           type: deployment
@@ -306,7 +322,7 @@ jobs:
         env:
           SUMMARY: |
             # Deployment summary
-            - Resource Group: ${{ env.generatedResourceGroupName }}
+            - Resource Group: ${{ steps.create-vars.outputs.RESOURCEGROUPNAME }}
             - Environment: ${{ inputs.envCode }}
             - Region: ${{ vars.GLOBAL_REGION_CODE }}
             - Instance: ${{ vars.INSTANCE_NUMBER }}
