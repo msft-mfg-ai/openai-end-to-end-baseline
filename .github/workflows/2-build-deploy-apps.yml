@@ -132,7 +132,11 @@ jobs:
           echo "ENV_DASH_REGION_DASH_INSTANCE=$ENV_DASH_REGION_DASH_INSTANCE"
           echo "ENV_DASH_REGION_DASH_INSTANCE=$ENV_DASH_REGION_DASH_INSTANCE" >> $GITHUB_OUTPUT
           
-          RESOURCE_GROUP_NAME="$(echo "${{ vars.RESOURCEGROUP_PREFIX }}-${{ inputs.deployEnvironment }}-${{ vars.GLOBAL_REGION_CODE }}-${{ vars.INSTANCE_NUMBER }}" | tr '[:upper:]' '[:lower:]')"
+          ENV_INITIAL="$(echo "${{ inputs.deployEnvironment }}" | cut -c1)"
+          echo "ENV_INITIAL=$ENV_INITIAL"
+          echo "ENV_INITIAL=$ENV_INITIAL" >> $GITHUB_OUTPUT
+
+          RESOURCE_GROUP_NAME="$(echo "${{ vars.RESOURCEGROUP_PREFIX }}-$ENV_INITIAL-${{ vars.GLOBAL_REGION_CODE }}-${{ vars.INSTANCE_NUMBER }}" | tr '[:lower:]' '[:upper:]')"
           echo "RESOURCE_GROUP_NAME=$RESOURCE_GROUP_NAME"
           echo "RESOURCE_GROUP_NAME=$RESOURCE_GROUP_NAME" >> $GITHUB_OUTPUT
 
