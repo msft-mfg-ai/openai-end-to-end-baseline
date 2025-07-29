@@ -21,10 +21,14 @@ param environmentName = '#{envCode}#'
 param principalId = '#{USER_PRINCIPAL_ID}#'
 param instanceNumber = '#{INSTANCE_NUMBER}#'
 param regionCode = '#{GLOBAL_REGION_CODE}#' 
-// param applicationId = '#{APP_ID}#'
-// param ownerEmailTag = '#{OWNER_EMAIL}#' 
-// param requestorName= '#{requestorName}#'
-// param costCenterTag = 'CC'
+
+param businessOwnerTag  = '#{BUSINESS_OWNER}#'
+param requestorNameTag  = '#{REQUESTOR_NAME}#'
+param primarySupportProviderTag  = '#{PRIMARY_SUPPORT_PROVIDER}#'
+param applicationOwnerTag  = '#{APPLICATION_OWNER}#'
+param costCenterTag  = '#{COST_CENTER}#'
+param ltiServiceClassTag  = '#{LTI_SERVICE_CLASS}#'
+param requestNumberTag  = '#{REQUEST_NUMBER}#'
 
 param gpt40_DeploymentCapacity = empty('#{AI_MODEL_CAPACITY}#') ? null : int('#{AI_MODEL_CAPACITY}#')
 param gpt41_DeploymentCapacity = empty('#{AI_MODEL_CAPACITY}#') ? null : int('#{AI_MODEL_CAPACITY}#')

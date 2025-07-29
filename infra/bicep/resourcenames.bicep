@@ -102,23 +102,23 @@ output bastion_pip_name string  = toLower('${resourceAbbreviations.networkPublic
 
 // ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Private Endpoint Names (sequential) -- created for the customer need
-output peStorageAccountBlobName string = 'pep-${sanitizedAppName}-${environmentInitial}-${regionCode}-001'
-output peStorageAccountTableName string = 'pep-${sanitizedAppName}-${environmentInitial}-${regionCode}-002'
-output peStorageAccountQueueName string = 'pep-${sanitizedAppName}-${environmentInitial}-${regionCode}-003'
-output peCosmosDbName string = 'pep-${sanitizedAppName}-${environmentInitial}-${regionCode}-004'
-output peKeyVaultName string = 'pep-${sanitizedAppName}-${environmentInitial}-${regionCode}-005'
-output peAcrName string = 'pep-${sanitizedAppName}-${environmentInitial}-${regionCode}-006'
-output peSearchServiceName string = 'pep-${sanitizedAppName}-${environmentInitial}-${regionCode}-007'
-output peOpenAIName string = 'pep-${sanitizedAppName}-${environmentInitial}-${regionCode}-008'
-output peContainerAppsName string = 'pep-${sanitizedAppName}-${environmentInitial}-${regionCode}-009'
+output peStorageAccountBlobName string = toLower('pep-${sanitizedAppName}-${environmentInitial}-${regionCode}-001')
+output peStorageAccountTableName string = toLower('pep-${sanitizedAppName}-${environmentInitial}-${regionCode}-002')
+output peStorageAccountQueueName string = toLower('pep-${sanitizedAppName}-${environmentInitial}-${regionCode}-003')
+output peCosmosDbName string = toLower('pep-${sanitizedAppName}-${environmentInitial}-${regionCode}-004')
+output peKeyVaultName string = toLower('pep-${sanitizedAppName}-${environmentInitial}-${regionCode}-005')
+output peAcrName string = toLower('pep-${sanitizedAppName}-${environmentInitial}-${regionCode}-006')
+output peSearchServiceName string = toLower('pep-${sanitizedAppName}-${environmentInitial}-${regionCode}-007')
+output peOpenAIName string = toLower('pep-${sanitizedAppName}-${environmentInitial}-${regionCode}-008')
+output peContainerAppsName string = toLower('pep-${sanitizedAppName}-${environmentInitial}-${regionCode}-009')
 
-output peDocumentIntelligenceName string = 'pep-${sanitizedAppName}-${environmentInitial}-${regionCode}-010'
-output peOpenAIServiceConnection string = 'pep-${sanitizedAppName}-${environmentInitial}-${regionCode}-011'
-output peAIHubName string = 'pep-${sanitizedAppName}-${environmentInitial}-${regionCode}-012'
-output peAppInsightsName string = 'pep-${sanitizedAppName}-${environmentInitial}-${regionCode}-013'
-output peMonitorName string = 'pep-${sanitizedAppName}-${environmentInitial}-${regionCode}-014'
+output peDocumentIntelligenceName string = toLower('pep-${sanitizedAppName}-${environmentInitial}-${regionCode}-010')
+output peOpenAIServiceConnection string = toLower('pep-${sanitizedAppName}-${environmentInitial}-${regionCode}-011')
+output peAIHubName string = toLower('pep-${sanitizedAppName}-${environmentInitial}-${regionCode}-012')
+output peAppInsightsName string = toLower('pep-${sanitizedAppName}-${environmentInitial}-${regionCode}-013')
+output peMonitorName string = toLower('pep-${sanitizedAppName}-${environmentInitial}-${regionCode}-014')
 
-output vnetNsgName string = '${resourceAbbreviations.networkNetworkSecurityGroups}${sanitizedAppName}-${environmentInitial}-${regionCode}-001'
+output vnetNsgName string = toLower('${resourceAbbreviations.networkNetworkSecurityGroups}${sanitizedAppName}-${environmentInitial}-${regionCode}-001')
 
 // ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Application Gateway resource names

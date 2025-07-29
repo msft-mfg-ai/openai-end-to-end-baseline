@@ -232,19 +232,22 @@ param regionCode string = 'NAA'
 @description('Instance number for the application, e.g. 001, 002, etc. This is used to differentiate multiple instances of the same application in the same environment.')
 param instanceNumber string = '001' // used to differentiate multiple instances of the same application in the same environment
 
-// // --------------------------------------------------------------------------------------------------------------
-// // Additional Tags that may be included or not
-// // --------------------------------------------------------------------------------------------------------------
-// param costCenterTag string = ''
-// param ownerEmailTag string = ''
-// param requestorName string = 'UNKNOWN'
-// param applicationId string = ''
-// param primarySupportProviderTag string = ''
-
 // --------------------------------------------------------------------------------------------------------------
 // A variable masquerading as a parameter to allow for dynamic value assignment in Bicep
 // --------------------------------------------------------------------------------------------------------------
 param runDateTime string = utcNow()
+
+// --------------------------------------------------------------------------------------------------------------
+// Additional Tags that may be included or not
+// --------------------------------------------------------------------------------------------------------------
+param businessOwnerTag string = 'UNKNOWN'
+param requestorNameTag string = 'UNKNOWN'
+param primarySupportProviderTag string = 'UNKNOWN'
+param applicationOwnerTag string = 'UNKNOWN'
+param createdByTag string = 'UNKNOWN'
+param costCenterTag string = 'UNKNOWN'
+param ltiServiceClassTag string = 'UNKNOWN'
+param requestNumberTag string = 'UNKNOWN'
 
 // --------------------------------------------------------------------------------------------------------------
 // -- Variables -------------------------------------------------------------------------------------------------
@@ -258,43 +261,19 @@ var appName = applicationName != '' ? applicationName : '${applicationPrefix}_${
 var deploymentSuffix = '-${runDateTime}'
 
 var tags = {
-  'creation-date': take(runDateTime, 8)
-  'application-name':  'otisone-ooai'
-  'application-id':    'not-applicable'
-  'application-owner': 'sanjithraj.rao_otis.com'
-  'business-owner':    'sanjithraj.rao_otis.com'
-  'cost-center':       '90090143'
-  'created-by':        'pavan.gajavalli_otis.com'
-  'environment-name':  'dev'
-  'lti-service-class': 'bronge'
-  'otis-region':       'amer'
-  'primary-support-provider': 'ltim'
-  'request-number':    'not-applicable'
-  'requestor-name':    'daniel.pahng_otis.com'
+  'creation-date':     take(runDateTime, 8)
+  'environment-name':  environmentName
+  'requestor-name':    requestorNameTag
+  'application-owner': applicationOwnerTag
+  'business-owner':    businessOwnerTag
+  'created-by':        createdByTag
+  'application-name':  applicationName
+  'cost-center':       costCenterTag
+  'lti-service-class': ltiServiceClassTag
+  'otis-region':       regionCode
+  'primary-support-provider': primarySupportProviderTag
+  'request-number':    requestNumberTag
 }
-var commonTags = tags
-
-// var commonTags = {
-//   'creation-date': take(runDateTime, 8)
-//   'application-name': appName
-//   'application-id': applicationId
-//   'environment-name': environmentName
-//   'global-region': regionCode
-//   'requestor-name': requestorName
-//   'primary-support-provider': primarySupportProviderTag == '' ? 'UNKNOWN' : primarySupportProviderTag
-// }
-// var costCenterTagObject = costCenterTag == '' ? {} :  { 'cost-center': costCenterTag }
-// var ownerEmailTagObject = ownerEmailTag == '' ? {} :  { 
-//   'application-owner': ownerEmailTag
-//   'business-owner': ownerEmailTag
-//   'point-of-contact': ownerEmailTag
-// }
-// // if this bicep was called from AZD, then it needs this tag added to the resource group (at a minimum) to deploy successfully...
-// var azdTag = azdEnvName != '' ? { 'azd-env-name': azdEnvName } : {}
-// var tags = union(commonTags, azdTag, costCenterTagObject, ownerEmailTagObject)
-// if this bicep was called from AZD, then it needs this tag added to the resource group (at a minimum) to deploy successfully...
-// var azdTag = azdEnvName != '' ? { 'azd-env-name': azdEnvName } : {}
-// var tags = union(commonTags, azdTag, costCenterTagObject, ownerEmailTagObject)
 
 // Run a script to dedupe the KeyVault secrets -- this fails on private networks right now so turn if off for them
 var deduplicateKVSecrets = publicAccessEnabled ? deduplicateKeyVaultSecrets : false
@@ -811,7 +790,7 @@ module apim './modules/api-management/apim.bicep' = if (deployAPIM) {
   params: {
     location: location
     name: resourceNames.outputs.apimName
-    commonTags: commonTags
+    commonTags: tags
     publisherEmail: apimPublisherEmail
     publisherName: adminPublisherName
     appInsightsName: logAnalytics.outputs.applicationInsightsName
