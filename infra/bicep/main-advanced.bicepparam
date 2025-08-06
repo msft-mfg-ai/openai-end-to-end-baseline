@@ -55,8 +55,6 @@ param admin_password = empty('#{ADMIN_PASSWORD}#') ? null : '#{ADMIN_PASSWORD}#'
 param vm_name = empty('#{VM_NAME}#') ? null : '#{VM_NAME}#' // optional Jumpbox VM name - otherwise created by resourceNames.bicep
 param myIpAddress = empty('#{MY_IP_ADDRESS}#') ? null : '#{MY_IP_ADDRESS}#'
 
-param aiFoundry_deploy_location = empty('#{AIFOUNDRY_DEPLOY_LOCATION}#') ? null : '#{AIFOUNDRY_DEPLOY_LOCATION}#'
-param deployAIFoundry = true
 param deployAPIM = empty('#{deployAPIM}#') ? false : toLower('#{deployAPIM}#') == 'true'
 // Should we deploy the API Management service?
 param deployAPIApp = empty('#{deployAPI}#') ? false : toLower('#{deployAPI}#') == 'true'

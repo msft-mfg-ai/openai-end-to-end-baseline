@@ -106,6 +106,7 @@ module privateEndpoint '../networking/private-endpoint.bicep' = if (!useExisting
 // --------------------------------------------------------------------------------------------------------------
 output id string = useExistingSearchService ? existingSearchService.id : search.id
 output resourceGroupName string = useExistingSearchService ? existingSearchServiceResourceGroupName : resourceGroupName
+output subscriptionId string = subscription().subscriptionId
 output name string = useExistingSearchService ? existingSearchService.name : search.name
 output endpoint string = useExistingSearchService ? 'https://${existingSearchServiceName}.search.windows.net/' : 'https://${name}.search.windows.net/'
 output searchKeySecretName string = searchKeySecretName

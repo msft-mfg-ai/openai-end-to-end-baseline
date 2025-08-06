@@ -279,6 +279,7 @@ resource containerRoleAssignmentUserContainer 'Microsoft.DocumentDB/databaseAcco
 output id string = useExistingAccount ? existingCosmosAccount.id : cosmosAccount.id
 output name string = useExistingAccount ? existingCosmosAccount.name : cosmosAccount.name
 output resourceGroupName string = useExistingAccount ? existingCosmosResourceGroupName : resourceGroup().name
+output subscriptionId string = subscription().subscriptionId
 output endpoint string = useExistingAccount
   ? existingCosmosAccount.properties.documentEndpoint
   : cosmosAccount.properties.documentEndpoint
