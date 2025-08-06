@@ -144,7 +144,7 @@ resource accountCapabilityHost 'Microsoft.CognitiveServices/accounts/capabilityH
 }
 
 resource project_connection_cosmosdb_account 'Microsoft.CognitiveServices/accounts/projects/connections@2025-04-01-preview' = if (!empty(cosmosDBName)) {
-  name: cosmosDBName
+  name: '${cosmosDBName}-for-${foundry_project.name}'
   parent: foundry_project
   properties: {
     category: 'CosmosDB'
@@ -159,7 +159,7 @@ resource project_connection_cosmosdb_account 'Microsoft.CognitiveServices/accoun
 }
 
 resource project_connection_azure_storage 'Microsoft.CognitiveServices/accounts/projects/connections@2025-04-01-preview' = if (!empty(azureStorageName)) {
-  name: azureStorageName
+  name: '${azureStorageName}-for-${foundry_project.name}'
   parent: foundry_project
   properties: {
     category: 'AzureStorageAccount'
@@ -174,7 +174,7 @@ resource project_connection_azure_storage 'Microsoft.CognitiveServices/accounts/
 }
 
 resource project_connection_azureai_search 'Microsoft.CognitiveServices/accounts/projects/connections@2025-04-01-preview' = if (!empty(aiSearchName)) {
-  name: aiSearchName
+  name: '${aiSearchName}-for-${foundry_project.name}'
   parent: foundry_project
   properties: {
     category: 'CognitiveSearch'
@@ -194,9 +194,9 @@ output projectConnectionString string = 'https://${foundryName}.services.ai.azur
 output projectEndpoint string = foundry_project.properties.endpoints['AI Foundry API']
 
 // return the BYO connection names
-output cosmosDBConnection string = cosmosDBName
-output azureStorageConnection string = azureStorageName
-output aiSearchConnection string = aiSearchName
+output cosmosDBConnection string = project_connection_cosmosdb_account.name
+output azureStorageConnection string = project_connection_azure_storage.name
+output aiSearchConnection string = project_connection_azureai_search.name
 output aiFoundryConnectionName string = empty(existingAiResourceId)
   ? ''
   : usingFoundryAiConnection ? byoAiFoundryConnectionName : byoAiProjectConnectionName

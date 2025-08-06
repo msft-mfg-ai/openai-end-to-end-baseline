@@ -2,7 +2,6 @@ param existing_CogServices_Name string = ''
 param existing_CogServices_RG_Name string = ''
 param name string = ''
 param location string = resourceGroup().location
-param pe_location string = location
 param tags object = {}
 param appInsightsName string
 param agentSubnetId string = ''
@@ -128,7 +127,7 @@ module privateEndpoint '../networking/private-endpoint.bicep' = if (deployInVNET
   dependsOn: [deployment]
   params: {
     tags: tags
-    location: pe_location
+    location: location
     privateEndpointName: privateEndpointName
     groupIds: ['account']
     targetResourceId: account.id

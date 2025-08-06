@@ -12,10 +12,16 @@ param environmentName string = 'dev'
 param regionCode string = 'NAA'
 
 @description('Instance number for the application, e.g. 001, 002, etc. This is used to differentiate multiple instances of the same application in the same environment.')
-param instance string = ''
+@maxLength(3)
+@minLength(3)
+param instance string = '000'
 
 @description('Optional resource token to ensure uniqueness - leave blank if desired')
 param resourceToken string = ''
+
+@description('Number of projects to create, used for AI Hub projects')
+@minValue(1)
+param numberOfProjects int
 
 // ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Scrub inputs and create repeatable variables
@@ -51,7 +57,12 @@ output cogServiceName string              = toLower('${resourceAbbreviations.cog
 output documentIntelligenceName string    = toLower('${resourceAbbreviations.documentIntelligence}-${sanitizedAppName}-${environmentInitial}${resourceTokenWithDash}${dashRegionDashInstance}')
 output aiHubName string                   = toLower('${resourceAbbreviations.cognitiveServicesAIHub}-${sanitizedAppName}-${environmentInitial}${resourceTokenWithDash}${dashRegionDashInstance}')
 // AI Hub Project name must be alpha numeric characters or '-', length must be <= 32
-output aiHubProjectName string            = take(toLower('${resourceAbbreviations.cognitiveServicesHubProject}-${sanitizedAppName}-${environmentInitial}${resourceTokenWithDash}${dashRegionDashInstance}'), 32)
+func getProjectName(no int) string => take(toLower('${resourceAbbreviations.cognitiveServicesFoundryProject}-${sanitizedAppName}-${no}-${environmentInitial}${resourceTokenWithDash}${dashRegionDashInstance}'), 32)
+var aiProjectNames = [for i in range(1, numberOfProjects + 1): getProjectName(i)]
+
+output aiHubProjectNames array = aiProjectNames
+output aiHubProjectName string            = aiProjectNames[0] // Use the first project name as the AI Hub Project name
+
 output aiHubFoundryProjectName string     = take(toLower('${resourceAbbreviations.cognitiveServicesFoundryProject}-${sanitizedAppName}-${environmentInitial}${resourceTokenWithDash}${dashRegionDashInstance}'), 32)
 
 output caManagedEnvName string            = toLower('${resourceAbbreviations.appManagedEnvironments}-${sanitizedAppName}-${environmentInitial}${resourceToken}${dashRegionDashInstance}')
@@ -130,3 +141,5 @@ output appGatewayPublicIpName string = toLower('${resourceAbbreviations.networkP
 // Monitoring and Alerting resource names
 output actionGroupName string             = toLower('${resourceAbbreviations.insightsActionGroups}${sanitizedAppName}-${environmentInitial}${resourceTokenWithDash}${dashRegionDashInstance}')
 output smartDetectorAlertRuleName string  = toLower('${resourceAbbreviations.insightsSmartDetectorAlertRules}${sanitizedAppName}-${environmentInitial}${resourceTokenWithDash}${dashRegionDashInstance}')
+
+

@@ -132,6 +132,10 @@ module privateEndpointQueue '../networking/private-endpoint.bicep' = if (!useExi
 // --------------------------------------------------------------------------------------------------------------
 output name string = useExistingStorageAccount ? existingStorageAccount.name : storage.name
 output id string = useExistingStorageAccount ? existingStorageAccount.id : storage.id
+// assumption: the resource group for the storage account is the same as the one where this module is deployed
+output resourceGroupName string = resourceGroup().name
+output subscriptionId string = subscription().subscriptionId
+
 output primaryEndpoints object = useExistingStorageAccount ? existingStorageAccount.properties.primaryEndpoints : storage.properties.primaryEndpoints
 output containerNames array = [
   for (name, i) in containers: useExistingStorageAccount ? null : {
