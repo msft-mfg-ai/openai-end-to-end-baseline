@@ -199,6 +199,8 @@ param uiImageName string?
 // --------------------------------------------------------------------------------------------------------------
 @description('Should resources be created with public access?')
 param publicAccessEnabled bool = false
+@description('Should we make Web Apps Public?')
+param makeWebAppsPublic bool = false
 @description('Create DNS Zones?')
 param createDnsZones bool = true
 @description('Add Role Assignments for the user assigned identity?')
@@ -389,7 +391,6 @@ module storage './modules/storage/storage-account.bicep' = {
     name: resourceNames.outputs.storageAccountName
     location: location
     tags: tags
-    // publicNetworkAccess: publicAccessEnabled
     privateEndpointSubnetId: vnet.outputs.subnetPeResourceID
     privateEndpointBlobName: resourceNames.outputs.peStorageAccountBlobName
     privateEndpointTableName: resourceNames.outputs.peStorageAccountTableName
@@ -558,7 +559,8 @@ module searchService './modules/search/search-services.bicep' = {
     disableLocalAuth: true
     location: location
     name: resourceNames.outputs.searchServiceName
-    publicNetworkAccess: publicAccessEnabled ? 'enabled' : 'disabled'
+    publicNetworkAccess: makeWebAppsPublic ? 'enabled' : 'disabled'
+    // before 08/15: publicNetworkAccess: publicAccessEnabled ? 'enabled' : 'disabled'
     myIpAddress: myIpAddress
     privateEndpointSubnetId: vnet.outputs.subnetPeResourceID
     privateEndpointName: resourceNames.outputs.peSearchServiceName
@@ -631,7 +633,8 @@ module aiFoundry './modules/ai/cognitive-services.bicep' = {
         }
       }
     ]
-    publicNetworkAccess: publicAccessEnabled ? 'enabled' : 'disabled'
+    publicNetworkAccess: makeWebAppsPublic ? 'enabled' : 'disabled'
+    // before 08/15: publicNetworkAccess: publicAccessEnabled ? 'enabled' : 'disabled'
     privateEndpointSubnetId: vnet.outputs.subnetPeResourceID
     agentSubnetId: vnet.outputs.subnetAgentResourceID
     privateEndpointName: resourceNames.outputs.peOpenAIName
@@ -649,7 +652,8 @@ module documentIntelligence './modules/ai/document-intelligence.bicep' = if (dep
     name: resourceNames.outputs.documentIntelligenceName
     location: location // this may be different than the other resources
     tags: tags
-    publicNetworkAccess: publicAccessEnabled ? 'enabled' : 'disabled'
+    publicNetworkAccess: makeWebAppsPublic ? 'enabled' : 'disabled'
+    // before 08/15: publicNetworkAccess: publicAccessEnabled ? 'enabled' : 'disabled'
     privateEndpointSubnetId: vnet.outputs.subnetPeResourceID
     privateEndpointName: resourceNames.outputs.peDocumentIntelligenceName
     myIpAddress: myIpAddress
@@ -1078,7 +1082,7 @@ module managedEnvironment './modules/app/managedEnvironment.bicep' = if (deployC
     logAnalyticsRgName: resourceGroupName
     appSubnetId: vnet.outputs.subnetAppSeResourceID
     tags: tags
-    publicAccessEnabled: publicAccessEnabled
+    publicAccessEnabled: makeWebAppsPublic // before 08/15: publicAccessEnabled
     containerAppEnvironmentWorkloadProfiles: containerAppEnvironmentWorkloadProfiles
     privateEndpointName: resourceNames.outputs.peContainerAppsName
     privateEndpointSubnetId: vnet.outputs.subnetPeResourceID

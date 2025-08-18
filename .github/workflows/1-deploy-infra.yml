@@ -44,6 +44,10 @@ on:
         description: Add Role Assignments?
         type: boolean
         default: true
+      makeWebAppsPublic:
+        description: Make Web Apps Public?
+        type: boolean
+        default: true
       deployAPIM:
         description: Deploy APIM?
         type: boolean
@@ -53,11 +57,12 @@ on:
         required: false
         default: true
         type: boolean
-      runGHASSecurityScan:
-        description: Run GHAS Scan
-        required: false
-        default: false
-        type: boolean
+      # Forced at client by policy...
+      # runGHASSecurityScan:
+      #  description: Run GHAS Scan
+      #  required: false
+      #  default: false
+      #  type: boolean
 
 
 # ------------------------------------------------------------------------------------------------------------------------
@@ -65,7 +70,7 @@ jobs:
   scan-code:
     name: Scan Source Code
     uses: ./.github/workflows/template-scan-code.yml
-    if: inputs.runMSSecurityScan || inputs.runGHASSecurityScan
+    if: inputs.runMSSecurityScan
     secrets: inherit
     permissions:
       id-token: write
@@ -79,7 +84,7 @@ jobs:
       packages: read
     with:
       runMSDevSecOpsScan: ${{ inputs.runMSSecurityScan }}
-      runGHASScan: ${{ inputs.runGHASSecurityScan }}
+      runGHASScan: false # $ { { inputs.runGHASSecurityScan } }
 
 # ------------------------------------------------------------------------------------------------------------------------
   Deploy_Bicep:
@@ -103,3 +108,4 @@ jobs:
       deployAPIM: ${{ inputs.deployAPIM }}
       appsToDeploy: ${{ inputs.appsToDeploy }}
       bicepDeploymentMode: ${{ inputs.bicepDeploymentMode }}
+      makeWebAppsPublic: ${{ inputs.makeWebAppsPublic }}

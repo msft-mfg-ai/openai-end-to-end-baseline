@@ -37,6 +37,10 @@ on:
         description: Create Resource Group?
         type: boolean
         default: false
+      makeWebAppsPublic:
+        description: Make Web Apps Public?
+        type: boolean
+        default: false
       publicAccessEnabled:
         description: Public Access Enabled?
         type: boolean
@@ -91,6 +95,7 @@ jobs:
       envCode: ${{ inputs.envCode }}
       createResourceGroup: ${{ inputs.createResourceGroup }}
       publicAccessEnabled: ${{ inputs.publicAccessEnabled }}
+      makeWebAppsPublic: ${{ inputs.makeWebAppsPublic }}
       createDnsZones: ${{ inputs.createDnsZones }}
       deployAIHub: ${{ inputs.deployAIHub }}
       addRoleAssignments: ${{ inputs.addRoleAssignments }}

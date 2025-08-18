@@ -133,6 +133,8 @@ param uiImageName string?
 // --------------------------------------------------------------------------------------------------------------
 @description('Should resources be created with public access?')
 param publicAccessEnabled bool = true
+@description('Should we make Web Apps Public?')
+param makeWebAppsPublic bool = false
 @description('Add Role Assignments for the user assigned identity?')
 param addRoleAssignments bool = true
 @description('Should we run a script to dedupe the KeyVault secrets? (this fails on private networks right now)')
@@ -439,7 +441,8 @@ module searchService './modules/search/search-services.bicep' = {
     disableLocalAuth: true
     location: location
     name: resourceNames.outputs.searchServiceName
-    publicNetworkAccess: publicAccessEnabled ? 'enabled' : 'disabled'
+    publicNetworkAccess: makeWebAppsPublic ? 'enabled' : 'disabled'
+    // before 08/15: publicNetworkAccess: publicAccessEnabled ? 'enabled' : 'disabled'
     myIpAddress: myIpAddress
     managedIdentityId: identity.outputs.managedIdentityId
     sku: {
@@ -510,7 +513,8 @@ module aiFoundry './modules/ai/cognitive-services.bicep' = {
         }
       }
     ]
-    publicNetworkAccess: publicAccessEnabled ? 'enabled' : 'disabled'
+    publicNetworkAccess: makeWebAppsPublic ? 'enabled' : 'disabled'
+    // before 08/15: publicNetworkAccess: publicAccessEnabled ? 'enabled' : 'disabled'
     myIpAddress: myIpAddress
   }
   dependsOn: [
@@ -525,7 +529,8 @@ module documentIntelligence './modules/ai/document-intelligence.bicep' = if (dep
     name: resourceNames.outputs.documentIntelligenceName
     location: location // this may be different than the other resources
     tags: tags
-    publicNetworkAccess: publicAccessEnabled ? 'enabled' : 'disabled'
+    publicNetworkAccess: makeWebAppsPublic ? 'enabled' : 'disabled'
+    // before 08/15: publicNetworkAccess: publicAccessEnabled ? 'enabled' : 'disabled'
     myIpAddress: myIpAddress
     managedIdentityId: identity.outputs.managedIdentityId
   }
@@ -606,7 +611,7 @@ module managedEnvironment './modules/app/managedEnvironment.bicep' = if (deployC
     logAnalyticsWorkspaceName: logAnalytics.outputs.logAnalyticsWorkspaceName
     logAnalyticsRgName: resourceGroupName
     tags: tags
-    publicAccessEnabled: publicAccessEnabled
+    publicAccessEnabled: makeWebAppsPublic // before 08/15: publicAccessEnabled
     containerAppEnvironmentWorkloadProfiles: containerAppEnvironmentWorkloadProfiles
   }
 }
