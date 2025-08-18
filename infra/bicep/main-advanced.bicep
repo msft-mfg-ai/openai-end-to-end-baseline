@@ -1084,8 +1084,8 @@ module managedEnvironment './modules/app/managedEnvironment.bicep' = if (deployC
     tags: tags
     publicAccessEnabled: makeWebAppsPublic // before 08/15: publicAccessEnabled
     containerAppEnvironmentWorkloadProfiles: containerAppEnvironmentWorkloadProfiles
-    privateEndpointName: resourceNames.outputs.peContainerAppsName
-    privateEndpointSubnetId: vnet.outputs.subnetPeResourceID
+    privateEndpointName: makeWebAppsPublic ? '' : resourceNames.outputs.peContainerAppsName
+    privateEndpointSubnetId: makeWebAppsPublic ? '' : vnet.outputs.subnetPeResourceID
   }
 }
 
