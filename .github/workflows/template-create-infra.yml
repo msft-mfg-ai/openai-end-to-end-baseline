@@ -65,6 +65,10 @@ on:
         description: Run Deploy APIM?
         type: boolean
         default: false
+      deployCapHost:
+        description: Deploy AIF Capability Hosts?
+        type: boolean
+        default: false
       requestorName:
         description: Requestor Name
         type: string
@@ -102,6 +106,7 @@ jobs:
       deployAPI: ${{ inputs.appsToDeploy && inputs.appsToDeploy == 'API' || inputs.appsToDeploy == 'API+UI' && 'true' || 'false' }}
       deployUI:  ${{ inputs.appsToDeploy && inputs.appsToDeploy == 'UI' || inputs.appsToDeploy == 'API+UI' && 'true' || 'false' }}
       deployAPIM: ${{ inputs.deployAPIM }}
+      deployCapHost: ${{ inputs.deployCapHost }}
       loginWithFederatedIdentity: ${{ secrets.CICD_CLIENT_SECRET == '' && 'true' || 'false' }}
       loginWithSecret: ${{ secrets.CICD_CLIENT_SECRET != '' && 'true' || 'false' }}
       gitHubRequestorName: ${{ inputs.requestorName }}

@@ -78,3 +78,6 @@ param containerAppEnvironmentWorkloadProfiles = [
     workloadProfileType: 'consumption'
   }
 ]
+
+// Should we deploy the AIF CapabilityHosts? Sometimes this crashes and we can't work around it...!!!
+param deployCapHost =  empty('#{deployCapHost}#') ? true : toLower('#{deployCapHost}#') == 'true'

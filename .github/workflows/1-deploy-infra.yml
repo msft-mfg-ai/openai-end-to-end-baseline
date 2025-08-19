@@ -57,6 +57,12 @@ on:
         required: false
         default: true
         type: boolean
+
+      deployCapHost:
+        description: Deploy AIF Capability Hosts?
+        type: boolean
+        default: true
+
       # Forced at client by policy...
       # runGHASSecurityScan:
       #  description: Run GHAS Scan
@@ -108,4 +114,4 @@ jobs:
       deployAPIM: ${{ inputs.deployAPIM }}
       appsToDeploy: ${{ inputs.appsToDeploy }}
       bicepDeploymentMode: ${{ inputs.bicepDeploymentMode }}
-      makeWebAppsPublic: ${{ inputs.makeWebAppsPublic }}
+      makeWebAppsPublic: ${{ inputs.makeWebAppsPublic }}      deployCapHost: ${{ inputs.deployCapHost }}
