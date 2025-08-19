@@ -49,6 +49,7 @@ param entraClientSecret = empty('#{ENTRA_CLIENT_SECRET}#') ? null : '#{ENTRA_CLI
 param addRoleAssignments = empty('#{addRoleAssignments}#') ? false : toLower('#{addRoleAssignments}#') == 'true'
 param createDnsZones = true
 param publicAccessEnabled = false
+param makeWebAppsPublic = empty('#{makeWebAppsPublic}#') ? false : toLower('#{makeWebAppsPublic}#') == 'true'
 
 param admin_username = empty('#{ADMIN_USERNAME}#') ? null : '#{ADMIN_USERNAME}#' // This is the username for the admin user of jumpboxvm
 param admin_password = empty('#{ADMIN_PASSWORD}#') ? null : '#{ADMIN_PASSWORD}#' // This is the password for the admin user of jumpboxvm
@@ -77,3 +78,6 @@ param containerAppEnvironmentWorkloadProfiles = [
     workloadProfileType: 'consumption'
   }
 ]
+
+// Should we deploy the AIF CapabilityHosts? Sometimes this crashes and we can't work around it...!!!
+param deployCapHost =  empty('#{deployCapHost}#') ? true : toLower('#{deployCapHost}#') == 'true'

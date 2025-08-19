@@ -37,6 +37,10 @@ on:
         description: Create Resource Group?
         type: boolean
         default: false
+      makeWebAppsPublic:
+        description: Make Web Apps Public?
+        type: boolean
+        default: false
       publicAccessEnabled:
         description: Public Access Enabled?
         type: boolean
@@ -59,6 +63,10 @@ on:
         default: 'none'
       deployAPIM:
         description: Run Deploy APIM?
+        type: boolean
+        default: false
+      deployCapHost:
+        description: Deploy AIF Capability Hosts?
         type: boolean
         default: false
       requestorName:
@@ -91,12 +99,14 @@ jobs:
       envCode: ${{ inputs.envCode }}
       createResourceGroup: ${{ inputs.createResourceGroup }}
       publicAccessEnabled: ${{ inputs.publicAccessEnabled }}
+      makeWebAppsPublic: ${{ inputs.makeWebAppsPublic }}
       createDnsZones: ${{ inputs.createDnsZones }}
       deployAIHub: ${{ inputs.deployAIHub }}
       addRoleAssignments: ${{ inputs.addRoleAssignments }}
       deployAPI: ${{ inputs.appsToDeploy && inputs.appsToDeploy == 'API' || inputs.appsToDeploy == 'API+UI' && 'true' || 'false' }}
       deployUI:  ${{ inputs.appsToDeploy && inputs.appsToDeploy == 'UI' || inputs.appsToDeploy == 'API+UI' && 'true' || 'false' }}
       deployAPIM: ${{ inputs.deployAPIM }}
+      deployCapHost: ${{ inputs.deployCapHost }}
       loginWithFederatedIdentity: ${{ secrets.CICD_CLIENT_SECRET == '' && 'true' || 'false' }}
       loginWithSecret: ${{ secrets.CICD_CLIENT_SECRET != '' && 'true' || 'false' }}
       gitHubRequestorName: ${{ inputs.requestorName }}

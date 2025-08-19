@@ -43,6 +43,7 @@ param entraClientSecret = empty('#{ENTRA_CLIENT_SECRET}#') ? null : '#{ENTRA_CLI
 
 param addRoleAssignments = empty('#{addRoleAssignments}#') ? false : toLower('#{addRoleAssignments}#') == 'true'
 param publicAccessEnabled = true
+param makeWebAppsPublic = true
 
 param deployAPIM = empty('#{deployAPIM}#') ? false : toLower('#{deployAPIM}#') == 'true'
 // Should we deploy the API Management service?

@@ -197,8 +197,12 @@ param uiImageName string?
 // --------------------------------------------------------------------------------------------------------------
 // Other deployment switches
 // --------------------------------------------------------------------------------------------------------------
+@description('Should we deploy the AIF CapabilityHosts?')
+param deployCapHost bool = true
 @description('Should resources be created with public access?')
 param publicAccessEnabled bool = false
+@description('Should we make Web Apps Public?')
+param makeWebAppsPublic bool = false
 @description('Create DNS Zones?')
 param createDnsZones bool = true
 @description('Add Role Assignments for the user assigned identity?')
@@ -389,7 +393,6 @@ module storage './modules/storage/storage-account.bicep' = {
     name: resourceNames.outputs.storageAccountName
     location: location
     tags: tags
-    // publicNetworkAccess: publicAccessEnabled
     privateEndpointSubnetId: vnet.outputs.subnetPeResourceID
     privateEndpointBlobName: resourceNames.outputs.peStorageAccountBlobName
     privateEndpointTableName: resourceNames.outputs.peStorageAccountTableName
@@ -558,7 +561,8 @@ module searchService './modules/search/search-services.bicep' = {
     disableLocalAuth: true
     location: location
     name: resourceNames.outputs.searchServiceName
-    publicNetworkAccess: publicAccessEnabled ? 'enabled' : 'disabled'
+    publicNetworkAccess: makeWebAppsPublic ? 'enabled' : 'disabled'
+    // before 08/15: publicNetworkAccess: publicAccessEnabled ? 'enabled' : 'disabled'
     myIpAddress: myIpAddress
     privateEndpointSubnetId: vnet.outputs.subnetPeResourceID
     privateEndpointName: resourceNames.outputs.peSearchServiceName
@@ -631,7 +635,8 @@ module aiFoundry './modules/ai/cognitive-services.bicep' = {
         }
       }
     ]
-    publicNetworkAccess: publicAccessEnabled ? 'enabled' : 'disabled'
+    publicNetworkAccess: makeWebAppsPublic ? 'enabled' : 'disabled'
+    // before 08/15: publicNetworkAccess: publicAccessEnabled ? 'enabled' : 'disabled'
     privateEndpointSubnetId: vnet.outputs.subnetPeResourceID
     agentSubnetId: vnet.outputs.subnetAgentResourceID
     privateEndpointName: resourceNames.outputs.peOpenAIName
@@ -649,7 +654,8 @@ module documentIntelligence './modules/ai/document-intelligence.bicep' = if (dep
     name: resourceNames.outputs.documentIntelligenceName
     location: location // this may be different than the other resources
     tags: tags
-    publicNetworkAccess: publicAccessEnabled ? 'enabled' : 'disabled'
+    publicNetworkAccess: makeWebAppsPublic ? 'enabled' : 'disabled'
+    // before 08/15: publicNetworkAccess: publicAccessEnabled ? 'enabled' : 'disabled'
     privateEndpointSubnetId: vnet.outputs.subnetPeResourceID
     privateEndpointName: resourceNames.outputs.peDocumentIntelligenceName
     myIpAddress: myIpAddress
@@ -689,7 +695,7 @@ var aiDependecies = {
   }
 }
 
-module aiProject1 './modules/ai/ai-project-with-caphost.bicep' = {
+module aiProject1 './modules/ai/ai-project-with-caphost.bicep' = if (deployCapHost) {
   name: 'aiProject${deploymentSuffix}-1'
   params: {
     foundryName: aiFoundry.outputs.name
@@ -699,7 +705,7 @@ module aiProject1 './modules/ai/ai-project-with-caphost.bicep' = {
   }
 }
 
-module aiProject2 './modules/ai/ai-project-with-caphost.bicep' = {
+module aiProject2 './modules/ai/ai-project-with-caphost.bicep' = if (deployCapHost) {
   name: 'aiProject${deploymentSuffix}-2'
   params: {
     foundryName: aiFoundry.outputs.name
@@ -712,7 +718,7 @@ module aiProject2 './modules/ai/ai-project-with-caphost.bicep' = {
   ]
 }
 
-module aiProject3 './modules/ai/ai-project-with-caphost.bicep' = {
+module aiProject3 './modules/ai/ai-project-with-caphost.bicep' = if (deployCapHost) {
   name: 'aiProject${deploymentSuffix}-3'
   params: {
     foundryName: aiFoundry.outputs.name
@@ -725,7 +731,7 @@ module aiProject3 './modules/ai/ai-project-with-caphost.bicep' = {
   ]
 }
 
-module aiProject4 './modules/ai/ai-project-with-caphost.bicep' = {
+module aiProject4 './modules/ai/ai-project-with-caphost.bicep' = if (deployCapHost) {
   name: 'aiProject${deploymentSuffix}-4'
   params: {
     foundryName: aiFoundry.outputs.name
@@ -1078,10 +1084,10 @@ module managedEnvironment './modules/app/managedEnvironment.bicep' = if (deployC
     logAnalyticsRgName: resourceGroupName
     appSubnetId: vnet.outputs.subnetAppSeResourceID
     tags: tags
-    publicAccessEnabled: publicAccessEnabled
+    publicAccessEnabled: makeWebAppsPublic // before 08/15: publicAccessEnabled
     containerAppEnvironmentWorkloadProfiles: containerAppEnvironmentWorkloadProfiles
-    privateEndpointName: resourceNames.outputs.peContainerAppsName
-    privateEndpointSubnetId: vnet.outputs.subnetPeResourceID
+    privateEndpointName: makeWebAppsPublic ? '' : resourceNames.outputs.peContainerAppsName
+    privateEndpointSubnetId: makeWebAppsPublic ? '' : vnet.outputs.subnetPeResourceID
   }
 }
 
@@ -1099,7 +1105,7 @@ var apiSettings = [
   { name: 'SEMANTICKERNEL_EXPERIMENTAL_GENAI_ENABLE_OTEL_DIAGNOSTICS', value: 'true' }
   { name: 'SEMANTICKERNEL_EXPERIMENTAL_GENAI_ENABLE_OTEL_DIAGNOSTICS_SENSITIVE', value: 'true' }
 
-  { name: 'AZURE_AI_AGENT_ENDPOINT', value: aiProject1.outputs.foundry_connection_string }
+  { name: 'AZURE_AI_AGENT_ENDPOINT', value: deployCapHost ? aiProject1.outputs.foundry_connection_string : '' }
   { name: 'AZURE_AI_AGENT_MODEL_DEPLOYMENT_NAME', value: gpt41_DeploymentName }
 
   { name: 'COSMOS_DB_ENDPOINT', value: cosmos.outputs.endpoint }
@@ -1216,8 +1222,8 @@ output SUBSCRIPTION_ID string = subscription().subscriptionId
 output ACR_NAME string = deployContainerRegistry ? containerRegistry!.outputs.name : ''
 output ACR_URL string = deployContainerRegistry ? containerRegistry!.outputs.loginServer : ''
 output AI_ENDPOINT string = aiFoundry.outputs.endpoint
-output AI_FOUNDRY_PROJECT_ID string = aiProject1.outputs.projectId
-output AI_FOUNDRY_PROJECT_NAME string = aiProject1.outputs.projectName
+output AI_FOUNDRY_PROJECT_ID string = deployCapHost ? aiProject1.outputs.projectId : ''
+output AI_FOUNDRY_PROJECT_NAME string = deployCapHost ? aiProject1.outputs.projectName : ''
 output AI_PROJECT_NAME string = resourceNames.outputs.aiHubProjectName
 output AI_SEARCH_ENDPOINT string = searchService.outputs.endpoint
 output API_CONTAINER_APP_FQDN string = deployAPIApp ? containerAppAPI!.outputs.fqdn : ''
