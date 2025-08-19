@@ -114,4 +114,5 @@ jobs:
       deployAPIM: ${{ inputs.deployAPIM }}
       appsToDeploy: ${{ inputs.appsToDeploy }}
       bicepDeploymentMode: ${{ inputs.bicepDeploymentMode }}
-      makeWebAppsPublic: ${{ inputs.makeWebAppsPublic }}      deployCapHost: ${{ inputs.deployCapHost }}
+      makeWebAppsPublic: ${{ inputs.makeWebAppsPublic }}
+      deployCapHost: ${{ inputs.deployCapHost }}
