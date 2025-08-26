@@ -671,7 +671,7 @@ module documentIntelligence './modules/ai/document-intelligence.bicep' = if (dep
 // Imported from https://github.com/adamhockemeyer/ai-agent-experience
 // --------------------------------------------------------------------------------------------------------------
 // AI Project
-var numberOfProjects int = 4 // This is the number of AI Projects to create
+var numberOfProjects int = 1 // This is the number of AI Projects to create
 // deploying AI projects in sequence
 
 var aiDependecies = {
@@ -703,45 +703,6 @@ module aiProject1 './modules/ai/ai-project-with-caphost.bicep' = if (deployCapHo
     projectNo: 1
     aiDependencies: aiDependecies
   }
-}
-
-module aiProject2 './modules/ai/ai-project-with-caphost.bicep' = if (deployCapHost) {
-  name: 'aiProject${deploymentSuffix}-2'
-  params: {
-    foundryName: aiFoundry.outputs.name
-    location: location
-    projectNo: 2
-    aiDependencies: aiDependecies
-  }
-  dependsOn: [
-    aiProject1
-  ]
-}
-
-module aiProject3 './modules/ai/ai-project-with-caphost.bicep' = if (deployCapHost) {
-  name: 'aiProject${deploymentSuffix}-3'
-  params: {
-    foundryName: aiFoundry.outputs.name
-    location: location
-    projectNo: 3
-    aiDependencies: aiDependecies
-  }
-  dependsOn: [
-    aiProject2
-  ]
-}
-
-module aiProject4 './modules/ai/ai-project-with-caphost.bicep' = if (deployCapHost) {
-  name: 'aiProject${deploymentSuffix}-4'
-  params: {
-    foundryName: aiFoundry.outputs.name
-    location: location
-    projectNo: 4
-    aiDependencies: aiDependecies
-  }
-dependsOn: [
-    aiProject3
-  ]
 }
 
 // --------------------------------------------------------------------------------------------------------------

@@ -1,7 +1,8 @@
 param tags object = {}
 param vnetResourceId string
-param keyVaultPrivateEndpointName string
-param openAiPrivateEndpointName string
+param dnsZonesResourceGroupName string = resourceGroup().name
+param keyVaultPrivateEndpointName string = ''
+param openAiPrivateEndpointName string = ''
 param aiSearchPrivateEndpointName string
 param storageBlobPrivateEndpointName string
 param storageQueuePrivateEndpointName string
@@ -27,14 +28,13 @@ var deployACR = !empty(acrPrivateEndpointName)
 var deployDocumentIntelligence = !empty(documentIntelligencePrivateEndpointName)
 var deployCosmosDb = !empty(cosmosPrivateEndpointName)
 
-
-
 module kvZone 'zone-with-a-record.bicep' = if (deployKeyVault) {
   name: 'kvZone'
   params: {
     zoneNames: ['privatelink.vaultcore.azure.net']
     privateEndpointNames: [keyVaultPrivateEndpointName]
     vnetResourceId: vnetResourceId
+    dnsZonesResourceGroupName: dnsZonesResourceGroupName
     tags: tags
   }
 }
@@ -45,6 +45,7 @@ module acrZone 'zone-with-a-record.bicep' = if (deployACR) {
     zoneNames: ['privatelink.azurecr.io']
     privateEndpointNames: [acrPrivateEndpointName]
     vnetResourceId: vnetResourceId
+    dnsZonesResourceGroupName: dnsZonesResourceGroupName
     tags: tags
   }
 }
@@ -55,6 +56,7 @@ module openAiZone 'zone-with-a-record.bicep' = if (deployOpenAi) {
     zoneNames: ['privatelink.openai.azure.com', 'privatelink.services.ai.azure.com', 'privatelink.cognitiveservices.azure.com']
     privateEndpointNames: [openAiPrivateEndpointName]
     vnetResourceId: vnetResourceId
+    dnsZonesResourceGroupName: dnsZonesResourceGroupName
     tags: tags
   }
 }
@@ -65,6 +67,7 @@ module documentIntelligenceZone 'zone-with-a-record.bicep' = if (deployDocumentI
     zoneNames: ['privatelink.cognitiveservices.azure.com']
     privateEndpointNames: [documentIntelligencePrivateEndpointName]
     vnetResourceId: vnetResourceId
+    dnsZonesResourceGroupName: dnsZonesResourceGroupName
     tags: tags
   }
 }
@@ -75,6 +78,7 @@ module aiSearchZone 'zone-with-a-record.bicep' = if (deployAiSearch) {
     zoneNames: ['privatelink.search.windows.net']
     privateEndpointNames: [aiSearchPrivateEndpointName]
     vnetResourceId: vnetResourceId
+    dnsZonesResourceGroupName: dnsZonesResourceGroupName
     tags: tags
   }
 }
@@ -85,6 +89,7 @@ module cosmosZone 'zone-with-a-record.bicep' = if (deployCosmosDb) {
     zoneNames: ['privatelink.documents.azure.com']
     privateEndpointNames: [cosmosPrivateEndpointName]
     vnetResourceId: vnetResourceId
+    dnsZonesResourceGroupName: dnsZonesResourceGroupName
     tags: tags
   }
 }
@@ -95,6 +100,7 @@ module storageBlobZone 'zone-with-a-record.bicep' = if (deployStorageBlob) {
     zoneNames: ['privatelink.blob.${environment().suffixes.storage}']
     privateEndpointNames: [storageBlobPrivateEndpointName]
     vnetResourceId: vnetResourceId
+    dnsZonesResourceGroupName: dnsZonesResourceGroupName
     tags: tags
   }
 }
@@ -105,6 +111,7 @@ module storageTableZone 'zone-with-a-record.bicep' = if (deployStorageTable) {
     zoneNames: ['privatelink.table.${environment().suffixes.storage}']
     privateEndpointNames: [storageTablePrivateEndpointName]
     vnetResourceId: vnetResourceId
+    dnsZonesResourceGroupName: dnsZonesResourceGroupName
     tags: tags
   }
 }
@@ -115,6 +122,7 @@ module storageQueueZone 'zone-with-a-record.bicep' = if (deployStorageQueue) {
     zoneNames: ['privatelink.queue.${environment().suffixes.storage}']
     privateEndpointNames: [storageQueuePrivateEndpointName]
     vnetResourceId: vnetResourceId
+    dnsZonesResourceGroupName: dnsZonesResourceGroupName
     tags: tags
   }
 }
@@ -125,6 +133,7 @@ module storageFileZone 'zone-with-a-record.bicep' = if (deployStorageFile) {
     zoneNames: ['privatelink.file.${environment().suffixes.storage}']
     privateEndpointNames: [storageFilePrivateEndpointName]
     vnetResourceId: vnetResourceId
+    dnsZonesResourceGroupName: dnsZonesResourceGroupName
     tags: tags
   }
 }
@@ -159,6 +168,7 @@ module acaPrivateEndpointZone 'zone-with-a-record.bicep' = if (deployAca) {
     zoneNames: ['privatelink.${acaPe.location}.azurecontainerapps.io']
     privateEndpointNames: [acaPrivateEndpointName]
     vnetResourceId: vnetResourceId
+    dnsZonesResourceGroupName: dnsZonesResourceGroupName
     tags: tags
   }
 }

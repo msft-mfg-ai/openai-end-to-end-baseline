@@ -4,6 +4,9 @@
 @description('Application name unique to this application, typically 5-8 characters.')
 param applicationName string = ''
 
+@description('Root Application Name that this is based on')
+param rootApplication string = ''
+
 @description('Environment name for the application, e.g. azd, dev, demo, qa, stg, ct, prod. This is used to differentiate resources in different environments.')
 param environmentName string = 'dev'
 
@@ -21,7 +24,11 @@ param resourceToken string = ''
 
 @description('Number of projects to create, used for AI Hub projects')
 @minValue(1)
-param numberOfProjects int
+param numberOfProjects int = projectNumber+1
+
+@description('Project number to use for AI Hub project names, must be less than or equal to numberOfProjects')
+@minValue(1)
+param projectNumber int=1
 
 // ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Scrub inputs and create repeatable variables
@@ -30,11 +37,13 @@ var sanitizedEnvironment = toLower(environmentName)
 var environmentInitial = take(sanitizedEnvironment, 1)
 var sanitizedAppNameWithDashes = replace(replace(toLower(applicationName), ' ', ''), '_', '')
 var sanitizedAppName = replace(replace(replace(toLower(applicationName), ' ', ''), '-', ''), '_', '')
+var sanitizedRootApplication = replace(replace(replace(toLower(rootApplication), ' ', ''), '-', ''), '_', '')
 
 var resourceTokenWithDash = resourceToken == '' ? '' : '-${resourceToken}'
 var resourceTokenWithoutDash = resourceToken == '' ? '' : '${resourceToken}'
 
 var dashRegionDashInstance = instance == '' ? '' : toLower('-${regionCode}-${instance}')
+var dashRegionDashProject = instance == '' ? '' : toLower('-${regionCode}-${projectNumber}')
 var regionInstance = instance == '' ? '' : toLower('${regionCode}${instance}')
 var partialInstance = substring(instance, 2, 1) // get last digit of a three digit code
 var partialRegion = substring(regionCode, 0, 1) // get first digit of a two digit code
@@ -55,13 +64,15 @@ output apimName string                    = toLower('${resourceAbbreviations.api
 output searchServiceName string           = toLower('${resourceAbbreviations.searchSearchServices}-${sanitizedAppName}-${environmentInitial}${resourceTokenWithDash}${dashRegionDashInstance}')
 output cogServiceName string              = toLower('${resourceAbbreviations.cognitiveServicesFoundry}-${sanitizedAppName}-${environmentInitial}${resourceTokenWithDash}${dashRegionDashInstance}')
 output documentIntelligenceName string    = toLower('${resourceAbbreviations.documentIntelligence}-${sanitizedAppName}-${environmentInitial}${resourceTokenWithDash}${dashRegionDashInstance}')
+output rootCogServiceName string          = toLower('${resourceAbbreviations.cognitiveServicesFoundry}-${sanitizedRootApplication}-${environmentInitial}${resourceTokenWithDash}${dashRegionDashInstance}')
+
 output aiHubName string                   = toLower('${resourceAbbreviations.cognitiveServicesAIHub}-${sanitizedAppName}-${environmentInitial}${resourceTokenWithDash}${dashRegionDashInstance}')
 // AI Hub Project name must be alpha numeric characters or '-', length must be <= 32
 func getProjectName(no int) string => take(toLower('${resourceAbbreviations.cognitiveServicesFoundryProject}-${sanitizedAppName}-${no}-${environmentInitial}${resourceTokenWithDash}${dashRegionDashInstance}'), 32)
 var aiProjectNames = [for i in range(1, numberOfProjects + 1): getProjectName(i)]
 
 output aiHubProjectNames array = aiProjectNames
-output aiHubProjectName string            = aiProjectNames[0] // Use the first project name as the AI Hub Project name
+output aiHubProjectName string            = getProjectName(projectNumber) // Use the first project name as the AI Hub Project name
 
 output aiHubFoundryProjectName string     = take(toLower('${resourceAbbreviations.cognitiveServicesFoundryProject}-${sanitizedAppName}-${environmentInitial}${resourceTokenWithDash}${dashRegionDashInstance}'), 32)
 
@@ -74,6 +85,7 @@ output containerAppBatchName string       = take(toLower('${resourceAbbreviation
 output caManagedIdentityName string       = toLower('${resourceAbbreviations.managedIdentityUserAssignedIdentities}-${sanitizedAppName}-${resourceAbbreviations.appManagedEnvironments}-${environmentInitial}${dashRegionDashInstance}')
 output kvManagedIdentityName string       = toLower('${resourceAbbreviations.managedIdentityUserAssignedIdentities}-${sanitizedAppName}-${resourceAbbreviations.keyVaultVaults}-${environmentInitial}${dashRegionDashInstance}')
 output userAssignedIdentityName string    = toLower('${resourceAbbreviations.managedIdentityUserAssignedIdentities}-${sanitizedAppName}-${environmentInitial}${dashRegionDashInstance}')
+output rootUserAssignedIdentityName string = toLower('${resourceAbbreviations.managedIdentityUserAssignedIdentities}-${sanitizedRootApplication}-${environmentInitial}${dashRegionDashInstance}')
 
 // ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Container Registry, Key Vaults and Storage Account names are only alpha numeric characters limited length
@@ -85,6 +97,8 @@ output storageAccountName string          = take('${resourceAbbreviations.storag
 // Network resource names
 // ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 output vnet_Name string                   = toLower('${resourceAbbreviations.networkVirtualNetworks}-${sanitizedAppName}-${environmentInitial}${dashRegionDashInstance}')
+output root_vnet_Name string              = toLower('${resourceAbbreviations.networkVirtualNetworks}-${sanitizedRootApplication}-${environmentInitial}${dashRegionDashInstance}')
+                               
 output subnetAppGwName string             = toLower('snet-app-gateway')
 output subnetAppSeName string             = toLower('snet-app-services')
 output subnetPeName string                = toLower('snet-private-endpoint')
@@ -111,6 +125,17 @@ output vm_nsg_name string       = toLower('${resourceAbbreviations.networkNetwor
 output bastion_host_name string = toLower('${resourceAbbreviations.networkBastionHosts}${sanitizedAppName}-${environmentInitial}${dashRegionDashInstance}')
 output bastion_pip_name string  = toLower('${resourceAbbreviations.networkPublicIPAddresses}${sanitizedAppName}-${resourceAbbreviations.bastionPip}-${environmentInitial}${dashRegionDashInstance}')
 
+output project_vm object = {
+  vm_name:                        toLower('${resourceAbbreviations.computeVirtualMachines}oaz${sanitizedAppName}${environmentInitial}${regionCode}${projectNumber}')
+  vm_name_15:                     take(toLower('${resourceAbbreviations.computeVirtualMachines}oaz${sanitizedAppName}${environmentInitial}${regionCode}${projectNumber}'),15)
+  vm_nic_name:                    toLower('${resourceAbbreviations.networkNetworkInterfaces}${sanitizedAppName}-${environmentInitial}${dashRegionDashProject}')
+  vm_pip_name:                    toLower('${resourceAbbreviations.networkPublicIPAddresses}${sanitizedAppName}-${environmentInitial}${dashRegionDashProject}')
+  vm_os_disk_name:                toLower('${resourceAbbreviations.computeDisks}-${sanitizedAppName}-${environmentInitial}${dashRegionDashProject}')
+  vm_nsg_name:                    toLower('${resourceAbbreviations.networkNetworkSecurityGroups}-${sanitizedAppName}-${environmentInitial}${dashRegionDashProject}')
+  bastion_host_name:              toLower('${resourceAbbreviations.networkBastionHosts}${sanitizedAppName}-${environmentInitial}${dashRegionDashProject}')
+  bastion_pip_name:               toLower('${resourceAbbreviations.networkPublicIPAddresses}${sanitizedAppName}-${resourceAbbreviations.bastionPip}-${environmentInitial}${dashRegionDashProject}')
+}
+
 // ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Private Endpoint Names (sequential) -- created for the customer need
 output peStorageAccountBlobName string = toLower('pep-${sanitizedAppName}-${environmentInitial}-${regionCode}-001')
@@ -129,7 +154,7 @@ output peAIHubName string = toLower('pep-${sanitizedAppName}-${environmentInitia
 output peAppInsightsName string = toLower('pep-${sanitizedAppName}-${environmentInitial}-${regionCode}-013')
 output peMonitorName string = toLower('pep-${sanitizedAppName}-${environmentInitial}-${regionCode}-014')
 
-output vnetNsgName string = toLower('${resourceAbbreviations.networkNetworkSecurityGroups}${sanitizedAppName}-${environmentInitial}-${regionCode}-001')
+output vnetNsgName string = toLower('${resourceAbbreviations.networkNetworkSecurityGroups}-${sanitizedAppName}-${environmentInitial}-${regionCode}-001')
 
 // ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Application Gateway resource names
@@ -141,5 +166,3 @@ output appGatewayPublicIpName string = toLower('${resourceAbbreviations.networkP
 // Monitoring and Alerting resource names
 output actionGroupName string             = toLower('${resourceAbbreviations.insightsActionGroups}${sanitizedAppName}-${environmentInitial}${resourceTokenWithDash}${dashRegionDashInstance}')
 output smartDetectorAlertRuleName string  = toLower('${resourceAbbreviations.insightsSmartDetectorAlertRules}${sanitizedAppName}-${environmentInitial}${resourceTokenWithDash}${dashRegionDashInstance}')
-
-

@@ -1,0 +1,60 @@
+# ------------------------------------------------------------------------------------------------------------------------
+# Action: Deploy Azure Foundry Application Project via Bicep Files
+# ------------------------------------------------------------------------------------------------------------------------
+name: 3 - Deploy AI Foundry Project
+run-name: '3 - Deploy AI Foundry Project: ${{ inputs.bicepDeploymentMode }} / ENV ${{ inputs.deployEnvironment }} by @${{ github.actor }}'
+
+on:
+  workflow_dispatch:
+    inputs:
+      deployEnvironment:
+        description: Environment
+        required: true
+        default: 'dev'
+        type: environment
+      bicepDeploymentMode:
+        description: Bicep Mode
+        default: create
+        type: choice
+        options:
+          - create
+          - whatIf
+      createProjectResourceGroup:
+        description: Create Resource Group?
+        type: boolean
+        default: true
+      projectName:
+        description: Project Name (change x to match Project Number)
+        required: true
+        default: 'aiprojX'
+        type: string
+      projectNumber:
+        description: Unique Project Number (integer)
+        required: true
+        default: 'X'
+        type: string
+
+# ------------------------------------------------------------------------------------------------------------------------
+jobs:
+  Deploy_Bicep:
+    name: Deploy ${{ inputs.deployEnvironment }} Bicep (${{ inputs.bicepDeploymentMode }})
+    uses: ./.github/workflows/template-create-infra.yml
+    secrets: inherit
+    permissions:
+      id-token: write
+      contents: read
+      actions: read
+      pages: write
+    with:
+      envCode: ${{ inputs.deployEnvironment }}
+      templatePath: './infra/bicep/'
+      templateFile: 'main-project.bicep'
+      parameterFile: 'main-project.bicepparam'
+      parameterFileReplaceTokens: 'true'
+      requestorName: ${{ github.actor }}
+      createResourceGroup: ${{ inputs.createProjectResourceGroup }}
+      bicepDeploymentMode: ${{ inputs.bicepDeploymentMode }}
+      addRoleAssignments: true
+      projectName: ${{ inputs.projectName }}
+      projectNumber: ${{ inputs.projectNumber }}
+      deployInResourceGroup: false

@@ -2,6 +2,7 @@ param privateEndpointNames string[]
 param zoneNames string[] = []
 param tags object = {}
 param vnetResourceId string
+param dnsZonesResourceGroupName string = resourceGroup().name
 
 resource pe 'Microsoft.Network/privateEndpoints@2023-06-01' existing = [for privateEndpointName in privateEndpointNames: {
   name: privateEndpointName
@@ -9,6 +10,7 @@ resource pe 'Microsoft.Network/privateEndpoints@2023-06-01' existing = [for priv
 
 module zones 'private-dns.bicep' = [for zoneName in zoneNames: {
   name: '${zoneName}-zone'
+  scope: resourceGroup(dnsZonesResourceGroupName)
   params: {
     zoneName: zoneName
     vnetResourceId: vnetResourceId
