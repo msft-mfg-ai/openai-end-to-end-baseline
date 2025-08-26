@@ -206,7 +206,7 @@ resource cosmosDBOperatorRole 'Microsoft.Authorization/roleDefinitions@2022-04-0
   scope: resourceGroup()
 }
 
-resource cosmosDBOperatorRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+resource cosmosDBOperatorRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (!useExistingAccount) {
   scope: cosmosAccount
   name: guid(managedIdentityPrincipalId, cosmosDBOperatorRole.id, cosmosAccount.id)
   properties: {

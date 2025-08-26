@@ -3,29 +3,29 @@ param location string = resourceGroup().location
 param existingVirtualNetworkName string = ''
 param existingVnetResourceGroupName string = resourceGroup().name
 param newVirtualNetworkName string = ''
-param vnetAddressPrefix string
+param vnetAddressPrefix string?
 //param subnet1Name string    - commented out to avoid confusion with existingVirtualNetworkName
 //param subnet2Name string - commented out to avoid confusion with existingVirtualNetworkName
-//param subnet1Prefix string - commented out to avoid confusion with existingVirtualNetworkName
-//param subnet2Prefix string - commented out to avoid confusion with existingVirtualNetworkName
+//param subnet1Prefix string? - commented out to avoid confusion with existingVirtualNetworkName
+//param subnet2Prefix string? - commented out to avoid confusion with existingVirtualNetworkName
 
 // Additional subnet name and prefix parameters for all subnets used below
 param subnetAppGwName string
-param subnetAppGwPrefix string
+param subnetAppGwPrefix string?
 param subnetAppSeName string
-param subnetAppSePrefix string
+param subnetAppSePrefix string?
 param subnetPeName string
-param subnetPePrefix string
+param subnetPePrefix string?
 param subnetAgentName string
-param subnetAgentPrefix string
+param subnetAgentPrefix string?
 param subnetBastionName string
-param subnetBastionPrefix string
+param subnetBastionPrefix string?
 param subnetJumpboxName string
-param subnetJumpboxPrefix string
+param subnetJumpboxPrefix string?
 param subnetTrainingName string
-param subnetTrainingPrefix string
+param subnetTrainingPrefix string?
 param subnetScoringName string
-param subnetScoringPrefix string
+param subnetScoringPrefix string?
 param vnetNsgName string = '${newVirtualNetworkName}-${subnetAppSeName}-nsg-${location}'
 
 var useExistingResource = !empty(existingVirtualNetworkName)
@@ -205,6 +205,6 @@ output subnetTrainingResourceID string = useExistingResource
 output subnetScoringResourceID string = useExistingResource
   ? existingVirtualNetwork::subnetScoring.id
   : newVirtualNetwork::subnetScoring.id
-output vnetAddressPrefix string = useExistingResource
+output vnetAddressPrefix string? = useExistingResource
   ? existingVirtualNetwork.properties.addressSpace.addressPrefixes[0]
   : newVirtualNetwork.properties.addressSpace.addressPrefixes[0]

@@ -78,6 +78,16 @@ on:
         required: false
         type: string
         default: 'create'
+      projectName:
+        description: AIF Project Name
+        required: true
+        default: ''
+        type: string
+      projectNumber:
+        description: AIF Project Number
+        required: true
+        default: '2'
+        type: string
 
 # ------------------------------------------------------------------------------------------------------------------------
 jobs:
@@ -117,6 +127,8 @@ jobs:
       cost-center: ${{ vars.COST_CENTER }}
       lti-service-class: ${{ vars.LTI_SERVICE_CLASS }}
       primary-support-provider: ${{ vars.PRIMARY_SUPPORT_PROVIDER }}
+      projectName: ${{ inputs.projectName }}
+      projectNumber: ${{ inputs.projectNumber }}
  
     # ------------------------------------------------------------------------------------------------------------------------
     # Outputs
@@ -147,14 +159,24 @@ jobs:
           echo "ENV_INITIAL=$ENV_INITIAL"
           echo "ENV_INITIAL=$ENV_INITIAL" >> $GITHUB_OUTPUT
 
+          if [ -z "${{ inputs.projectName }}" ]; then
           RESOURCEGROUPNAME="$(echo "${{ vars.RESOURCEGROUP_PREFIX }}-$ENV_INITIAL-${{ vars.GLOBAL_REGION_CODE }}-${{ vars.INSTANCE_NUMBER }}" | tr '[:lower:]' '[:upper:]')"
+          else
+          RESOURCEGROUPNAME="$(echo "${{ vars.RESOURCEGROUP_PREFIX }}-$ENV_INITIAL-${{ vars.GLOBAL_REGION_CODE }}-${{ vars.INSTANCE_NUMBER }}-${{ inputs.projectName }}" | tr '[:lower:]' '[:upper:]')"
+          fi
           echo "RESOURCEGROUPNAME=$RESOURCEGROUPNAME"
           echo "RESOURCEGROUPNAME=$RESOURCEGROUPNAME" >> $GITHUB_OUTPUT
+
+          ROOTRESOURCEGROUPNAME="$(echo "${{ vars.RESOURCEGROUP_PREFIX }}-$ENV_INITIAL-${{ vars.GLOBAL_REGION_CODE }}-${{ vars.INSTANCE_NUMBER }}" | tr '[:lower:]' '[:upper:]')"
+          echo "ROOTRESOURCEGROUPNAME=$ROOTRESOURCEGROUPNAME"
+          echo "ROOTRESOURCEGROUPNAME=$ROOTRESOURCEGROUPNAME" >> $GITHUB_OUTPUT
 
       - name: Display Variables and Files
         run: |-
           echo "inputs.envCode=${{ inputs.envCode }}"
-          echo "resourceGroupName=${{ steps.create-vars.outputs.RESOURCEGROUPNAME }}"
+          echo "step.resourceGroupName=${{ steps.create-vars.outputs.RESOURCEGROUPNAME }}"
+          echo "step.ROOTRESOURCEGROUPNAME=${{ steps.create-vars.outputs.ROOTRESOURCEGROUPNAME }}"
+          echo "deployInResourceGroup=${{ inputs.deployInResourceGroup }}"
           echo "templateFilePath=${{ inputs.templatePath }}${{ inputs.templateFile }}"
           echo "parameterFilePath=${{ inputs.templatePath }}${{ inputs.parameterFile }}"
           echo "bicepDeploymentMode=${{ inputs.bicepDeploymentMode }}"
@@ -185,6 +207,8 @@ jobs:
           echo '${{ toJSON(secrets) }}'
           echo "Inputs:"
           echo '${{ toJSON(inputs) }}'
+          echo "steps.create-vars.outputs:"
+          echo '${{ toJSON(steps.create-vars.outputs) }}'
           echo "##[endgroup]"
           echo "---------------------------------"
           echo "##[group]Directory of ${{ github.workspace  }}"
@@ -197,7 +221,7 @@ jobs:
         uses: qetza/replacetokens-action@v1
         with:
           sources: '${{ inputs.templatePath }}${{ inputs.parameterFile }}; !local/ => ${{ inputs.parameterFile }}'
-          variables: '[${{ toJSON(env) }},${{ toJSON(vars) }},${{ toJSON(secrets) }}]' # use environment & variables & secrets
+          variables: '[${{ toJSON(env) }},${{ toJSON(vars) }},${{ toJSON(secrets) }},${{ toJSON(steps.create-vars.outputs) }}]' # use environment & variables & secrets
 
       - name: Display Param File
         run: |-
@@ -215,7 +239,7 @@ jobs:
           client-secret: ${{ secrets.CICD_CLIENT_SECRET }}
 
       - name: Create Resource Group
-        if: ${{ inputs.runCreateInfra && inputs.deployInResourceGroup }}
+        if: ${{ inputs.runCreateInfra && inputs.createResourceGroup }}
         run: az group create --name ${{ steps.create-vars.outputs.RESOURCEGROUPNAME }} --location ${{ vars.RESOURCEGROUP_LOCATION }} --tags environment-name=${{ inputs.envCode }} Template=${{ inputs.templateFile }} Instance=${{ vars.INSTANCE_NUMBER }} creation-date=${{ steps.create-vars.outputs.DATE_TIME_STAMP }} requestor-name=${{ env.requestor-name }} application-owner=${{ env.application-owner }} business-owner=${{ env.business-owner }} cost-center=${{ env.cost-center }} created-by=${{ env.created-by }} lti-service-class=${{ env.lti-service-class }} otis-region=${{ vars.GLOBAL_REGION_CODE }} primary-support-provider=${{ env.primary-support-provider }} application-name=not-applicable request-number=not-applicable
 
       - name: What-If Analysis (RG)
