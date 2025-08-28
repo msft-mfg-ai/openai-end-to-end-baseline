@@ -14,6 +14,10 @@ This reference implementation deploys an AI Landing Zone for Azure OpenAI, which
 
 ![Resource Diagram](docs/images/Agent-Architecture-Design.png)
 
+## Application Shared Landing Zone
+
+![Resource Diagram](docs/images/AI_Shared_Landing_Zone.png)
+
 ---
 
 ## GitHub Workflows
