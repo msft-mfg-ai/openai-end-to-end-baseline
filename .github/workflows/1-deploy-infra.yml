@@ -102,4 +102,3 @@ jobs:
       appsToDeploy: ${{ inputs.appsToDeploy }}
       bicepDeploymentMode: ${{ inputs.bicepDeploymentMode }}
       makeWebAppsPublic: ${{ inputs.makeWebAppsPublic }}
-      deployCapHost: true

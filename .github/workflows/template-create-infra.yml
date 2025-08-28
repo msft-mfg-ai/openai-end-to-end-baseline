@@ -68,7 +68,7 @@ on:
       deployCapHost:
         description: Deploy AIF Capability Hosts?
         type: boolean
-        default: false
+        default: true
       requestorName:
         description: Requestor Name
         type: string
